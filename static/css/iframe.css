@@ -16,18 +16,18 @@
 }
 
 
-/* For LESS THAN 850px wide */
-@media (max-width : 849px) {
+/* For LESS THAN 641px wide */
+@media (max-width : 640px) {
   #innerdocbody{
     padding-top:0px !important;
     margin-left:0px !important;
-  } 
+  }
   #sidediv{
     padding-right:4px !important
   }
 }
 
-@media (max-width : 900px) {
+@media (max-width : 691px) {
   #innerdocbody > div {
     margin-left:0px !important;
     margin-right:0px;
@@ -42,9 +42,9 @@
   }
 }
 
-/* For screens GREATER THAN 845px wide */
+/* For screens GREATER THAN 636px wide */
 /* Note some browers are this pissy about this..  Chrome and FF respond at different sizes etc. */
-@media (min-width : 845px) {
+@media (min-width : 636px) {
 
   #sidediv .pv{
     padding-right:12px;
@@ -55,18 +55,19 @@
   }
 
   .outerPV{
-    width:850px !important;
+    width:641px !important;
   }
 
+/* Apparently not being used...
   .pageViewOn {
-    width:850px;
+    width:641px;
     margin-left:-102px;
     height:40px;
     background-color:#f7f7f7;
     margin-top:100px;
     margin-bottom:100px;
   }
-
+*/
   .pageBreakComputed, .pageBreak {
     page-break-after: always;
     -webkit-region-break-inside: avoid;
@@ -77,7 +78,7 @@
 
   .outerBackground{
     background-color:#f7f7f7 !important;
-    width: 850px;
+    width: 641px;
     margin:auto;
     border:none;
   }
@@ -94,19 +95,20 @@
     min-height:1500px;
   }
 
+/* Apparently not being used...
   .innerPVDiv{
     margin-left:100px;
     margin-right:100px;
   }
-
+*/
   #innerdocbody .innerPV{
     min-height:1500px;
     padding-top:100px !important;
   }
 
   #innerdocbody > div{
-    margin-left:100px !important;
-     margin-right:100px;
+    margin-left:117px !important;
+    margin-right:78px;
   }
 
   .pageBreakFullScreen{
@@ -117,7 +119,7 @@
   .lineNumbersAndPageView{
     /* width:28px !important; */
     /* The above breaks ep_comments */
-   border-radius: 5px 0 0 0;
+    border-radius: 5px 0 0 0;
     border: 1px solid #ccc;
     border-right:none !important;
     top: 7px !important;
@@ -130,8 +132,8 @@
   }
 
   #innerdocbody > div {
-    margin-left:100px;
-    margin-right:100px;
+    margin-left:117px;
+    margin-right:78px;
   }
 
 }

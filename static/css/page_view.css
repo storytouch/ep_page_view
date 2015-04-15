@@ -5,7 +5,7 @@
 */
 }
 
-@media (min-width: 921px) {
+@media (min-width: 712px) {
   #editorcontainer.page_view {
     overflow: hidden;
     background-color: #f7f7f7;
@@ -31,8 +31,8 @@
 
 }
 
-@media (max-width: 920px) {
-  
+@media (max-width: 711px) {
+
   .outerBackground{
     width:100%;
   }
