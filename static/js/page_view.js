@@ -35,7 +35,7 @@ exports.postAceInit = function(hook, context){
       }
       reDrawPageBreaks();
       var inner = $('iframe[name="ace_outer"]').contents().find('iframe[name="ace_inner"]');
-      var style = "width:850px;margin-left:-102px;height:40px;background-color:#f7f7f7;margin-top:100px;margin-bottom:100px;border-bottom:1px dotted #aaa";
+      var style = "width:641px;margin-left:-102px;height:40px;background-color:#f7f7f7;margin-top:100px;margin-bottom:100px;border-bottom:1px dotted #aaa";
       inner.contents().find("head").append("<style>.pageBreak{"+style+"}</style>");
       inner.contents().find("head").append("<style>.pageBreakComputed{"+style+"}</style>");
     },
