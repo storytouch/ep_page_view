@@ -64,8 +64,8 @@
     margin-left:-102px;
     height:40px;
     background-color:#f7f7f7;
-    margin-top:100px;
-    margin-bottom:100px;
+    margin-top:77px;
+    margin-bottom:77px;
   }
 */
   .pageBreakComputed, .pageBreak {
@@ -91,7 +91,7 @@
     position: relative;
     box-shadow: 10px 20px 40px 20px #ddd;
     padding-right:0px !important;
-    padding-top:100px !important;
+    padding-top:77px !important;
     min-height:1500px;
   }
 
@@ -103,7 +103,7 @@
 */
   #innerdocbody .innerPV{
     min-height:1500px;
-    padding-top:100px !important;
+    padding-top:77px !important;
   }
 
   #innerdocbody > div{
@@ -124,7 +124,7 @@
     border-right:none !important;
     top: 7px !important;
     left: auto !important;
-    padding-top: 100px !important;
+    padding-top: 77px !important;
   }
 
   .outerBackground{
