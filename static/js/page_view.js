@@ -357,7 +357,7 @@ exports.aceEditEvent = function(hook, callstack, editorInfo, rep, documentAttrib
 reDrawPageBreaks = function(){
   // console.log("redrawing");
   var lines = {};
-  var yHeight = 922.5; // This is dirty and I feel bad for it..
+  var yHeight = 771.0; // originally was: 922.5; // This is dirty and I feel bad for it..
   var lineNumber = 0;
   var pages = []; // Array of Y px of each page.
 
