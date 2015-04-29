@@ -73,10 +73,10 @@ exports.postAceInit = function(hook, context){
     }
   }
 
-  clientVars.plugins.plugins.ep_page_view.enable = pv.enable;
-  clientVars.plugins.plugins.ep_page_view.disable = pv.disable;
-  clientVars.plugins.plugins.ep_page_view.pageBreaksEnable = pv.pageBreaksEnable;
-  clientVars.plugins.plugins.ep_page_view.pageBreaksDisable = pv.pageBreaksDisable;
+  clientVars.plugins.plugins.ep_script_page_view.enable = pv.enable;
+  clientVars.plugins.plugins.ep_script_page_view.disable = pv.disable;
+  clientVars.plugins.plugins.ep_script_page_view.pageBreaksEnable = pv.pageBreaksEnable;
+  clientVars.plugins.plugins.ep_script_page_view.pageBreaksDisable = pv.pageBreaksDisable;
 
   /* init */
   // page view
@@ -84,18 +84,18 @@ exports.postAceInit = function(hook, context){
     $('#options-pageview').attr('checked','checked');
     pv.enable();
     // set a value we will refer to later and other plugins will refer to
-    clientVars.plugins.plugins.ep_page_view.enabled = true;
+    clientVars.plugins.plugins.ep_script_page_view.enabled = true;
   }else{
     $('#options-pageview').attr("checked", false);
   }
   if($('#options-pageview').is(':checked')) {
     pv.enable();
     // set a value we will refer to later and other plugins will refer to
-    clientVars.plugins.plugins.ep_page_view.enabled = true;
+    clientVars.plugins.plugins.ep_script_page_view.enabled = true;
   } else {
     pv.disable();
     // set a value we will refer to later and other plugins will refer to
-    clientVars.plugins.plugins.ep_page_view.enabled = false;
+    clientVars.plugins.plugins.ep_script_page_view.enabled = false;
   }
 
   // page breaks
@@ -103,18 +103,18 @@ exports.postAceInit = function(hook, context){
     $('#options-pagebreaks').attr('checked','checked');
     pv.pageBreaksEnable();
     // set a value we will refer to later and other plugins will refer to
-    clientVars.plugins.plugins.ep_page_view.pageBreaksEnabled = true;
+    clientVars.plugins.plugins.ep_script_page_view.pageBreaksEnabled = true;
   }else{
     $('#options-pagebreaks').attr("checked", false);
   }
   if($('#options-pagebreaks').is(':checked')) {
     pv.pageBreaksEnable();
     // set a value we will refer to later and other plugins will refer to
-    clientVars.plugins.plugins.ep_page_view.pageBreaksEnabled = true;
+    clientVars.plugins.plugins.ep_script_page_view.pageBreaksEnabled = true;
   } else {
     pv.pageBreaksDisable();
     // set a value we will refer to later and other plugins will refer to
-    clientVars.plugins.plugins.ep_page_view.pageBreaksEnabled = false;
+    clientVars.plugins.plugins.ep_script_page_view.pageBreaksEnabled = false;
   }
 
   /* on click */
@@ -172,7 +172,7 @@ function getParam(sname){
 }
 
 exports.aceEditorCSS = function(hook_name, cb){
-  return ["/ep_page_view/static/css/iframe.css"];
+  return ["/ep_script_page_view/static/css/iframe.css"];
 } // inner pad CSS
 
 

@@ -1,8 +1,8 @@
 {
-  "name":        "ep_page_view",
-  "version":     "0.5.22",
+  "name":        "ep_script_page_view",
+  "version":     "0.0.1",
   "keywords":    ["page view", "pv", "preview", "overview", "page break", "break", "new page"],
-  "description": "Add support to do 'page view', with a toggle on/off option in Settings, also Page Breaks with Control Enter",
+  "description": "Add support to do 'page view' for movie scripts. Based on ep_page_view project from Etherpad (https://github.com/ether/ep_page_view).",
   "contributors": [
     {
       "name": "John McLear",
@@ -13,12 +13,16 @@
       "name": "Robin Buse",
       "email": "me@factor.cc",
       "url": "https://factor.cc/"
+    },
+    {
+      "name": "Luiza Pagliari",
+      "email": "lpagliari@gmail.com"
     }
   ],
 
   "repository" : {
     "type": "git",
-    "url":  "git://github.com/ether/ep_page_view.git"
+    "url":  "git://github.com/storytouch/ep_script_page_view.git"
   },
 
   "dependencies": {},
