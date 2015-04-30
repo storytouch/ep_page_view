@@ -27,10 +27,22 @@
   }
 }
 
+/* 444px ~ 61 chars/line */
+
+/* If it is not possible to have any margin: */
+@media (max-width : 463px) {
+  #innerdocbody > div {
+    margin-left: 0px !important;
+    margin-right: 0px;
+  }
+}
+
+/* This is the point where we hide page outline: */
 @media (max-width : 691px) {
   #innerdocbody > div {
     margin-left:0px !important;
     margin-right:0px;
+    max-width: 444px;
   }
   .outerBackground{
     width:100%;
@@ -39,6 +51,22 @@
   .innerPV{
     border:none;
     box-shadow:none;
+  }
+}
+
+/* If we have some space to have a right margin, but not
+   enough for a left margin or to draw page outline: */
+@media (min-width: 464px) and (max-width : 541px) {
+  #innerdocbody > div {
+    margin-left: calc(100% - 444px) !important; /* right margin gets all available space */
+  }
+}
+
+/* If we have some space to have both margins, but not
+   enough to draw page outline: */
+@media (min-width: 542px) and (max-width : 691px) {
+  #innerdocbody > div {
+    margin-left: calc(50% - 222px) !important; /* split available space between left and right margins */
   }
 }
 
