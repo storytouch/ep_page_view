@@ -58,7 +58,8 @@
    enough for a left margin or to draw page outline: */
 @media (min-width: 464px) and (max-width : 541px) {
   #innerdocbody > div {
-    margin-left: calc(100% - 444px) !important; /* right margin gets all available space */
+    margin-left: 0px !important; /* right margin gets all available space */
+    margin-right: calc(100% - 444px) !important;
   }
 }
 
@@ -66,7 +67,8 @@
    enough to draw page outline: */
 @media (min-width: 542px) and (max-width : 691px) {
   #innerdocbody > div {
-    margin-left: calc(50% - 222px) !important; /* split available space between left and right margins */
+    margin-left: 67px !important; /* left margin gets only enough to display scene number */
+    margin-right: calc(100% - 511px) !important;
   }
 }
 
@@ -136,7 +138,7 @@
 
   #innerdocbody > div{
     margin-left:117px !important;
-    margin-right:78px;
+    margin-right:78px !important;
   }
 
   .pageBreakFullScreen{
