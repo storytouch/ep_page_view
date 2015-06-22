@@ -82,7 +82,7 @@ exports.postAceInit = function(hook, context){
   /* from URL param */
   var urlContainspageviewTrue = (getParam("pageview") == "true"); // if the url param is set
   if(urlContainspageviewTrue){
-    $('#options-pageview').prop('checked',true);
+    $('#options-pageview').prop('checked', 'checked');
   }else if (getParam("pageview") == "false"){
     $('#options-pageview').prop('checked',false);
   }
@@ -90,7 +90,7 @@ exports.postAceInit = function(hook, context){
   /* from cookie */
   // page view
   if (padcookie.getPref("page_view")) {
-    $('#options-pageview').prop('checked', true);
+    $('#options-pageview').prop('checked', 'checked');
     // set a value we will refer to later and other plugins will refer to
     clientVars.plugins.plugins.ep_script_page_view.enabled = true;
   }else if (padcookie.getPref("page_view") == false){
@@ -110,7 +110,7 @@ exports.postAceInit = function(hook, context){
 
   // page breaks
   if (padcookie.getPref("page_breaks")) {
-    $('#options-pagebreaks').prop('checked', true);
+    $('#options-pagebreaks').prop('checked', 'checked');
     pv.pageBreaksEnable();
     // set a value we will refer to later and other plugins will refer to
     clientVars.plugins.plugins.ep_script_page_view.pageBreaksEnabled = true;
