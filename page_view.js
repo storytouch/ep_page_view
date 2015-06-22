@@ -3,7 +3,7 @@ var settings = require('ep_etherpad-lite/node/utils/Settings');
 var checked_state = '';
 
 exports.eejsBlock_mySettings = function (hook_name, args, cb) {
-  if (settings.ep_script_page_view_default) checked_state = 'checked';
+  if (settings.ep_page_view_default) checked_state = 'checked';
   args.content = args.content + eejs.require('ep_script_page_view/templates/page_view_entry.ejs', {checked : checked_state});
   return cb();
 }

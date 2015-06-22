@@ -18,7 +18,7 @@ Features:
 
 1. Open `settings.json`
 2. Append:
-   `"ep_script_page_view_default" : true,`
+   `"ep_page_view_default" : true,`
 
 ## Embed parameter
 Suffix this on your pad URL to auto display page view when opening a pad ``&pageview=true``
