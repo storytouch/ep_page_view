@@ -4,21 +4,11 @@
       "name": "page_view",
       "client_hooks": {
         "postAceInit": "ep_script_page_view/static/js/page_view",
-        "aceEditorCSS": "ep_script_page_view/static/js/page_view",
-        "aceCreateDomLine": "ep_script_page_view/static/js/page_view",
-        "aceAttribsToClasses": "ep_script_page_view/static/js/page_view",
-        "aceDomLineProcessLineAttributes": "ep_script_page_view/static/js/page_view",
-        "collectContentPre": "ep_script_page_view/static/js/shared",
-        "aceInitialized": "ep_script_page_view/static/js/page_view",
-        "aceKeyEvent": "ep_script_page_view/static/js/page_view",
-        "aceEditEvent": "ep_script_page_view/static/js/page_view"
+        "aceEditorCSS": "ep_script_page_view/static/js/page_view"
       },
       "hooks": {
         "eejsBlock_mySettings": "ep_script_page_view/page_view",
         "eejsBlock_styles": "ep_script_page_view/page_view",
-        "collectContentPre": "ep_script_page_view/static/js/shared",
-        "collectContentPost": "ep_script_page_view/static/js/shared",
-        "getLineHTMLForExport": "ep_script_page_view/index",
         "eejsBlock_dd_insert" : "ep_script_page_view/page_view",
         "eejsBlock_dd_view" : "ep_script_page_view/page_view"
       }
