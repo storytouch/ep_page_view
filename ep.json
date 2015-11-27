@@ -4,7 +4,8 @@
       "name": "page_view",
       "client_hooks": {
         "postAceInit": "ep_script_page_view/static/js/page_view",
-        "aceEditorCSS": "ep_script_page_view/static/js/page_view"
+        "aceEditorCSS": "ep_script_page_view/static/js/page_view",
+        "aceEditEvent": "ep_script_page_view/static/js/pageBreak"
       },
       "hooks": {
         "eejsBlock_mySettings": "ep_script_page_view/page_view",

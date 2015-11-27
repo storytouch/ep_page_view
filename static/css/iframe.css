@@ -98,12 +98,24 @@
     margin-bottom:77px;
   }
 */
-  .pageBreakComputed, .pageBreak {
-    page-break-after: always;
-    -webkit-region-break-inside: avoid;
-    border-bottom: 1px dotted #AAA;
-    border-top: 1px dotted #aaa;
+
+  #innerdocbody.breakPages div.pageBreak:before {
+    content: "";
+    width:641px;
+    margin-right:-79px;
+    height:40px;
+    background-color:#f7f7f7;
+    margin-top:77px;
+    margin-bottom:77px;
+    border-bottom:1px dotted #aaa;
+    border-top:1px dotted #aaa;
+    float: right;
     cursor: default;
+
+    /* might be useful for printing: */
+  /*  page-break-after: always;
+    -webkit-region-break-inside: avoid;
+  */
   }
 
   .outerBackground{

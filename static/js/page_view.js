@@ -50,6 +50,11 @@ exports.postAceInit = function(hook, context){
 
   /* init */
   /* from URL param */
+  var enablePageBreaks = (getParam("pagebreak") == "true"); // if the url param is set
+  if(enablePageBreaks){
+    $innerdocbody.addClass('breakPages');
+  }
+
   var urlContainspageviewTrue = (getParam("pageview") == "true"); // if the url param is set
   if(urlContainspageviewTrue){
     $('#options-pageview').prop('checked', 'checked');
