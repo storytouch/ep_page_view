@@ -1,6 +1,6 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 
-var REGULAR_LINES_PER_PAGE = 5;
+var REGULAR_LINES_PER_PAGE = 55;
 
 // HACK: page breaks are not *permanently* drawn until everything is setup on the editor.
 // To be able to have page breaks drawn when opening the script (before user starts changing
@@ -52,7 +52,8 @@ var redrawPageBreaks = function() {
     skippingEmptyLines = false;
 
     var shouldBreakPage = false;
-    var lineHeight = $(this).height();
+    // get height including margins and paddings
+    var lineHeight = getLineHeight(this);
     // Q: if this line is placed on current page, will the page height be over the
     // allowed max height?
     if (currentPageHeight + lineHeight > maxPageHeight) {
@@ -96,6 +97,24 @@ var maxPageHeight;
 var getMaxPageHeight = function() {
   maxPageHeight = maxPageHeight || (REGULAR_LINES_PER_PAGE * getRegularLineHeight());
   return maxPageHeight;
+}
+
+var getLineHeight = function(targetLine) {
+  var lineHeight;
+
+  // margin top/bottom are defined on script elements, not on div, so we need to get the
+  // inner element
+  var scriptElementsSelector = "heading, action, character, parenthetical, dialogue, transition, shot";
+  var $innerElement = $(targetLine).find(scriptElementsSelector);
+
+  // general have no inner tag, so get height from targetLine
+  var isGeneral = $innerElement.length === 0;
+  if (isGeneral) {
+    lineHeight = $(targetLine).height();
+  } else {
+    lineHeight = $innerElement.outerHeight(true);
+  }
+  return lineHeight;
 }
 
 var getRegularLineHeight = function() {
