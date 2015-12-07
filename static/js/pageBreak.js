@@ -10,6 +10,9 @@ var REGULAR_LINES_PER_PAGE = 5;
 var firstPageBreakRedrawNotRunYet = true;
 
 exports.aceEditEvent = function(hook, context) {
+  // don't do anything if page break is disabled
+  if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;
+
   var cs = context.callstack;
 
   // force redrawPageBreaks() to run. See notes on firstPageBreakRedrawNotRunYet for more details

@@ -53,6 +53,7 @@ exports.postAceInit = function(hook, context){
   var enablePageBreaks = (getParam("pagebreak") == "true"); // if the url param is set
   if(enablePageBreaks){
     $innerdocbody.addClass('breakPages');
+    clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled = true;
   }
 
   var urlContainspageviewTrue = (getParam("pageview") == "true"); // if the url param is set
