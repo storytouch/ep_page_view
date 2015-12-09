@@ -1,6 +1,7 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 
 var REGULAR_LINES_PER_PAGE = 55;
+var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
 
 // HACK: page breaks are not *permanently* drawn until everything is setup on the editor.
 // To be able to have page breaks drawn when opening the script (before user starts changing
@@ -32,58 +33,7 @@ var redrawPageBreaks = function() {
   var $lines = getPadInner().find("div");
   $lines.removeClass("pageBreak");
 
-  var maxPageHeight = getMaxPageHeight();
-
-  // select lines to have page breaks
-  var $linesWithPageBreaks = $();
-  var $currentLine = $lines.first();
-  var currentPageHeight = 0;
-  var skippingEmptyLines = false;
-  while(!reachedEndOfPad($currentLine)) {
-    // HACK: ignore empty lines on top of pages.
-    // We need this because :before/:after pseudo elements (as page breaks are implemented)
-    // are not displayed correctly over some elements (including <br>, which is the
-    // representation of empty lines on Etherpad): every empty line after a page break is
-    // displayed on the previous page (before the page break), although they are placed
-    // *after* the page break. So to work around this limitation, we ignore all empty lines
-    // on top the pages
-    // Source: http://stackoverflow.com/questions/3538506/which-elements-support-the-before-and-after-pseudo-elements?rq=1#3538529
-    var lineIsEmpty = $currentLine.text().length === 0;
-    if (skippingEmptyLines && lineIsEmpty) {
-      // don't process anything, just move to next line
-      $currentLine = $currentLine.next();
-      continue;
-    }
-
-    // ok, line is not empty, so we stop skipping empty lines
-    skippingEmptyLines = false;
-
-    // get height including margins and paddings
-    var lineHeight = getLineHeight($currentLine);
-    // Q: if this line is placed on current page, will the page height be over the
-    // allowed max height?
-    if (currentPageHeight + lineHeight > maxPageHeight) {
-      // A: yes, so place the line on next page
-
-      // ignore empty lines on top of pages (see details about this HACK above)
-      if (lineIsEmpty) {
-        currentPageHeight = 0;
-        // start skipping lines again
-        skippingEmptyLines = true;
-      } else {
-        currentPageHeight = lineHeight;
-        skippingEmptyLines = false;
-      }
-
-      $linesWithPageBreaks = $linesWithPageBreaks.add($currentLine);
-    } else {
-      // A: no, so simply increase current page height
-      currentPageHeight += lineHeight;
-    }
-
-    // update variables for next iteration on while-loop
-    $currentLine = $currentLine.next();
-  }
+  var $linesWithPageBreaks = filterLinesToHavePageBreak($lines);
 
   // add page break markers to selected lines
   $linesWithPageBreaks.addClass("pageBreak");
@@ -114,8 +64,7 @@ var getLineHeight = function($targetLine) {
 
   // margin top/bottom are defined on script elements, not on div, so we need to get the
   // inner element
-  var scriptElementsSelector = "heading, action, character, parenthetical, dialogue, transition, shot";
-  var $innerElement = $targetLine.find(scriptElementsSelector);
+  var $innerElement = $targetLine.find(SCRIPT_ELEMENTS_SELECTOR);
 
   // general have no inner tag, so get height from targetLine
   var isGeneral = $innerElement.length === 0;
@@ -141,6 +90,113 @@ var needInitialPageBreakRedraw = function(callstack) {
   return firstPageBreakRedrawNotRunYet && callstack.editEvent.eventType === "idleWorkTimer";
 }
 
+var filterLinesToHavePageBreak = function($lines) {
+  var maxPageHeight = getMaxPageHeight();
+  var $linesWithPageBreaks = $();
+
+  // select lines to have page breaks
+  var $currentLine = $lines.first();
+  var currentPageHeight = 0;
+  var skippingEmptyLines = false;
+  while(!reachedEndOfPad($currentLine)) {
+    // HACK: ignore empty lines on top of pages.
+    // We need this because :before/:after pseudo elements (as page breaks are implemented)
+    // are not displayed correctly over some elements (including <br>, which is the
+    // representation of empty lines on Etherpad): every empty line after a page break is
+    // displayed on the previous page (before the page break), although they are placed
+    // *after* the page break. So to work around this limitation, we ignore all empty lines
+    // on top the pages
+    // Source: http://stackoverflow.com/questions/3538506/which-elements-support-the-before-and-after-pseudo-elements?rq=1#3538529
+    var lineIsEmpty = $currentLine.text().length === 0;
+    if (skippingEmptyLines && lineIsEmpty) {
+      // don't process anything, just move to next line
+      $currentLine = $currentLine.next();
+      continue;
+    }
+
+    // ok, line is not empty, so we stop skipping empty lines
+    skippingEmptyLines = false;
+
+    // check if current line is on the beginning of a block
+    var blockInfo = getBlockInfo($currentLine);
+    if (blockInfo) {
+      // get height including margins and paddings
+      var blockHeight = blockInfo.blockHeight;
+
+      // Q: if this block is placed on current page, will the page height be over the
+      // allowed max height?
+      if (currentPageHeight + blockHeight > maxPageHeight) {
+        // A: yes, so place the ENTIRE BLOCK on next page
+        $linesWithPageBreaks = $linesWithPageBreaks.add(blockInfo.$topOfBlock);
+      } else {
+        // A: no, so simply increase current page height
+        currentPageHeight += blockHeight;
+      }
+
+      // move $currentLine to last line of the block before next iteration of while-loop
+      $currentLine = blockInfo.$bottomOfBlock;
+    } else {
+      // get height including margins and paddings
+      var lineHeight = getLineHeight($currentLine);
+      // Q: if this line is placed on current page, will the page height be over the
+      // allowed max height?
+      if (currentPageHeight + lineHeight > maxPageHeight) {
+        // A: yes, so place the line on next page
+
+        // ignore empty lines on top of pages (see details about this HACK above)
+        if (lineIsEmpty) {
+          currentPageHeight = 0;
+          // start skipping lines again
+          skippingEmptyLines = true;
+        } else {
+          currentPageHeight = lineHeight;
+          skippingEmptyLines = false;
+        }
+
+        $linesWithPageBreaks = $linesWithPageBreaks.add($currentLine);
+      } else {
+        // A: no, so simply increase current page height
+        currentPageHeight += lineHeight;
+      }
+
+      // move to next line before next iteration of while-loop
+      $currentLine = $currentLine.next();
+    }
+  }
+
+  return $linesWithPageBreaks;
+}
+
 var reachedEndOfPad = function($currentLine) {
   return $currentLine.length === 0;
+}
+
+var getBlockInfo = function($currentLine) {
+  var blockInfo;
+
+  var typeOfCurrentLine = typeOf($currentLine);
+
+  // heading || shot, followed by !(heading || shot)
+  if (typeOfCurrentLine === "heading" || typeOfCurrentLine === "shot") {
+    var $nextLine = $currentLine.next();
+    var typeOfNextLine = typeOf($nextLine);
+
+    if (typeOfNextLine !== "heading" && typeOfNextLine !== "shot") {
+      var blockHeight = getLineHeight($currentLine) + getLineHeight($nextLine);
+      blockInfo = {
+        blockHeight: blockHeight,
+        $topOfBlock: $currentLine,
+        $bottomOfBlock: $nextLine
+      };
+    }
+  }
+
+  return blockInfo;
+}
+
+var typeOf = function($line) {
+ var $innerElement = $line.find(SCRIPT_ELEMENTS_SELECTOR);
+ var tagName = $innerElement.prop("tagName") || "general"; // general does not have inner tag
+
+ return tagName.toLowerCase();
 }
