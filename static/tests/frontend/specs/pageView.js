@@ -1,4 +1,4 @@
-describe("Page View", function(){
+describe("ep_script_page_view - page view", function(){
   //create a new pad before each test run
   beforeEach(function(cb){
     helper.newPad(cb);
