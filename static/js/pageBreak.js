@@ -29,14 +29,17 @@ exports.aceEditEvent = function(hook, context) {
 
 var redrawPageBreaks = function() {
   // clean page breaks
-  var $lines = getPadInner().find("div").removeClass("pageBreak");
+  var $lines = getPadInner().find("div");
+  $lines.removeClass("pageBreak");
 
   var maxPageHeight = getMaxPageHeight();
 
   // select lines to have page breaks
+  var $linesWithPageBreaks = $();
+  var $currentLine = $lines.first();
   var currentPageHeight = 0;
   var skippingEmptyLines = false;
-  var $linesOnEndOfPage = $lines.filter(function(index) {
+  while(!reachedEndOfPad($currentLine)) {
     // HACK: ignore empty lines on top of pages.
     // We need this because :before/:after pseudo elements (as page breaks are implemented)
     // are not displayed correctly over some elements (including <br>, which is the
@@ -45,15 +48,18 @@ var redrawPageBreaks = function() {
     // *after* the page break. So to work around this limitation, we ignore all empty lines
     // on top the pages
     // Source: http://stackoverflow.com/questions/3538506/which-elements-support-the-before-and-after-pseudo-elements?rq=1#3538529
-    var lineIsEmpty = $(this).text().length === 0;
-    if (skippingEmptyLines && lineIsEmpty) return false;
+    var lineIsEmpty = $currentLine.text().length === 0;
+    if (skippingEmptyLines && lineIsEmpty) {
+      // don't process anything, just move to next line
+      $currentLine = $currentLine.next();
+      continue;
+    }
 
     // ok, line is not empty, so we stop skipping empty lines
     skippingEmptyLines = false;
 
-    var shouldBreakPage = false;
     // get height including margins and paddings
-    var lineHeight = getLineHeight(this);
+    var lineHeight = getLineHeight($currentLine);
     // Q: if this line is placed on current page, will the page height be over the
     // allowed max height?
     if (currentPageHeight + lineHeight > maxPageHeight) {
@@ -69,14 +75,18 @@ var redrawPageBreaks = function() {
         skippingEmptyLines = false;
       }
 
-      shouldBreakPage = true;
+      $linesWithPageBreaks = $linesWithPageBreaks.add($currentLine);
     } else {
       // A: no, so simply increase current page height
       currentPageHeight += lineHeight;
     }
 
-    return shouldBreakPage;
-  }).addClass("pageBreak");
+    // update variables for next iteration on while-loop
+    $currentLine = $currentLine.next();
+  }
+
+  // add page break markers to selected lines
+  $linesWithPageBreaks.addClass("pageBreak");
 }
 
 // Easier access to outer pad
@@ -99,18 +109,18 @@ var getMaxPageHeight = function() {
   return maxPageHeight;
 }
 
-var getLineHeight = function(targetLine) {
+var getLineHeight = function($targetLine) {
   var lineHeight;
 
   // margin top/bottom are defined on script elements, not on div, so we need to get the
   // inner element
   var scriptElementsSelector = "heading, action, character, parenthetical, dialogue, transition, shot";
-  var $innerElement = $(targetLine).find(scriptElementsSelector);
+  var $innerElement = $targetLine.find(scriptElementsSelector);
 
   // general have no inner tag, so get height from targetLine
   var isGeneral = $innerElement.length === 0;
   if (isGeneral) {
-    lineHeight = $(targetLine).height();
+    lineHeight = $targetLine.height();
   } else {
     lineHeight = $innerElement.outerHeight(true);
   }
@@ -129,4 +139,8 @@ var getFloatValueOfCSSProperty = function($element, property){
 
 var needInitialPageBreakRedraw = function(callstack) {
   return firstPageBreakRedrawNotRunYet && callstack.editEvent.eventType === "idleWorkTimer";
+}
+
+var reachedEndOfPad = function($currentLine) {
+  return $currentLine.length === 0;
 }
