@@ -192,6 +192,10 @@ var getBlockInfo = function($currentLine) {
     // to a block
     return;
   }
+  // block type: sequence of transitions => only the last 2 lines of sequence are a block
+  else if (typeOfNextLine === "transition" && typeOfLineAfterNext === "transition") {
+    return;
+  }
   // block type: heading || shot, followed by !(heading || shot)
   else if (typeOfCurrentLine === "heading" || typeOfCurrentLine === "shot") {
     if (typeOfNextLine !== "heading" && typeOfNextLine !== "shot") {

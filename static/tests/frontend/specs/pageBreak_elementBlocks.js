@@ -151,6 +151,24 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
   });
 
+  context("when block is transition followed by transition", function() {
+    before(function() {
+      linesBeforeBlock = 51;
+      lastLineText = "another transition";
+      buildBlock = function() {
+        var transition = utils.transition("transition");
+        var anotherTransition = utils.transition("another transition");
+
+        return transition + anotherTransition;
+      };
+    });
+
+    it("moves the entire block to next page", function(done) {
+      var firstLineOfNextPage = "transition";
+      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
+    });
+  });
+
   // context("when block is transition followed by (parenthetical or dialogue or transition)", function() {
   //   before(function() {
   //     linesBeforeBlock = 52;
