@@ -1,6 +1,6 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 
-var REGULAR_LINES_PER_PAGE = 55;
+var REGULAR_LINES_PER_PAGE = 54;
 var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
 
 // HACK: page breaks are not *permanently* drawn until everything is setup on the editor.
@@ -128,13 +128,14 @@ var filterLinesToHavePageBreak = function($lines) {
       if (currentPageHeight + blockHeight > maxPageHeight) {
         // A: yes, so place the ENTIRE BLOCK on next page
         $linesWithPageBreaks = $linesWithPageBreaks.add(blockInfo.$topOfBlock);
+        currentPageHeight = blockHeight;
       } else {
         // A: no, so simply increase current page height
         currentPageHeight += blockHeight;
       }
 
-      // move $currentLine to last line of the block before next iteration of while-loop
-      $currentLine = blockInfo.$bottomOfBlock;
+      // move $currentLine to first line after the block, before next iteration of while-loop
+      $currentLine = blockInfo.$bottomOfBlock.next();
     } else {
       // get height including margins and paddings
       var lineHeight = getLineHeight($currentLine);
@@ -176,12 +177,27 @@ var getBlockInfo = function($currentLine) {
 
   var typeOfCurrentLine = typeOf($currentLine);
 
-  // heading || shot, followed by !(heading || shot)
+  // block type: heading || shot, followed by !(heading || shot)
   if (typeOfCurrentLine === "heading" || typeOfCurrentLine === "shot") {
     var $nextLine = $currentLine.next();
     var typeOfNextLine = typeOf($nextLine);
 
     if (typeOfNextLine !== "heading" && typeOfNextLine !== "shot") {
+      var blockHeight = getLineHeight($currentLine) + getLineHeight($nextLine);
+      blockInfo = {
+        blockHeight: blockHeight,
+        $topOfBlock: $currentLine,
+        $bottomOfBlock: $nextLine
+      };
+    }
+  }
+  // block type: any element except (heading || shot), followed by
+  // (parenthetical || dialogue || transition)
+  else if (typeOfCurrentLine !== "heading" && typeOfCurrentLine !== "shot") {
+    var $nextLine = $currentLine.next();
+    var typeOfNextLine = typeOf($nextLine);
+
+    if (typeOfNextLine === "parenthetical" || typeOfNextLine === "dialogue" || typeOfNextLine === "transition") {
       var blockHeight = getLineHeight($currentLine) + getLineHeight($nextLine);
       blockInfo = {
         blockHeight: blockHeight,

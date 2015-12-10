@@ -1,10 +1,10 @@
-var LINES_PER_PAGE          = 55;
+var GENERALS_PER_PAGE       = 54;
 var HEADINGS_PER_PAGE       = 18;
 var ACTIONS_PER_PAGE        = 27;
 var CHARACTERS_PER_PAGE     = 27;
-var PARENTHETICALS_PER_PAGE = 55;
-var DIALOGUES_PER_PAGE      = 55;
-var TRANSITIONS_PER_PAGE    = 27;
+var PARENTHETICALS_PER_PAGE = 54;
+var DIALOGUES_PER_PAGE      = 54;
+var TRANSITIONS_PER_PAGE    = 26;
 var SHOTS_PER_PAGE          = 18;
 
 describe("ep_script_page_view - page break", function() {
@@ -30,7 +30,7 @@ describe("ep_script_page_view - page break", function() {
       scriptBuilder = pageBreak.scriptWithPageFullOfGenerals;
     });
 
-    it("fits " + LINES_PER_PAGE + " lines in a page", function(done) {
+    it("fits " + GENERALS_PER_PAGE + " lines in a page", function(done) {
       var inner$ = helper.padInner$;
 
       // verify there is no page break yet
@@ -97,8 +97,8 @@ describe("ep_script_page_view - page break", function() {
     // this scenario is a workaround to the limitation of CSS :after/:before, which is not
     // displayed correctly on some elements (including <br>)
     context("when pages > 1 have empty lines on the top of the page", function() {
-      var FIRST_LINE_OF_PAGE_2 = LINES_PER_PAGE;
-      var FIRST_LINE_OF_PAGE_3 = 2*LINES_PER_PAGE + 2; // there are 2 empty lines on top of page 2
+      var FIRST_LINE_OF_PAGE_2 = GENERALS_PER_PAGE;
+      var FIRST_LINE_OF_PAGE_3 = 2*GENERALS_PER_PAGE + 2; // there are 2 empty lines on top of page 2
 
       beforeEach(function(cb) {
         var inner$ = helper.padInner$;
@@ -112,7 +112,7 @@ describe("ep_script_page_view - page break", function() {
         // wait for Etherpad to process lines
         helper.waitFor(function() {
           var lineNumber = inner$("div").length;
-          return lineNumber === 3*LINES_PER_PAGE + 5; // 3 full pages + 5 (empty) lines
+          return lineNumber === 3*GENERALS_PER_PAGE + 5; // 3 full pages + 5 (empty) lines
         }).done(cb);
       });
 
@@ -295,7 +295,7 @@ ep_script_page_view_test_helper.pageBreak = {
     }
 
     // create non-empty lines
-    for (var i = 0; i < LINES_PER_PAGE; i++) {
+    for (var i = 0; i < GENERALS_PER_PAGE; i++) {
       script += utils.general(text);
     }
 
@@ -330,7 +330,7 @@ ep_script_page_view_test_helper.pageBreak = {
 
     // add new line (should be placed on next page)
     var $lastLine = inner$("div").last();
-    $lastLine.append(elementBuilder("1st of 3rd page"));
+    $lastLine.append(elementBuilder("1st of 3rd page") + elementBuilder("2nd of 3rd page"));
 
     // wait for new page to be created
     helper.waitFor(function() {
