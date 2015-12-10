@@ -22,7 +22,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
     this.timeout(60000);
   });
 
-  context("when block is heading + something other than heading or shot", function() {
+  // contexts for rule (heading || shot) + !(heading || shot)
+  context("when block is heading followed by something other than heading or shot", function() {
     before(function() {
       linesBeforeBlock = 51;
       lastLineText = "action";
@@ -49,7 +50,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
   });
 
-  context("when block is shot + something other than heading or shot", function() {
+  context("when block is shot followed by something other than heading or shot", function() {
     before(function() {
       linesBeforeBlock = 51;
       lastLineText = "action";
@@ -76,7 +77,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
   });
 
-  context("when block is action + (parenthetical or dialogue or transition)", function() {
+  // contexts for rule (action || character || general) + (parenthetical || dialogue || transition)
+  context("when block is action followed by (parenthetical or dialogue or transition)", function() {
     before(function() {
       linesBeforeBlock = 52;
       lastLineText = "parenthetical";
@@ -103,7 +105,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
   });
 
-  context("when block is character + (parenthetical or dialogue or transition)", function() {
+  context("when block is character followed by (parenthetical or dialogue or transition)", function() {
     before(function() {
       linesBeforeBlock = 52;
       lastLineText = "dialogue";
@@ -130,7 +132,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
   });
 
-  context("when block is general + (parenthetical or dialogue or transition)", function() {
+  context("when block is general followed by (parenthetical or dialogue or transition)", function() {
     before(function() {
       linesBeforeBlock = 53;
       lastLineText = "parenthetical";
@@ -157,63 +159,62 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
   });
 
-  // context("when block is parenthetical + (parenthetical or dialogue or transition)", function() {
-  //   before(function() {
-  //     linesBeforeBlock = 53;
-  //     lastLineText = "another parenthetical";
-  //     buildBlock = function() {
-  //       var parenthetical = utils.parenthetical("parenthetical");
-  //       var anotherParenthetical = utils.parenthetical("another parenthetical");
+  // contexts for rule (parenthetical || dialogue)* + (parenthetical || dialogue) + (parenthetical || dialogue)
+  context("when block is parenthetical followed by (parenthetical or dialogue)", function() {
+    before(function() {
+      linesBeforeBlock = 53;
+      lastLineText = "dialogue";
+      buildBlock = function() {
+        var parenthetical = utils.parenthetical("parenthetical");
+        var dialogue = utils.dialogue("dialogue");
 
-  //       return parenthetical + anotherParenthetical;
-  //     };
-  //   });
+        return parenthetical + dialogue;
+      };
+    });
 
-  //   // TODO un-pend this test when rule to group (parentheticals || dialogues) is implemented
-  //   xit("moves the entire block to next page", function(done) {
-  //     var inner$ = helper.padInner$;
+    it("moves the entire block to next page", function(done) {
+      var inner$ = helper.padInner$;
 
-  //     // verify there is one page break
-  //     var $linesWithPageBreaks = inner$("div.pageBreak");
-  //     expect($linesWithPageBreaks.length).to.be(1);
+      // verify there is one page break
+      var $linesWithPageBreaks = inner$("div.pageBreak");
+      expect($linesWithPageBreaks.length).to.be(1);
 
-  //     // verify page break is on top of block
-  //     var $firstPageBreak = $linesWithPageBreaks.first();
-  //     expect($firstPageBreak.text()).to.be("parenthetical");
+      // verify page break is on top of block
+      var $firstPageBreak = $linesWithPageBreaks.first();
+      expect($firstPageBreak.text()).to.be("parenthetical");
 
-  //     done();
-  //   });
-  // });
+      done();
+    });
+  });
 
-  // context("when block is dialogue + (parenthetical or dialogue or transition)", function() {
-  //   before(function() {
-  //     linesBeforeBlock = 53;
-  //     lastLineText = "parenthetical";
-  //     buildBlock = function() {
-  //       var dialogue = utils.dialogue("dialogue");
-  //       var parenthetical  = utils.parenthetical("parenthetical");
+  context("when block is dialogue followed by (parenthetical or dialogue)", function() {
+    before(function() {
+      linesBeforeBlock = 53;
+      lastLineText = "parenthetical";
+      buildBlock = function() {
+        var dialogue = utils.dialogue("dialogue");
+        var parenthetical = utils.parenthetical("parenthetical");
 
-  //       return dialogue + parenthetical;
-  //     };
-  //   });
+        return dialogue + parenthetical;
+      };
+    });
 
-  //   // TODO un-pend this test when rule to group (parentheticals || dialogues) is implemented
-  //   xit("moves the entire block to next page", function(done) {
-  //     var inner$ = helper.padInner$;
+    it("moves the entire block to next page", function(done) {
+      var inner$ = helper.padInner$;
 
-  //     // verify there is one page break
-  //     var $linesWithPageBreaks = inner$("div.pageBreak");
-  //     expect($linesWithPageBreaks.length).to.be(1);
+      // verify there is one page break
+      var $linesWithPageBreaks = inner$("div.pageBreak");
+      expect($linesWithPageBreaks.length).to.be(1);
 
-  //     // verify page break is on top of block
-  //     var $firstPageBreak = $linesWithPageBreaks.first();
-  //     expect($firstPageBreak.text()).to.be("dialogue");
+      // verify page break is on top of block
+      var $firstPageBreak = $linesWithPageBreaks.first();
+      expect($firstPageBreak.text()).to.be("dialogue");
 
-  //     done();
-  //   });
-  // });
+      done();
+    });
+  });
 
-  // context("when block is transition + (parenthetical or dialogue or transition)", function() {
+  // context("when block is transition followed by (parenthetical or dialogue or transition)", function() {
   //   before(function() {
   //     linesBeforeBlock = 52;
   //     lastLineText = "another transition";

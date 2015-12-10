@@ -175,13 +175,25 @@ var reachedEndOfPad = function($currentLine) {
 var getBlockInfo = function($currentLine) {
   var blockInfo;
 
-  var typeOfCurrentLine = typeOf($currentLine);
+  var $nextLine      = $currentLine.next();
+  var $lineAfterNext = $nextLine.next();
 
+  var typeOfCurrentLine   = typeOf($currentLine);
+  var typeOfNextLine      = typeOf($nextLine);
+  var typeOfLineAfterNext = typeOf($lineAfterNext);
+
+  var nextLineIsParentheticalOrDialogue = (typeOfNextLine === "parenthetical" || typeOfNextLine === "dialogue");
+  var lineAfterNextIsParentheticalOrDialogue = (typeOfLineAfterNext === "parenthetical" || typeOfLineAfterNext === "dialogue");
+
+  // block type: sequence of (parenthetical || dialogue) => only the last 2 lines of sequence
+  // are a block
+  if (nextLineIsParentheticalOrDialogue && lineAfterNextIsParentheticalOrDialogue) {
+    // there are two lines after current that are a block, so current line does not belong
+    // to a block
+    return;
+  }
   // block type: heading || shot, followed by !(heading || shot)
-  if (typeOfCurrentLine === "heading" || typeOfCurrentLine === "shot") {
-    var $nextLine = $currentLine.next();
-    var typeOfNextLine = typeOf($nextLine);
-
+  else if (typeOfCurrentLine === "heading" || typeOfCurrentLine === "shot") {
     if (typeOfNextLine !== "heading" && typeOfNextLine !== "shot") {
       var blockHeight = getLineHeight($currentLine) + getLineHeight($nextLine);
       blockInfo = {
@@ -194,9 +206,6 @@ var getBlockInfo = function($currentLine) {
   // block type: any element except (heading || shot), followed by
   // (parenthetical || dialogue || transition)
   else if (typeOfCurrentLine !== "heading" && typeOfCurrentLine !== "shot") {
-    var $nextLine = $currentLine.next();
-    var typeOfNextLine = typeOf($nextLine);
-
     if (typeOfNextLine === "parenthetical" || typeOfNextLine === "dialogue" || typeOfNextLine === "transition") {
       var blockHeight = getLineHeight($currentLine) + getLineHeight($nextLine);
       blockInfo = {
