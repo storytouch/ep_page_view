@@ -36,17 +36,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
 
     it("moves the entire block to next page", function(done) {
-      var inner$ = helper.padInner$;
-
-      // verify there is one page break
-      var $linesWithPageBreaks = inner$("div.pageBreak");
-      expect($linesWithPageBreaks.length).to.be(1);
-
-      // verify page break is on top of block
-      var $firstPageBreak = $linesWithPageBreaks.first();
-      expect($firstPageBreak.text()).to.be("heading");
-
-      done();
+      var firstLineOfNextPage = "heading";
+      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
     });
   });
 
@@ -63,17 +54,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
 
     it("moves the entire block to next page", function(done) {
-      var inner$ = helper.padInner$;
-
-      // verify there is one page break
-      var $linesWithPageBreaks = inner$("div.pageBreak");
-      expect($linesWithPageBreaks.length).to.be(1);
-
-      // verify page break is on top of block
-      var $firstPageBreak = $linesWithPageBreaks.first();
-      expect($firstPageBreak.text()).to.be("shot");
-
-      done();
+      var firstLineOfNextPage = "shot";
+      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
     });
   });
 
@@ -91,17 +73,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
 
     it("moves the entire block to next page", function(done) {
-      var inner$ = helper.padInner$;
-
-      // verify there is one page break
-      var $linesWithPageBreaks = inner$("div.pageBreak");
-      expect($linesWithPageBreaks.length).to.be(1);
-
-      // verify page break is on top of block
-      var $firstPageBreak = $linesWithPageBreaks.first();
-      expect($firstPageBreak.text()).to.be("action");
-
-      done();
+      var firstLineOfNextPage = "action";
+      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
     });
   });
 
@@ -118,17 +91,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
 
     it("moves the entire block to next page", function(done) {
-      var inner$ = helper.padInner$;
-
-      // verify there is one page break
-      var $linesWithPageBreaks = inner$("div.pageBreak");
-      expect($linesWithPageBreaks.length).to.be(1);
-
-      // verify page break is on top of block
-      var $firstPageBreak = $linesWithPageBreaks.first();
-      expect($firstPageBreak.text()).to.be("character");
-
-      done();
+      var firstLineOfNextPage = "character";
+      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
     });
   });
 
@@ -137,7 +101,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       linesBeforeBlock = 53;
       lastLineText = "parenthetical";
       buildBlock = function() {
-        var general = utils.general("general");
+        var general = utils.general("general of block");
         var parenthetical  = utils.parenthetical("parenthetical");
 
         return general + parenthetical;
@@ -145,17 +109,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
 
     it("moves the entire block to next page", function(done) {
-      var inner$ = helper.padInner$;
-
-      // verify there is one page break
-      var $linesWithPageBreaks = inner$("div.pageBreak");
-      expect($linesWithPageBreaks.length).to.be(1);
-
-      // verify page break is on top of block
-      var $firstPageBreak = $linesWithPageBreaks.first();
-      expect($firstPageBreak.text()).to.be("general");
-
-      done();
+      var firstLineOfNextPage = "general of block";
+      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
     });
   });
 
@@ -173,17 +128,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
 
     it("moves the entire block to next page", function(done) {
-      var inner$ = helper.padInner$;
-
-      // verify there is one page break
-      var $linesWithPageBreaks = inner$("div.pageBreak");
-      expect($linesWithPageBreaks.length).to.be(1);
-
-      // verify page break is on top of block
-      var $firstPageBreak = $linesWithPageBreaks.first();
-      expect($firstPageBreak.text()).to.be("parenthetical");
-
-      done();
+      var firstLineOfNextPage = "parenthetical";
+      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
     });
   });
 
@@ -200,17 +146,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
 
     it("moves the entire block to next page", function(done) {
-      var inner$ = helper.padInner$;
-
-      // verify there is one page break
-      var $linesWithPageBreaks = inner$("div.pageBreak");
-      expect($linesWithPageBreaks.length).to.be(1);
-
-      // verify page break is on top of block
-      var $firstPageBreak = $linesWithPageBreaks.first();
-      expect($firstPageBreak.text()).to.be("dialogue");
-
-      done();
+      var firstLineOfNextPage = "dialogue";
+      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
     });
   });
 
@@ -253,5 +190,19 @@ ep_script_page_view_test_helper.elementBlocks = {
     }
 
     return script;
+  },
+
+  testItMovesTheEntireBlockToNextPage: function(textOfFirstLineOfPage, done) {
+    var inner$ = helper.padInner$;
+
+    // verify there is one page break
+    var $linesWithPageBreaks = inner$("div.pageBreak");
+    expect($linesWithPageBreaks.length).to.be(1);
+
+    // verify page break is on top of block
+    var $firstPageBreak = $linesWithPageBreaks.first();
+    expect($firstPageBreak.text()).to.be(textOfFirstLineOfPage);
+
+    done();
   },
 }
