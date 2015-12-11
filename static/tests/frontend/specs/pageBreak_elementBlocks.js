@@ -305,7 +305,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   // context for block type:
-  // (*) => transition
+  // (*) => transition (only one line of text)
   context("when first line of page is a transition", function() {
     var transitionText = "transition";
 
@@ -315,7 +315,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       buildBlock = function() {
         var lastLineOfPreviousPage = utils.action("action");
         var firstLineOfNextPage = utils.transition(transitionText);
-        var secondLineOfNextPage = utils.transition(lastLineText);
+        var secondLineOfNextPage = utils.general(lastLineText);
 
         return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
       };
@@ -326,16 +326,13 @@ describe("ep_script_page_view - page break on element blocks", function() {
       elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
     });
 
-    // context for block type:
-    // (*) => very long transition => !transition
-    // TODO still need to implement rule for this test to pass
     context("and transition has a long text (displayed in 2 lines)", function() {
       before(function() {
         linesBeforeBlock = 50;
         transitionText = "very long transition";
       });
 
-      xit("does not pull last line of previous page to next page", function(done) {
+      it("does not pull last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "very long transition";
         elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
       });

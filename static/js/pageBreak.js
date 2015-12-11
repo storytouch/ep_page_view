@@ -53,6 +53,7 @@ var getPadInner = function() {
  return padInner;
 }
 
+// cache maxPageHeight
 var maxPageHeight;
 var getMaxPageHeight = function() {
   maxPageHeight = maxPageHeight || (REGULAR_LINES_PER_PAGE * getRegularLineHeight());
@@ -76,7 +77,14 @@ var getLineHeight = function($targetLine) {
   return lineHeight;
 }
 
+// cache regularLineHeight
+var regularLineHeight;
 var getRegularLineHeight = function() {
+  regularLineHeight = regularLineHeight || calculateRegularLineHeight();
+  return regularLineHeight;
+}
+
+var calculateRegularLineHeight = function() {
   var $editor = getPadInner().find("#innerdocbody");
   return getFloatValueOfCSSProperty($editor, "line-height");
 }
@@ -175,9 +183,9 @@ var getBlockInfo = function($currentLine, currentLineHeight) {
   var typeOfNextLine     = typeOf($nextLine);
 
   // block type:
-  // (*) =>     transition
-  //        +- $currentLine -+
-  if (typeOfCurrentLine === "transition") {
+  // (*) => transition (only one line of text)
+  //        +--------- $currentLine ----------+
+  if (typeOfCurrentLine === "transition" && getNumberOfInnerLinesOf($currentLine) === 1) {
     var blockHeight = currentLineHeight + getLineHeight($previousLine);
     blockInfo.blockHeight = blockHeight;
     blockInfo.$topOfBlock = $previousLine;
@@ -214,4 +222,12 @@ var typeOf = function($line) {
  var tagName = $innerElement.prop("tagName") || "general"; // general does not have inner tag
 
  return tagName.toLowerCase();
+}
+
+var getNumberOfInnerLinesOf = function($line) {
+  var totalHeight = $line.height();
+  var heightOfOneLine = getRegularLineHeight();
+  var numberOfInnerLines = totalHeight / heightOfOneLine;
+
+  return numberOfInnerLines;
 }
