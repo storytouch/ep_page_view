@@ -186,10 +186,20 @@ var getBlockInfo = function($currentLine, currentLineHeight) {
   // (*) => transition (only one line of text)
   //        +--------- $currentLine ----------+
   if (typeOfCurrentLine === "transition" && getNumberOfInnerLinesOf($currentLine) === 1) {
-    var blockHeight = currentLineHeight + getLineHeight($previousLine);
-    blockInfo.blockHeight = blockHeight;
-    blockInfo.$topOfBlock = $previousLine;
-    // blockInfo.$bottomOfBlock = $currentLine;
+    if (typeOfPreviousLine !== "parenthetical" && typeOfPreviousLine !== "dialogue" ) {
+      var blockHeight = currentLineHeight + getLineHeight($previousLine);
+      blockInfo.blockHeight = blockHeight;
+      blockInfo.$topOfBlock = $previousLine;
+    }
+    // block type:
+    // (*) => (parenthetical || dialogue) => transition (only one line of text)
+    //                                       +--------- $currentLine ----------+
+    else {
+      var $lineBeforePrevious = $previousLine.prev();
+      var blockHeight = currentLineHeight + getLineHeight($previousLine) + getLineHeight($lineBeforePrevious);
+      blockInfo.blockHeight = blockHeight;
+      blockInfo.$topOfBlock = $lineBeforePrevious;
+    }
   }
   // block type:
   // (*) => (parenthetical || dialogue) => !(parenthetical || dialogue)
@@ -200,7 +210,6 @@ var getBlockInfo = function($currentLine, currentLineHeight) {
     var blockHeight = currentLineHeight + getLineHeight($previousLine);
     blockInfo.blockHeight = blockHeight;
     blockInfo.$topOfBlock = $previousLine;
-    // blockInfo.$bottomOfBlock = $currentLine;
   }
   // block type:
   // (heading || shot) => (action || character || general)
@@ -211,7 +220,6 @@ var getBlockInfo = function($currentLine, currentLineHeight) {
     var blockHeight = currentLineHeight + getLineHeight($previousLine);
     blockInfo.blockHeight = blockHeight;
     blockInfo.$topOfBlock = $previousLine;
-    // blockInfo.$bottomOfBlock = $currentLine;
   }
 
   return blockInfo;

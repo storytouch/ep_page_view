@@ -307,10 +307,9 @@ describe("ep_script_page_view - page break on element blocks", function() {
   // context for block type:
   // (*) => transition (only one line of text)
   context("when first line of page is a transition", function() {
-    var transitionText = "transition";
+    var transitionText;
 
     before(function() {
-      linesBeforeBlock = 51;
       lastLineText = "last element";
       buildBlock = function() {
         var lastLineOfPreviousPage = utils.action("action");
@@ -321,9 +320,60 @@ describe("ep_script_page_view - page break on element blocks", function() {
       };
     });
 
-    it("pulls last line of previous page to next page", function(done) {
-      var firstLineOfNextPage = "action";
-      elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+    context("and transition has a short text (displayed in a single line)", function() {
+      before(function() {
+        linesBeforeBlock = 51;
+        transitionText = "transition";
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "action";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+
+      // contexts for block type:
+      // (*) => (parenthetical || dialogue) => transition (only one line of text)
+      context("and last line of previous page is a parenthetical", function() {
+        before(function() {
+          // we need to create the last 2 elements of previous page, so there will be
+          // less generals before block
+          linesBeforeBlock = 50;
+          buildBlock = function() {
+            var lineBeforeLastLineOfPreviousPage = utils.action("action");
+            var lastLineOfPreviousPage           = utils.parenthetical("parenthetical");
+            var firstLineOfNextPage              = utils.transition(transitionText);
+            var secondLineOfNextPage             = utils.general(lastLineText);
+
+            return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
+          };
+        });
+
+        it("pulls last two lines of previous page to next page", function(done) {
+          var firstLineOfNextPage = "action";
+          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and last line of previous page is a dialogue", function() {
+        before(function() {
+          // we need to create the last 2 elements of previous page, so there will be
+          // less generals before block
+          linesBeforeBlock = 50;
+          buildBlock = function() {
+            var lineBeforeLastLineOfPreviousPage = utils.action("action");
+            var lastLineOfPreviousPage           = utils.dialogue("dialogue");
+            var firstLineOfNextPage              = utils.transition(transitionText);
+            var secondLineOfNextPage             = utils.general(lastLineText);
+
+            return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
+          };
+        });
+
+        it("pulls last two lines of previous page to next page", function(done) {
+          var firstLineOfNextPage = "action";
+          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
     });
 
     context("and transition has a long text (displayed in 2 lines)", function() {
