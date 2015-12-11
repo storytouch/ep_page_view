@@ -260,11 +260,7 @@ describe("ep_script_page_view - page break", function() {
         scriptBuilder = pageBreak.pageFullOfElementsBuilder(TRANSITIONS_PER_PAGE, utils.transition);
       });
 
-      // FD has a logic (a.k.a. bug) that pulls last element of a page to next page when the regular
-      // page-break calculation places a transition on top of the page. What they forgot to think about
-      // was what they should do it the last element of previous page was ALSO a transition. :-/
-      // xit("fits " + TRANSITIONS_PER_PAGE + " lines in a page", function(done) {
-      xit("fits " + TRANSITIONS_PER_PAGE + " lines in a page (FD fits " + (TRANSITIONS_PER_PAGE-1) + ", so this text is pending because of that)", function(done) {
+      it("fits " + TRANSITIONS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.transition;
         var pageBuilder    = scriptBuilder;
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, done);

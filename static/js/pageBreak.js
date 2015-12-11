@@ -175,9 +175,9 @@ var getBlockInfo = function($currentLine, currentLineHeight) {
   var typeOfNextLine     = typeOf($nextLine);
 
   // block type:
-  // (*) =>     transition     => !transition
+  // (*) =>     transition
   //        +- $currentLine -+
-  if (typeOfCurrentLine === "transition" && typeOfNextLine !== "transition") {
+  if (typeOfCurrentLine === "transition") {
     var blockHeight = currentLineHeight + getLineHeight($previousLine);
     blockInfo.blockHeight = blockHeight;
     blockInfo.$topOfBlock = $previousLine;
