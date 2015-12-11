@@ -22,179 +22,352 @@ describe("ep_script_page_view - page break on element blocks", function() {
     this.timeout(60000);
   });
 
-  // contexts for rule (heading || shot) + !(heading || shot)
-  context("when block is heading followed by something other than heading or shot", function() {
+  // contexts for block type:
+  // (heading || shot) => (action || character || general)
+  context("when first line of page is an action", function() {
+    var buildLastLineOfPreviousPage;
+
     before(function() {
-      linesBeforeBlock = 51;
+      linesBeforeBlock = 50;
       lastLineText = "action";
       buildBlock = function() {
-        var heading = utils.heading("heading");
-        var action  = utils.action("action");
+        var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
+        var firstLineOfNextPage = utils.action("action");
 
-        return heading + action;
+        return lastLineOfPreviousPage + firstLineOfNextPage;
       };
     });
 
-    it("moves the entire block to next page", function(done) {
-      var firstLineOfNextPage = "heading";
-      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
+    context("and last line of previous page is a heading", function() {
+      before(function() {
+        buildLastLineOfPreviousPage = function() {
+          return utils.heading("heading");
+        };
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "heading";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and last line of previous page is a shot", function() {
+      before(function() {
+        buildLastLineOfPreviousPage = function() {
+          return utils.shot("shot");
+        };
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "shot";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and last line of previous page is something else", function() {
+      before(function() {
+        // need to increase line number, as transitions have lower margin
+        linesBeforeBlock = 51;
+        buildLastLineOfPreviousPage = function() {
+          return utils.transition("transition");
+        };
+      });
+
+      it("does not pull last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "action";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
     });
   });
 
-  context("when block is shot followed by something other than heading or shot", function() {
+  context("when first line of page is a character", function() {
+    var buildLastLineOfPreviousPage;
+
+    before(function() {
+      linesBeforeBlock = 50;
+      lastLineText = "character";
+      buildBlock = function() {
+        var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
+        var firstLineOfNextPage = utils.character("character");
+
+        return lastLineOfPreviousPage + firstLineOfNextPage;
+      };
+    });
+
+    context("and last line of previous page is a heading", function() {
+      before(function() {
+        buildLastLineOfPreviousPage = function() {
+          return utils.heading("heading");
+        };
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "heading";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and last line of previous page is a shot", function() {
+      before(function() {
+        buildLastLineOfPreviousPage = function() {
+          return utils.shot("shot");
+        };
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "shot";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and last line of previous page is something else", function() {
+      before(function() {
+        // need to increase line number, as transitions have lower margin
+        linesBeforeBlock = 51;
+        buildLastLineOfPreviousPage = function() {
+          return utils.transition("transition");
+        };
+      });
+
+      it("does not pull last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "character";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+  });
+
+  context("when first line of page is a general", function() {
+    var buildLastLineOfPreviousPage;
+
     before(function() {
       linesBeforeBlock = 51;
-      lastLineText = "action";
+      lastLineText = "another general";
       buildBlock = function() {
-        var shot = utils.shot("shot");
-        var action  = utils.action("action");
+        var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
+        var firstLineOfNextPage = utils.general("another general");
 
-        return shot + action;
+        return lastLineOfPreviousPage + firstLineOfNextPage;
       };
     });
 
-    it("moves the entire block to next page", function(done) {
-      var firstLineOfNextPage = "shot";
-      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
+    context("and last line of previous page is a heading", function() {
+      before(function() {
+        buildLastLineOfPreviousPage = function() {
+          return utils.heading("heading");
+        };
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "heading";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and last line of previous page is a shot", function() {
+      before(function() {
+        buildLastLineOfPreviousPage = function() {
+          return utils.shot("shot");
+        };
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "shot";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and last line of previous page is something else", function() {
+      before(function() {
+        // need to increase line number, as transitions have lower margin
+        linesBeforeBlock = 52;
+        buildLastLineOfPreviousPage = function() {
+          return utils.transition("transition");
+        };
+      });
+
+      it("does not pull last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "another general";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
     });
   });
 
-  // contexts for rule (action || character || general) + (parenthetical || dialogue || transition)
-  context("when block is action followed by (parenthetical or dialogue or transition)", function() {
-    before(function() {
-      linesBeforeBlock = 52;
-      lastLineText = "parenthetical";
-      buildBlock = function() {
-        var action = utils.action("action");
-        var parenthetical = utils.parenthetical("parenthetical");
+  // contexts for block type:
+  // (*) => (parenthetical || dialogue) => !(parenthetical || dialogue)
+  context("when first line of page is a parenthetical", function() {
+    var buildNextLine;
 
-        return action + parenthetical;
-      };
-    });
-
-    it("moves the entire block to next page", function(done) {
-      var firstLineOfNextPage = "action";
-      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
-    });
-  });
-
-  context("when block is character followed by (parenthetical or dialogue or transition)", function() {
-    before(function() {
-      linesBeforeBlock = 52;
-      lastLineText = "dialogue";
-      buildBlock = function() {
-        var character = utils.character("character");
-        var dialogue  = utils.dialogue("dialogue");
-
-        return character + dialogue;
-      };
-    });
-
-    it("moves the entire block to next page", function(done) {
-      var firstLineOfNextPage = "character";
-      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
-    });
-  });
-
-  context("when block is general followed by (parenthetical or dialogue or transition)", function() {
-    before(function() {
-      linesBeforeBlock = 53;
-      lastLineText = "parenthetical";
-      buildBlock = function() {
-        var general = utils.general("general of block");
-        var parenthetical  = utils.parenthetical("parenthetical");
-
-        return general + parenthetical;
-      };
-    });
-
-    it("moves the entire block to next page", function(done) {
-      var firstLineOfNextPage = "general of block";
-      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
-    });
-  });
-
-  // contexts for rule (parenthetical || dialogue)* + (parenthetical || dialogue) + (parenthetical || dialogue)
-  context("when block is parenthetical followed by (parenthetical or dialogue)", function() {
     before(function() {
       linesBeforeBlock = 53;
-      lastLineText = "dialogue";
+      lastLineText = "last element";
       buildBlock = function() {
-        var parenthetical = utils.parenthetical("parenthetical");
-        var dialogue = utils.dialogue("dialogue");
+        var lastLineOfPreviousPage = utils.dialogue("dialogue");
+        var firstLineOfNextPage = utils.parenthetical("parenthetical");
+        var secondLineOfNextPage = buildNextLine();
 
-        return parenthetical + dialogue;
+        return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
       };
     });
 
-    it("moves the entire block to next page", function(done) {
-      var firstLineOfNextPage = "parenthetical";
-      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
+    context("and next line is not parenthetical nor dialogue", function() {
+      before(function() {
+        buildNextLine = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "dialogue";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and next line is a parenthetical", function() {
+      before(function() {
+        buildNextLine = function() {
+          return utils.parenthetical(lastLineText);
+        };
+      });
+
+      it("does not pull last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "parenthetical";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and next line is a dialogue", function() {
+      before(function() {
+        buildNextLine = function() {
+          return utils.dialogue(lastLineText);
+        };
+      });
+
+      it("does not pull last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "parenthetical";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
     });
   });
 
-  context("when block is dialogue followed by (parenthetical or dialogue)", function() {
+  context("when first line of page is a dialogue", function() {
+    var buildNextLine;
+
     before(function() {
       linesBeforeBlock = 53;
-      lastLineText = "parenthetical";
+      lastLineText = "last element";
       buildBlock = function() {
-        var dialogue = utils.dialogue("dialogue");
-        var parenthetical = utils.parenthetical("parenthetical");
+        var lastLineOfPreviousPage = utils.parenthetical("parenthetical");
+        var firstLineOfNextPage = utils.dialogue("dialogue");
+        var secondLineOfNextPage = buildNextLine();
 
-        return dialogue + parenthetical;
+        return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
       };
     });
 
-    it("moves the entire block to next page", function(done) {
-      var firstLineOfNextPage = "dialogue";
-      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
+    context("and next line is not dialogue nor parenthetical", function() {
+      before(function() {
+        buildNextLine = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "parenthetical";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and next line is a dialogue", function() {
+      before(function() {
+        buildNextLine = function() {
+          return utils.dialogue(lastLineText);
+        };
+      });
+
+      it("does not pull last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "dialogue";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and next line is a parenthetical", function() {
+      before(function() {
+        buildNextLine = function() {
+          return utils.parenthetical(lastLineText);
+        };
+      });
+
+      it("does not pull last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "dialogue";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
     });
   });
 
-  context("when block is transition followed by transition", function() {
+  // context for block type:
+  // (*) => transition => !transition
+  context("when first line of page is a transition", function() {
+    var buildNextLine;
+
     before(function() {
       linesBeforeBlock = 51;
-      lastLineText = "another transition";
+      lastLineText = "last element";
       buildBlock = function() {
-        var transition = utils.transition("transition");
-        var anotherTransition = utils.transition("another transition");
+        var lastLineOfPreviousPage = utils.action("action");
+        var firstLineOfNextPage = utils.transition("transition");
+        var secondLineOfNextPage = buildNextLine();
 
-        return transition + anotherTransition;
+        return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
       };
     });
 
-    it("moves the entire block to next page", function(done) {
-      var firstLineOfNextPage = "transition";
-      elementBlocks.testItMovesTheEntireBlockToNextPage(firstLineOfNextPage, done);
+    context("and next line is a transition", function() {
+      before(function() {
+        buildNextLine = function() {
+          return utils.transition(lastLineText);
+        };
+      });
+
+      it("does not pull last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "transition";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("and next line is not a transition", function() {
+      before(function() {
+        buildNextLine = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "action";
+        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      });
+
+      // context for block type:
+      // (*) => very long transition => !transition
+      // TODO still need to implement rule for this test to pass
+      context("and transition has a long text (displayed in 2 lines)", function() {
+        before(function() {
+          linesBeforeBlock = 50;
+          buildBlock = function() {
+            var lastLineOfPreviousPage = utils.action("action");
+            var firstLineOfNextPage = utils.transition("very long transition");
+            var secondLineOfNextPage = buildNextLine();
+
+            return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
+          };
+        });
+
+        xit("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "very long transition";
+          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
     });
   });
-
-  // context("when block is transition followed by (parenthetical or dialogue or transition)", function() {
-  //   before(function() {
-  //     linesBeforeBlock = 52;
-  //     lastLineText = "another transition";
-  //     buildBlock = function() {
-  //       var transition = utils.transition("transition");
-  //       var anotherTransition = utils.transition("another transition");
-
-  //       return transition + anotherTransition;
-  //     };
-  //   });
-
-  //   it("moves the entire block to next page", function(done) {
-  //     var inner$ = helper.padInner$;
-
-  //     // verify there is one page break
-  //     var $linesWithPageBreaks = inner$("div.pageBreak");
-  //     expect($linesWithPageBreaks.length).to.be(1);
-
-  //     // verify page break is on top of block
-  //     var $firstPageBreak = $linesWithPageBreaks.first();
-  //     expect($firstPageBreak.text()).to.be("transition");
-
-  //     done();
-  //   });
-  // });
 });
 
 var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
@@ -210,7 +383,7 @@ ep_script_page_view_test_helper.elementBlocks = {
     return script;
   },
 
-  testItMovesTheEntireBlockToNextPage: function(textOfFirstLineOfPage, done) {
+  testPageBreakIsOn: function(textOfFirstLineOfPage, done) {
     var inner$ = helper.padInner$;
 
     // verify there is one page break

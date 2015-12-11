@@ -117,52 +117,40 @@ var filterLinesToHavePageBreak = function($lines) {
     // ok, line is not empty, so we stop skipping empty lines
     skippingEmptyLines = false;
 
-    // check if current line is on the beginning of a block
-    var blockInfo = getBlockInfo($currentLine);
-    if (blockInfo) {
-      // get height including margins and paddings
-      var blockHeight = blockInfo.blockHeight;
+    // get height including margins and paddings
+    var lineHeight = getLineHeight($currentLine);
+    // Q: if this line is placed on current page, will the page height be over the
+    // allowed max height?
+    if (currentPageHeight + lineHeight > maxPageHeight) {
+      // A: yes, so check if line belongs to a block and "pull" elements if necessary
 
-      // Q: if this block is placed on current page, will the page height be over the
-      // allowed max height?
-      if (currentPageHeight + blockHeight > maxPageHeight) {
-        // A: yes, so place the ENTIRE BLOCK on next page
-        $linesWithPageBreaks = $linesWithPageBreaks.add(blockInfo.$topOfBlock);
-        currentPageHeight = blockHeight;
+      var $elementOnTopOfPage;
+      // ignore empty lines on top of pages (see details about this HACK above)
+      if (lineIsEmpty) {
+        $elementOnTopOfPage = $currentLine;
+        currentPageHeight = 0;
+        // start skipping lines again
+        skippingEmptyLines = true;
       } else {
-        // A: no, so simply increase current page height
-        currentPageHeight += blockHeight;
+        var blockInfo = getBlockInfo($currentLine, lineHeight);
+
+        $elementOnTopOfPage = blockInfo.$topOfBlock;
+        currentPageHeight = blockInfo.blockHeight;
+        skippingEmptyLines = false;
+
+        // move $currentLine to end of the block
+        $currentLine = blockInfo.$bottomOfBlock;
       }
 
-      // move $currentLine to first line after the block, before next iteration of while-loop
-      $currentLine = blockInfo.$bottomOfBlock.next();
+      // mark element to be on top of page
+      $linesWithPageBreaks = $linesWithPageBreaks.add($elementOnTopOfPage);
     } else {
-      // get height including margins and paddings
-      var lineHeight = getLineHeight($currentLine);
-      // Q: if this line is placed on current page, will the page height be over the
-      // allowed max height?
-      if (currentPageHeight + lineHeight > maxPageHeight) {
-        // A: yes, so place the line on next page
-
-        // ignore empty lines on top of pages (see details about this HACK above)
-        if (lineIsEmpty) {
-          currentPageHeight = 0;
-          // start skipping lines again
-          skippingEmptyLines = true;
-        } else {
-          currentPageHeight = lineHeight;
-          skippingEmptyLines = false;
-        }
-
-        $linesWithPageBreaks = $linesWithPageBreaks.add($currentLine);
-      } else {
-        // A: no, so simply increase current page height
-        currentPageHeight += lineHeight;
-      }
-
-      // move to next line before next iteration of while-loop
-      $currentLine = $currentLine.next();
+      // A: no, so simply increase current page height
+      currentPageHeight += lineHeight;
     }
+
+    // move to next line before next iteration of while-loop
+    $currentLine = $currentLine.next();
   }
 
   return $linesWithPageBreaks;
@@ -172,52 +160,50 @@ var reachedEndOfPad = function($currentLine) {
   return $currentLine.length === 0;
 }
 
-var getBlockInfo = function($currentLine) {
-  var blockInfo;
+var getBlockInfo = function($currentLine, currentLineHeight) {
+  var blockInfo = {
+    blockHeight: currentLineHeight,
+    $topOfBlock: $currentLine,
+    $bottomOfBlock: $currentLine,
+  };
 
-  var $nextLine      = $currentLine.next();
-  var $lineAfterNext = $nextLine.next();
+  var $previousLine = $currentLine.prev();
+  var $nextLine     = $currentLine.next();
 
-  var typeOfCurrentLine   = typeOf($currentLine);
-  var typeOfNextLine      = typeOf($nextLine);
-  var typeOfLineAfterNext = typeOf($lineAfterNext);
+  var typeOfCurrentLine  = typeOf($currentLine);
+  var typeOfPreviousLine = typeOf($previousLine);
+  var typeOfNextLine     = typeOf($nextLine);
 
-  var nextLineIsParentheticalOrDialogue = (typeOfNextLine === "parenthetical" || typeOfNextLine === "dialogue");
-  var lineAfterNextIsParentheticalOrDialogue = (typeOfLineAfterNext === "parenthetical" || typeOfLineAfterNext === "dialogue");
-
-  // block type: sequence of (parenthetical || dialogue) => only the last 2 lines of sequence
-  // are a block
-  if (nextLineIsParentheticalOrDialogue && lineAfterNextIsParentheticalOrDialogue) {
-    // there are two lines after current that are a block, so current line does not belong
-    // to a block
-    return;
+  // block type:
+  // (*) =>     transition     => !transition
+  //        +- $currentLine -+
+  if (typeOfCurrentLine === "transition" && typeOfNextLine !== "transition") {
+    var blockHeight = currentLineHeight + getLineHeight($previousLine);
+    blockInfo.blockHeight = blockHeight;
+    blockInfo.$topOfBlock = $previousLine;
+    // blockInfo.$bottomOfBlock = $currentLine;
   }
-  // block type: sequence of transitions => only the last 2 lines of sequence are a block
-  else if (typeOfNextLine === "transition" && typeOfLineAfterNext === "transition") {
-    return;
+  // block type:
+  // (*) => (parenthetical || dialogue) => !(parenthetical || dialogue)
+  //        +------ $currentLine -----+
+  else if ((typeOfCurrentLine === "parenthetical" || typeOfCurrentLine === "dialogue")
+     &&
+     (typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")) {
+    var blockHeight = currentLineHeight + getLineHeight($previousLine);
+    blockInfo.blockHeight = blockHeight;
+    blockInfo.$topOfBlock = $previousLine;
+    // blockInfo.$bottomOfBlock = $currentLine;
   }
-  // block type: heading || shot, followed by !(heading || shot)
-  else if (typeOfCurrentLine === "heading" || typeOfCurrentLine === "shot") {
-    if (typeOfNextLine !== "heading" && typeOfNextLine !== "shot") {
-      var blockHeight = getLineHeight($currentLine) + getLineHeight($nextLine);
-      blockInfo = {
-        blockHeight: blockHeight,
-        $topOfBlock: $currentLine,
-        $bottomOfBlock: $nextLine
-      };
-    }
-  }
-  // block type: any element except (heading || shot), followed by
-  // (parenthetical || dialogue || transition)
-  else if (typeOfCurrentLine !== "heading" && typeOfCurrentLine !== "shot") {
-    if (typeOfNextLine === "parenthetical" || typeOfNextLine === "dialogue" || typeOfNextLine === "transition") {
-      var blockHeight = getLineHeight($currentLine) + getLineHeight($nextLine);
-      blockInfo = {
-        blockHeight: blockHeight,
-        $topOfBlock: $currentLine,
-        $bottomOfBlock: $nextLine
-      };
-    }
+  // block type:
+  // (heading || shot) => (action || character || general)
+  //                      +-------- $currentLine --------+
+  else if ((typeOfCurrentLine === "action" || typeOfCurrentLine === "character" || typeOfCurrentLine === "general")
+     &&
+     (typeOfPreviousLine === "heading" || typeOfPreviousLine === "shot")) {
+    var blockHeight = currentLineHeight + getLineHeight($previousLine);
+    blockInfo.blockHeight = blockHeight;
+    blockInfo.$topOfBlock = $previousLine;
+    // blockInfo.$bottomOfBlock = $currentLine;
   }
 
   return blockInfo;
