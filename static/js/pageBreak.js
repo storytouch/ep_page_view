@@ -1,6 +1,10 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 
-var REGULAR_LINES_PER_PAGE = 54;
+// Letter
+// var REGULAR_LINES_PER_PAGE = 54;
+// A4
+var REGULAR_LINES_PER_PAGE = 58;
+
 var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
 
 // HACK: page breaks are not *permanently* drawn until everything is setup on the editor.
@@ -140,7 +144,7 @@ var filterLinesToHavePageBreak = function($lines) {
         // start skipping lines again
         skippingEmptyLines = true;
       } else {
-        var blockInfo = getBlockInfo($currentLine, lineHeight);
+        var blockInfo = getBlockInfo($currentLine);
 
         $elementOnTopOfPage = blockInfo.$topOfBlock;
         currentPageHeight = blockInfo.blockHeight;
@@ -168,7 +172,10 @@ var reachedEndOfPad = function($currentLine) {
   return $currentLine.length === 0;
 }
 
-var getBlockInfo = function($currentLine, currentLineHeight) {
+var getBlockInfo = function($currentLine) {
+  // height of first line of the block should not consider margins, as margins are not displayed
+  // on first element of the page
+  var currentLineHeight = $currentLine.height();
   var blockInfo = {
     blockHeight: currentLineHeight,
     $topOfBlock: $currentLine,

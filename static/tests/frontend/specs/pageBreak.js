@@ -1,11 +1,22 @@
-var GENERALS_PER_PAGE       = 54;
-var HEADINGS_PER_PAGE       = 18;
-var ACTIONS_PER_PAGE        = 27;
-var CHARACTERS_PER_PAGE     = 27;
-var PARENTHETICALS_PER_PAGE = 54;
-var DIALOGUES_PER_PAGE      = 54;
-var TRANSITIONS_PER_PAGE    = 26;
-var SHOTS_PER_PAGE          = 18;
+// Letter
+// var GENERALS_PER_PAGE       = 54;
+// var HEADINGS_PER_PAGE       = 18;
+// var ACTIONS_PER_PAGE        = 27;
+// var CHARACTERS_PER_PAGE     = 27;
+// var PARENTHETICALS_PER_PAGE = 54;
+// var DIALOGUES_PER_PAGE      = 54;
+// var TRANSITIONS_PER_PAGE    = 26;
+// var SHOTS_PER_PAGE          = 18;
+
+// A4
+var GENERALS_PER_PAGE       = 58;
+var HEADINGS_PER_PAGE       = 20;
+var ACTIONS_PER_PAGE        = 29;
+var CHARACTERS_PER_PAGE     = 29;
+var PARENTHETICALS_PER_PAGE = 58;
+var DIALOGUES_PER_PAGE      = 58;
+var TRANSITIONS_PER_PAGE    = 28;
+var SHOTS_PER_PAGE          = 20;
 
 describe("ep_script_page_view - page break", function() {
   var utils, pageBreak, scriptBuilder;

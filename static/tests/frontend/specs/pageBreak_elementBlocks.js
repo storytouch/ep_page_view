@@ -1,3 +1,8 @@
+// Letter
+// var GENERALS_PER_PAGE = 54;
+// A4
+var GENERALS_PER_PAGE = 58;
+
 describe("ep_script_page_view - page break on element blocks", function() {
   // shortcuts for helper functions
   var utils, elementBlocks;
@@ -28,7 +33,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     var buildLastLineOfPreviousPage;
 
     before(function() {
-      linesBeforeBlock = 50;
+      linesBeforeBlock = GENERALS_PER_PAGE - 4;
       lastLineText = "action";
       buildBlock = function() {
         var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
@@ -67,7 +72,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     context("and last line of previous page is something else", function() {
       before(function() {
         // need to increase line number, as transitions have lower margin
-        linesBeforeBlock = 51;
+        linesBeforeBlock = GENERALS_PER_PAGE - 3;
         buildLastLineOfPreviousPage = function() {
           return utils.transition("transition");
         };
@@ -84,7 +89,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     var buildLastLineOfPreviousPage;
 
     before(function() {
-      linesBeforeBlock = 50;
+      linesBeforeBlock = GENERALS_PER_PAGE - 4;
       lastLineText = "character";
       buildBlock = function() {
         var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
@@ -123,7 +128,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     context("and last line of previous page is something else", function() {
       before(function() {
         // need to increase line number, as transitions have lower margin
-        linesBeforeBlock = 51;
+        linesBeforeBlock = GENERALS_PER_PAGE - 3;
         buildLastLineOfPreviousPage = function() {
           return utils.transition("transition");
         };
@@ -140,7 +145,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     var buildLastLineOfPreviousPage;
 
     before(function() {
-      linesBeforeBlock = 51;
+      linesBeforeBlock = GENERALS_PER_PAGE - 3;
       lastLineText = "another general";
       buildBlock = function() {
         var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
@@ -179,7 +184,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     context("and last line of previous page is something else", function() {
       before(function() {
         // need to increase line number, as transitions have lower margin
-        linesBeforeBlock = 52;
+        linesBeforeBlock = GENERALS_PER_PAGE - 2;
         buildLastLineOfPreviousPage = function() {
           return utils.transition("transition");
         };
@@ -198,7 +203,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     var buildNextLine;
 
     before(function() {
-      linesBeforeBlock = 53;
+      linesBeforeBlock = GENERALS_PER_PAGE - 1;
       lastLineText = "last element";
       buildBlock = function() {
         var lastLineOfPreviousPage = utils.dialogue("dialogue");
@@ -253,7 +258,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     var buildNextLine;
 
     before(function() {
-      linesBeforeBlock = 53;
+      linesBeforeBlock = GENERALS_PER_PAGE - 1;
       lastLineText = "last element";
       buildBlock = function() {
         var lastLineOfPreviousPage = utils.parenthetical("parenthetical");
@@ -322,7 +327,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
     context("and transition has a short text (displayed in a single line)", function() {
       before(function() {
-        linesBeforeBlock = 51;
+        linesBeforeBlock = GENERALS_PER_PAGE - 3;
         transitionText = "transition";
       });
 
@@ -337,7 +342,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
         before(function() {
           // we need to create the last 2 elements of previous page, so there will be
           // less generals before block
-          linesBeforeBlock = 50;
+          linesBeforeBlock = GENERALS_PER_PAGE - 4;
           buildBlock = function() {
             var lineBeforeLastLineOfPreviousPage = utils.action("action");
             var lastLineOfPreviousPage           = utils.parenthetical("parenthetical");
@@ -358,7 +363,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
         before(function() {
           // we need to create the last 2 elements of previous page, so there will be
           // less generals before block
-          linesBeforeBlock = 50;
+          linesBeforeBlock = GENERALS_PER_PAGE - 4;
           buildBlock = function() {
             var lineBeforeLastLineOfPreviousPage = utils.action("action");
             var lastLineOfPreviousPage           = utils.dialogue("dialogue");
@@ -378,7 +383,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
     context("and transition has a long text (displayed in 2 lines)", function() {
       before(function() {
-        linesBeforeBlock = 50;
+        linesBeforeBlock = GENERALS_PER_PAGE - 4;
         transitionText = "very long transition";
       });
 
