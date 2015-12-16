@@ -18,7 +18,7 @@ var DIALOGUES_PER_PAGE      = 58;
 var TRANSITIONS_PER_PAGE    = 28;
 var SHOTS_PER_PAGE          = 20;
 
-describe("ep_script_page_view - page break", function() {
+describe("ep_script_page_view - page break main tests", function() {
   var utils, pageBreak, scriptBuilder;
 
   before(function(){
@@ -80,7 +80,7 @@ describe("ep_script_page_view - page break", function() {
         var inner$ = helper.padInner$;
 
         // "PAGE2................(...)"
-        veryLongLineText = "PAGE2" + utils.buildStringWithLength(62 - "PAGE2".length);
+        veryLongLineText = "PAGE2" + utils.buildStringWithLength(62 - "PAGE2".length, ".");
 
         // replaces last line with a very long text (> 61 chars, so it is
         // displayed in 2 lines on the editor)

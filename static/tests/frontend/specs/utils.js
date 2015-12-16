@@ -62,7 +62,24 @@ ep_script_page_view_test_helper.utils = {
     return line;
   },
 
-  buildStringWithLength: function(length) {
-    return ".".repeat(length);
+  buildStringWithLength: function(length, text) {
+    return text.repeat(length);
+  },
+
+  buildScriptWithGenerals: function(text, howMany) {
+    var utils = ep_script_page_view_test_helper.utils;
+
+    var script = "";
+    for (var i = 0; i < howMany; i++) {
+      script += utils.general(text);
+    }
+
+    return script;
+  },
+
+  undo: function() {
+    var chrome$ = helper.padChrome$;
+    var $undoButton = chrome$(".buttonicon-undo");
+    $undoButton.click();
   },
 }

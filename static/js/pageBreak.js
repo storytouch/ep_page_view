@@ -14,6 +14,26 @@ var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialo
 // redrawPageBreaks()
 var firstPageBreakRedrawNotRunYet = true;
 
+exports.aceAttribsToClasses = function(hook, context) {
+  if(context.key === 'splitPageBreak'){
+    return [context.key];
+  }
+}
+
+exports.aceCreateDomLine = function(hook, context){
+  var cls = context.cls;
+
+  if (cls.match('splitPageBreak')){
+    var modifier = {
+      extraOpenTags: '<elementPageBreak/>',
+      extraCloseTags: '',
+      cls: ''
+    };
+    return [modifier];
+  }
+  return [];
+};
+
 exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
   if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;
@@ -22,22 +42,20 @@ exports.aceEditEvent = function(hook, context) {
 
   // force redrawPageBreaks() to run. See notes on firstPageBreakRedrawNotRunYet for more details
   if (needInitialPageBreakRedraw(cs)) {
-    redrawPageBreaks();
+    redrawPageBreaks(context);
     firstPageBreakRedrawNotRunYet = false;
   }
 
   // don't do anything if text did not change
   if(!cs.docTextChanged) return;
 
-  redrawPageBreaks();
+  redrawPageBreaks(context);
 }
 
-var redrawPageBreaks = function() {
-  // clean page breaks
-  var $lines = getPadInner().find("div");
-  $lines.removeClass("pageBreak");
+var redrawPageBreaks = function(context) {
+  var $lines = cleanPageBreaks(context);
 
-  var $linesWithPageBreaks = filterLinesToHavePageBreak($lines);
+  var $linesWithPageBreaks = filterLinesToHavePageBreak($lines, context);
 
   // add page break markers to selected lines
   $linesWithPageBreaks.addClass("pageBreak");
@@ -102,7 +120,37 @@ var needInitialPageBreakRedraw = function(callstack) {
   return firstPageBreakRedrawNotRunYet && callstack.editEvent.eventType === "idleWorkTimer";
 }
 
-var filterLinesToHavePageBreak = function($lines) {
+var cleanPageBreaks = function(context) {
+  cleanPageBreaksOverSplitElements(context);
+
+  // need to get lines after cleaning page breaks over split elements, otherwise pad content
+  // would change and we would work over "old" references to pad elements
+  var $lines = getPadInner().find("div");
+
+  cleanPageBreaksOverWholeElements($lines);
+
+  return $lines;
+}
+
+var cleanPageBreaksOverWholeElements = function($lines) {
+  $lines.removeClass("pageBreak");
+}
+
+var cleanPageBreaksOverSplitElements = function(context) {
+  var attributeManager = context.documentAttributeManager;
+  var cs               = context.callstack;
+
+  var totalLines      = context.rep.lines.length();
+  var docStart        = [0,0];
+  var docEnd          = [totalLines+1,0];
+  var removePageBreak = [["splitPageBreak", false]];
+
+  performNonUnduableEvent(cs, function() {
+    attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreak);
+  });
+}
+
+var filterLinesToHavePageBreak = function($lines, context) {
   var maxPageHeight = getMaxPageHeight();
   var $linesWithPageBreaks = $();
 
@@ -136,26 +184,34 @@ var filterLinesToHavePageBreak = function($lines) {
     if (currentPageHeight + lineHeight > maxPageHeight) {
       // A: yes, so check if line belongs to a block and "pull" elements if necessary
 
-      var $elementOnTopOfPage;
       // ignore empty lines on top of pages (see details about this HACK above)
       if (lineIsEmpty) {
-        $elementOnTopOfPage = $currentLine;
-        currentPageHeight = 0;
         // start skipping lines again
         skippingEmptyLines = true;
-      } else {
-        var blockInfo = getBlockInfo($currentLine);
 
-        $elementOnTopOfPage = blockInfo.$topOfBlock;
-        currentPageHeight = blockInfo.blockHeight;
+        currentPageHeight = 0;
+
+        // mark line to be on top of page
+        $linesWithPageBreaks = $linesWithPageBreaks.add($currentLine);
+      } else {
         skippingEmptyLines = false;
 
-        // move $currentLine to end of the block
-        $currentLine = blockInfo.$bottomOfBlock;
-      }
+        var splitElementInfo = splitElement($currentLine, context);
+        if (splitElementInfo) {
+          // restart counting page height again
+          currentPageHeight = splitElementInfo.heightAfterPageBreak;
+        } else {
+          var blockInfo = getBlockInfo($currentLine);
 
-      // mark element to be on top of page
-      $linesWithPageBreaks = $linesWithPageBreaks.add($elementOnTopOfPage);
+          currentPageHeight = blockInfo.blockHeight;
+
+          // mark element to be on top of page
+          $linesWithPageBreaks = $linesWithPageBreaks.add(blockInfo.$topOfBlock);
+
+          // move $currentLine to end of the block
+          $currentLine = blockInfo.$bottomOfBlock;
+        }
+      }
     } else {
       // A: no, so simply increase current page height
       currentPageHeight += lineHeight;
@@ -245,4 +301,58 @@ var getNumberOfInnerLinesOf = function($line) {
   var numberOfInnerLines = totalHeight / heightOfOneLine;
 
   return numberOfInnerLines;
+}
+
+var splitElement = function($line, context) {
+  var singleInnerLineHeight = getRegularLineHeight();
+  var numberOfInnerLines = getNumberOfInnerLines($line, singleInnerLineHeight);
+
+  if (numberOfInnerLines > 1) {
+    var innerLineToSplitElement = 1;
+    var innerLinesAfterPageBreak = numberOfInnerLines-innerLineToSplitElement;
+
+    splitElementOnInnerLine(innerLineToSplitElement, $line, context);
+
+    return {
+      // TODO change this
+      // need to improve calculation of height of lines after page break
+      heightAfterPageBreak: singleInnerLineHeight * innerLinesAfterPageBreak
+    };
+  }
+}
+
+var getNumberOfInnerLines = function($line, singleInnerLineHeight) {
+  var totalInnerHeight   = $line.height();
+  var numberOfInnerLines = parseInt(totalInnerHeight/singleInnerLineHeight);
+
+  return numberOfInnerLines;
+}
+
+var splitElementOnInnerLine = function(innerLineNumber, $line, context) {
+    var attributeManager = context.documentAttributeManager;
+    var cs               = context.callstack;
+
+    var lineId                  = $line.attr("id");
+    var lineNumber              = context.rep.lines.indexOfKey(lineId);
+    // TODO position of page break is not necessarily the end of line. It is the last sentence mark
+    // before the beginning of innerLineNumber
+    var elementLength                   = 61;
+    var columnOfBeginningOf2ndInnerLine = innerLineNumber       * elementLength;
+    var columnOfEndOf2ndInnerLine       = (innerLineNumber + 1) * elementLength;
+    var beginningOf2ndInnerLine         = [lineNumber, columnOfBeginningOf2ndInnerLine];
+    var endOf2ndInnerLine               = [lineNumber, columnOfEndOf2ndInnerLine];
+    var addPageBreak                    = [["splitPageBreak", true]];
+
+    performNonUnduableEvent(cs, function() {
+      attributeManager.setAttributesOnRange(beginningOf2ndInnerLine, endOf2ndInnerLine, addPageBreak);
+    });
+
+}
+
+var performNonUnduableEvent = function(callstack, action) {
+  var eventType = callstack.editEvent.eventType;
+
+  callstack.startNewEvent("nonundoable");
+  action();
+  callstack.startNewEvent(eventType);
 }

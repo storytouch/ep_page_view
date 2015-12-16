@@ -99,6 +99,11 @@
   }
 */
 
+  #innerdocbody.breakPages div elementPageBreak {
+    display: block;
+  }
+
+  #innerdocbody.breakPages div elementPageBreak:before,
   #innerdocbody.breakPages div.pageBreak:before {
     content: "";
     width:641px;

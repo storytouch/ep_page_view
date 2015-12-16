@@ -17,7 +17,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
   beforeEach(function(cb){
     helper.newPad(function() {
       utils.cleanPad(function() {
-        var generals = elementBlocks.buildScriptWithGenerals("general", linesBeforeBlock);
+        var generals = utils.buildScriptWithGenerals("general", linesBeforeBlock);
         var block    = buildBlock();
         var script   = generals + block;
 
@@ -397,17 +397,6 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
 var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
 ep_script_page_view_test_helper.elementBlocks = {
-  buildScriptWithGenerals: function(text, howMany) {
-    var utils = ep_script_page_view_test_helper.utils;
-
-    var script = "";
-    for (var i = 0; i < howMany; i++) {
-      script += utils.general(text);
-    }
-
-    return script;
-  },
-
   testPageBreakIsOn: function(textOfFirstLineOfPage, done) {
     var inner$ = helper.padInner$;
 

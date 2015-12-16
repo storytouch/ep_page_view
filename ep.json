@@ -5,6 +5,8 @@
       "client_hooks": {
         "postAceInit": "ep_script_page_view/static/js/page_view",
         "aceEditorCSS": "ep_script_page_view/static/js/page_view",
+        "aceAttribsToClasses": "ep_script_page_view/static/js/pageBreak",
+        "aceCreateDomLine": "ep_script_page_view/static/js/pageBreak",
         "aceEditEvent": "ep_script_page_view/static/js/pageBreak"
       },
       "hooks": {
