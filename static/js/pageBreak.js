@@ -196,7 +196,8 @@ var filterLinesToHavePageBreak = function($lines, context) {
       } else {
         skippingEmptyLines = false;
 
-        var splitElementInfo = splitElement($currentLine, context);
+        var availableHeightOnPage = maxPageHeight - currentPageHeight;
+        var splitElementInfo = splitElement($currentLine, lineHeight, availableHeightOnPage, context);
         if (splitElementInfo) {
           // restart counting page height again
           currentPageHeight = splitElementInfo.heightAfterPageBreak;
@@ -303,15 +304,17 @@ var getNumberOfInnerLinesOf = function($line) {
   return numberOfInnerLines;
 }
 
-var splitElement = function($line, context) {
+var splitElement = function($line, totalOutterHeight, availableHeightOnPage, context) {
   var singleInnerLineHeight = getRegularLineHeight();
-  var numberOfInnerLines = getNumberOfInnerLines($line, singleInnerLineHeight);
+  var totalInnerHeight      = $line.height();
+  var numberOfInnerLines    = getNumberOfInnerLines(totalInnerHeight, singleInnerLineHeight);
+  var linesBeforePageBreak  = getNumberOfInnerLinesThatFit($line, totalInnerHeight, totalOutterHeight, availableHeightOnPage, singleInnerLineHeight);
 
-  if (numberOfInnerLines > 1) {
-    var innerLineToSplitElement = 1;
-    var innerLinesAfterPageBreak = numberOfInnerLines-innerLineToSplitElement;
+  if (linesBeforePageBreak > 0) {
+    // can split element
+    var innerLinesAfterPageBreak = numberOfInnerLines-linesBeforePageBreak;
 
-    splitElementOnInnerLine(innerLineToSplitElement, $line, context);
+    splitElementOnInnerLine(linesBeforePageBreak, $line, context);
 
     return {
       // TODO change this
@@ -321,8 +324,15 @@ var splitElement = function($line, context) {
   }
 }
 
-var getNumberOfInnerLines = function($line, singleInnerLineHeight) {
-  var totalInnerHeight   = $line.height();
+var getNumberOfInnerLinesThatFit = function($line, totalInnerHeight, totalOutterHeight, availableHeight, singleInnerLineHeight) {
+  var margin                       = totalOutterHeight - totalInnerHeight;
+  var availableHeightForInnerLines = availableHeight - margin;
+  var numberOfLinesThatFit         = parseInt(availableHeightForInnerLines/singleInnerLineHeight);
+
+  return numberOfLinesThatFit;
+}
+
+var getNumberOfInnerLines = function(totalInnerHeight, singleInnerLineHeight) {
   var numberOfInnerLines = parseInt(totalInnerHeight/singleInnerLineHeight);
 
   return numberOfInnerLines;

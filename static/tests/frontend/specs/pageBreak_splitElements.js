@@ -23,22 +23,20 @@ describe("ep_script_page_view - page break on split elements", function() {
   });
 
   context("when first line of page is a very long general", function() {
-    var textAfterPageBreak;
+    var lines;
 
     before(function() {
       // give enough space for first line of general to fit on first page
       linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
       var line1 = utils.buildStringWithLength(60, "1") + ".";
       var line2 = utils.buildStringWithLength(60, "2") + ".";
-      lastLineText = line1 + line2;
-      textAfterPageBreak = line2;
+      var line3 = utils.buildStringWithLength(60, "3") + ".";
+      var line4 = utils.buildStringWithLength(60, "4") + ".";
+      lines = [line1, line2, line3, line4];
+      lastLineText = line1 + line2 + line3 + line4;
       buildTargetElement = function() {
         return utils.general(lastLineText);
       };
-    });
-
-    it("splits general into two parts, one on each page", function(done) {
-      splitElements.testPageBreakIsOn(textAfterPageBreak, done);
     });
 
     it("removes existing page breaks and recalculates new ones when user changes pad content", function(done) {
@@ -61,8 +59,8 @@ describe("ep_script_page_view - page break on split elements", function() {
         var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
         var $firstPageBreak = $splitElementsWithPageBreaks.first();
 
-        // page break was added to second line of first very long general
-        return $firstPageBreak.text() === line2;
+        // page break was added to third line of first very long general
+        return $firstPageBreak.text() === line3;
       }).done(function() {
         // now there should be only a single page break (on the first very long general)
         var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
@@ -72,7 +70,38 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
     });
 
-    context("when user presses UNDO", function() {
+    context("and there is room on previous page for minimum number of lines (1)", function() {
+      it("splits general between the two pages, and first page has one line of the general", function(done) {
+        var secondLine = lines[1];
+        splitElements.testSplitPageBreakIsOn(secondLine, done);
+      });
+    });
+
+    context("and there is room on previous page for more than the minimum line (1+)", function() {
+      before(function() {
+        // give enough space for first 3 lines of general to fit on first page
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+      });
+
+      it("splits general between the two pages, and first page has as much lines as it can fit", function(done) {
+        var lastLine = lines[3];
+        splitElements.testSplitPageBreakIsOn(lastLine, done);
+      });
+    });
+
+    context("and there is no room on previous page for any line", function() {
+      before(function() {
+        // fill the entire page
+        linesBeforeTargetElement = GENERALS_PER_PAGE;
+      });
+
+      it("moves the entire general for next page", function(done) {
+        var wholeGeneral = lastLineText;
+        splitElements.testNonSplitPageBreakIsOn(wholeGeneral, done);
+      });
+    });
+
+    context("and user presses UNDO", function() {
       before(function() {
         // give enough space for a one-line-general + first line of a two-lines-general to fit on first page
         linesBeforeTargetElement = GENERALS_PER_PAGE - 2;
@@ -126,14 +155,14 @@ describe("ep_script_page_view - page break on split elements", function() {
 
   //   it("does not split heading into two parts, one on each page", function(done) {
   //     var fullElementText = lastLineText;
-  //     splitElements.testPageBreakIsOn(fullElementText, done);
+  //     splitElements.testSplitPageBreakIsOn(fullElementText, done);
   //   });
   // });
 });
 
 var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
 ep_script_page_view_test_helper.splitElements = {
-  testPageBreakIsOn: function(textAfterPageBreak, done) {
+  testSplitPageBreakIsOn: function(textAfterPageBreak, done) {
     var inner$ = helper.padInner$;
 
     // verify there is one page break
@@ -142,6 +171,20 @@ ep_script_page_view_test_helper.splitElements = {
 
     // verify page break is on targetElement
     var $firstPageBreak = $splitElementsWithPageBreaks.first();
+    expect($firstPageBreak.text()).to.be(textAfterPageBreak);
+
+    done();
+  },
+
+  testNonSplitPageBreakIsOn: function(textAfterPageBreak, done) {
+    var inner$ = helper.padInner$;
+
+    // verify there is one page break
+    var $elementsWithPageBreaksOnTop = inner$("div.pageBreak");
+    expect($elementsWithPageBreaksOnTop.length).to.be(1);
+
+    // verify page break is above targetElement
+    var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
     expect($firstPageBreak.text()).to.be(textAfterPageBreak);
 
     done();
