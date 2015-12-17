@@ -305,26 +305,30 @@ var getNumberOfInnerLinesOf = function($line) {
 }
 
 var splitElement = function($line, totalOutterHeight, availableHeightOnPage, context) {
-  var singleInnerLineHeight = getRegularLineHeight();
-  var totalInnerHeight      = $line.height();
-  var numberOfInnerLines    = getNumberOfInnerLines(totalInnerHeight, singleInnerLineHeight);
-  var linesBeforePageBreak  = getNumberOfInnerLinesThatFit($line, totalInnerHeight, totalOutterHeight, availableHeightOnPage, singleInnerLineHeight);
+  var singleInnerLineHeight         = getRegularLineHeight();
+  var totalInnerHeight              = $line.height();
+  var numberOfInnerLines            = getNumberOfInnerLines(totalInnerHeight, singleInnerLineHeight);
+  var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage(totalInnerHeight, totalOutterHeight, availableHeightOnPage, singleInnerLineHeight);
 
-  if (linesBeforePageBreak > 0) {
-    // can split element
-    var innerLinesAfterPageBreak = numberOfInnerLines-linesBeforePageBreak;
+  // only calculate the position where element should be split if there is any space to do that
+  if (linesAvailableBeforePageBreak > 0) {
+    var splitPosition = calculateElementSplitPosition(linesAvailableBeforePageBreak, $line, context);
+    if (splitPosition) {
+      // ok, can split element
+      var innerLinesAfterPageBreak = numberOfInnerLines - linesAvailableBeforePageBreak;
 
-    splitElementOnInnerLine(linesBeforePageBreak, $line, context);
+      splitElementOnInnerLine(splitPosition, context);
 
-    return {
-      // TODO change this
-      // need to improve calculation of height of lines after page break
-      heightAfterPageBreak: singleInnerLineHeight * innerLinesAfterPageBreak
-    };
+      return {
+        // TODO change this
+        // need to improve calculation of height of lines after page break
+        heightAfterPageBreak: singleInnerLineHeight * innerLinesAfterPageBreak
+      };
+    }
   }
 }
 
-var getNumberOfInnerLinesThatFit = function($line, totalInnerHeight, totalOutterHeight, availableHeight, singleInnerLineHeight) {
+var getNumberOfInnerLinesThatFitOnPage = function(totalInnerHeight, totalOutterHeight, availableHeight, singleInnerLineHeight) {
   var margin                       = totalOutterHeight - totalInnerHeight;
   var availableHeightForInnerLines = availableHeight - margin;
   var numberOfLinesThatFit         = parseInt(availableHeightForInnerLines/singleInnerLineHeight);
@@ -338,25 +342,58 @@ var getNumberOfInnerLines = function(totalInnerHeight, singleInnerLineHeight) {
   return numberOfInnerLines;
 }
 
-var splitElementOnInnerLine = function(innerLineNumber, $line, context) {
-    var attributeManager = context.documentAttributeManager;
-    var cs               = context.callstack;
+var calculateElementSplitPosition = function(innerLineNumber, $line, context) {
+  var lineId     = $line.attr("id");
+  var lineNumber = context.rep.lines.indexOfKey(lineId);
+  var lineText   = context.rep.lines.atKey(lineId).text;
 
-    var lineId                  = $line.attr("id");
-    var lineNumber              = context.rep.lines.indexOfKey(lineId);
-    // TODO position of page break is not necessarily the end of line. It is the last sentence mark
-    // before the beginning of innerLineNumber
-    var elementLength                   = 61;
-    var columnOfBeginningOf2ndInnerLine = innerLineNumber       * elementLength;
-    var columnOfEndOf2ndInnerLine       = (innerLineNumber + 1) * elementLength;
-    var beginningOf2ndInnerLine         = [lineNumber, columnOfBeginningOf2ndInnerLine];
-    var endOf2ndInnerLine               = [lineNumber, columnOfEndOf2ndInnerLine];
-    var addPageBreak                    = [["splitPageBreak", true]];
+  var columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(innerLineNumber, lineText);
+  // only can split element if it has a sentence that fits the available height. If no sentence
+  // marker is found, columnAfterLastSentenceMarker is 0
+  if (columnAfterLastSentenceMarker) {
+    var columnOfEndOfLineAfterSentenceMarker = getColumnOfEndOfInnerLineOrEndOfText(columnAfterLastSentenceMarker, lineText);
+    var afterLastSentenceThatFits            = [lineNumber, columnAfterLastSentenceMarker];
+    var endOfLineAfterLastSentenceThatFits   = [lineNumber, columnOfEndOfLineAfterSentenceMarker];
 
-    performNonUnduableEvent(cs, function() {
-      attributeManager.setAttributesOnRange(beginningOf2ndInnerLine, endOf2ndInnerLine, addPageBreak);
-    });
+    return {
+      start: afterLastSentenceThatFits,
+      end: endOfLineAfterLastSentenceThatFits
+    };
+  }
+}
 
+var splitElementOnInnerLine = function(splitPosition, context) {
+  var attributeManager = context.documentAttributeManager;
+  var cs               = context.callstack;
+
+  var addPageBreak = [["splitPageBreak", true]];
+
+  performNonUnduableEvent(cs, function() {
+    attributeManager.setAttributesOnRange(splitPosition.start, splitPosition.end, addPageBreak);
+  });
+}
+
+var getColumnOfLastSentenceMarkerOfInnerLine = function(innerLineNumber, fullText) {
+  // get text until the end of target inner line
+  var innerLineLength = getInnerLineLengthOf();
+  var endOfTargetLine = innerLineNumber * innerLineLength;
+  var innerLineText   = fullText.substring(0, endOfTargetLine);
+
+  // look backwards for the last sentence marker of the text
+  return innerLineText.search(/[.?!;][^.?!;]*$/);
+}
+
+var getInnerLineLengthOf = function() {
+  // TODO add other line types
+  return 61;
+}
+
+var getColumnOfEndOfInnerLineOrEndOfText = function(startIndex, fullText) {
+  var columnOfEndOfInnerLine = startIndex + getInnerLineLengthOf();
+  var lastColumnOfText = fullText.length;
+
+  // avoid errors if we reach end of text
+  return Math.min(lastColumnOfText, columnOfEndOfInnerLine);
 }
 
 var performNonUnduableEvent = function(callstack, action) {

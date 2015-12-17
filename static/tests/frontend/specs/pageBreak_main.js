@@ -73,38 +73,6 @@ describe("ep_script_page_view - page break main tests", function() {
       });
     });
 
-    context("when line is too long to fit entirely on the page", function() {
-      var veryLongLineText;
-
-      beforeEach(function() {
-        var inner$ = helper.padInner$;
-
-        // "PAGE2................(...)"
-        veryLongLineText = "PAGE2" + utils.buildStringWithLength(62 - "PAGE2".length, ".");
-
-        // replaces last line with a very long text (> 61 chars, so it is
-        // displayed in 2 lines on the editor)
-        var $lastLine = inner$("div").last();
-        $lastLine.sendkeys("{selectall}");
-        $lastLine.sendkeys(veryLongLineText);
-      });
-
-      it("moves line to next page", function(done) {
-        var inner$ = helper.padInner$;
-
-        // wait for new page to be created
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = inner$("div.pageBreak");
-          return $linesWithPageBreaks.length === 1;
-        }).done(function() {
-          var $linesWithPageBreaks = inner$("div.pageBreak");
-          expect($linesWithPageBreaks.text()).to.be(veryLongLineText);
-
-          done();
-        });
-      });
-    });
-
     // this scenario is a workaround to the limitation of CSS :after/:before, which is not
     // displayed correctly on some elements (including <br>)
     context("when pages > 1 have empty lines on the top of the page", function() {
@@ -215,6 +183,39 @@ describe("ep_script_page_view - page break main tests", function() {
         var elementBuilder = utils.heading;
         var pageBuilder    = scriptBuilder;
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, done);
+      });
+
+      // this is valid for some other elements too (but not for generals)
+      context("and last line is too long to fit entirely on the page", function() {
+        var veryLongLineText;
+
+        beforeEach(function() {
+          var inner$ = helper.padInner$;
+
+          // "PAGE2................(...)"
+          veryLongLineText = "PAGE2" + utils.buildStringWithLength(62 - "PAGE2".length, ".");
+
+          // replaces last line with a very long text (> 61 chars, so it is
+          // displayed in 2 lines on the editor)
+          var $lastLine = inner$("div").last().find("heading");
+          $lastLine.sendkeys("{selectall}");
+          $lastLine.sendkeys(veryLongLineText);
+        });
+
+        it("moves line to next page", function(done) {
+          var inner$ = helper.padInner$;
+
+          // wait for new page to be created
+          helper.waitFor(function() {
+            var $linesWithPageBreaks = inner$("div.pageBreak");
+            return $linesWithPageBreaks.length === 1;
+          }).done(function() {
+            var $linesWithPageBreaks = inner$("div.pageBreak");
+            expect($linesWithPageBreaks.text()).to.be(veryLongLineText);
+
+            done();
+          });
+        });
       });
     });
 

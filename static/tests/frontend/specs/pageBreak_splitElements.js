@@ -23,7 +23,7 @@ describe("ep_script_page_view - page break on split elements", function() {
   });
 
   context("when first line of page is a very long general", function() {
-    var lines;
+    var sentences;
 
     before(function() {
       // give enough space for first line of general to fit on first page
@@ -32,7 +32,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       var line2 = utils.buildStringWithLength(60, "2") + ".";
       var line3 = utils.buildStringWithLength(60, "3") + ".";
       var line4 = utils.buildStringWithLength(60, "4") + ".";
-      lines = [line1, line2, line3, line4];
+      sentences = [line1, line2, line3, line4];
       lastLineText = line1 + line2 + line3 + line4;
       buildTargetElement = function() {
         return utils.general(lastLineText);
@@ -72,7 +72,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
     context("and there is room on previous page for minimum number of lines (1)", function() {
       it("splits general between the two pages, and first page has one line of the general", function(done) {
-        var secondLine = lines[1];
+        var secondLine = sentences[1];
         splitElements.testSplitPageBreakIsOn(secondLine, done);
       });
     });
@@ -84,7 +84,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
 
       it("splits general between the two pages, and first page has as much lines as it can fit", function(done) {
-        var lastLine = lines[3];
+        var lastLine = sentences[3];
         splitElements.testSplitPageBreakIsOn(lastLine, done);
       });
     });
@@ -137,6 +137,59 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         done();
       })
+    });
+
+    context("and first sentence ends in the middle of last line that fits", function() {
+      before(function() {
+        // give enough space for first sentence (1.5 line long) to fit on first page
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 2;
+        var sentence1 = utils.buildStringWithLength(90, "1") + "."; // 1.5 line long
+        var sentence2 = utils.buildStringWithLength(45, "2") + "."; // .75 line long
+        sentences = [sentence1, sentence2];
+        lastLineText = sentence1 + sentence2;
+        buildTargetElement = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      it("splits general at the end of first sentence", function(done) {
+        var lastSentence = sentences[1];
+        splitElements.testSplitPageBreakIsOn(lastSentence, done);
+      });
+
+      context("and there is no delimiter for end of sentence", function() {
+        before(function() {
+          // build sentence that is 2.5 lines long
+          var sentence1 = utils.buildStringWithLength(150, "1");
+          sentences = [sentence1];
+          lastLineText = sentence1;
+        });
+
+        it("moves the entire general for next page", function(done) {
+          var wholeGeneral = lastLineText;
+          splitElements.testNonSplitPageBreakIsOn(wholeGeneral, done);
+        });
+      });
+    });
+
+    context("and first sentence ends after last line that fits", function() {
+      before(function() {
+        // give enough space for only part of first sentence to fit on first page
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
+        // build sentences that are 1.5 line long
+        var sentence1 = utils.buildStringWithLength(90, "1") + ".";
+        var sentence2 = utils.buildStringWithLength(90, "2") + ".";
+        sentences = [sentence1, sentence2];
+        lastLineText = sentence1 + sentence2;
+        buildTargetElement = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      it("moves the entire general for next page", function(done) {
+        var wholeGeneral = lastLineText;
+        splitElements.testNonSplitPageBreakIsOn(wholeGeneral, done);
+      });
     });
   });
 
