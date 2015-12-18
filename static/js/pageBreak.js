@@ -55,10 +55,15 @@ exports.aceEditEvent = function(hook, context) {
 var redrawPageBreaks = function(context) {
   var $lines = cleanPageBreaks(context);
 
-  var $linesWithPageBreaks = filterLinesToHavePageBreak($lines, context);
+  var pageBreaksInfo = calculatePageBreaks($lines, context);
+  var $linesWithPageBreaks = pageBreaksInfo.linesWithPageBreaks;
+  var splitPositions = pageBreaksInfo.splitPositions;
 
   // add page break markers to selected lines
   $linesWithPageBreaks.addClass("pageBreak");
+
+  // split elements that are in the middle of a page break
+  splitElementsOnPositions(splitPositions, context);
 }
 
 // Easier access to outer pad
@@ -150,9 +155,10 @@ var cleanPageBreaksOverSplitElements = function(context) {
   });
 }
 
-var filterLinesToHavePageBreak = function($lines, context) {
+var calculatePageBreaks = function($lines, context) {
   var maxPageHeight = getMaxPageHeight();
   var $linesWithPageBreaks = $();
+  var elementsToBeSplit = [];
 
   // select lines to have page breaks
   var $currentLine = $lines.first();
@@ -197,16 +203,19 @@ var filterLinesToHavePageBreak = function($lines, context) {
         skippingEmptyLines = false;
 
         var availableHeightOnPage = maxPageHeight - currentPageHeight;
-        var splitElementInfo = splitElement($currentLine, lineHeight, availableHeightOnPage, context);
+        var splitElementInfo = getSplitInfo($currentLine, lineHeight, availableHeightOnPage, context);
         if (splitElementInfo) {
           // restart counting page height again
           currentPageHeight = splitElementInfo.heightAfterPageBreak;
+
+          // mark element to be split when pagination is done
+          elementsToBeSplit.push(splitElementInfo.splitPosition);
         } else {
           var blockInfo = getBlockInfo($currentLine);
 
           currentPageHeight = blockInfo.blockHeight;
 
-          // mark element to be on top of page
+          // mark element to be on top of page when pagination is done
           $linesWithPageBreaks = $linesWithPageBreaks.add(blockInfo.$topOfBlock);
 
           // move $currentLine to end of the block
@@ -222,7 +231,10 @@ var filterLinesToHavePageBreak = function($lines, context) {
     $currentLine = $currentLine.next();
   }
 
-  return $linesWithPageBreaks;
+  return {
+    linesWithPageBreaks: $linesWithPageBreaks,
+    splitPositions: elementsToBeSplit
+  };
 }
 
 var reachedEndOfPad = function($currentLine) {
@@ -304,31 +316,27 @@ var getNumberOfInnerLinesOf = function($line) {
   return numberOfInnerLines;
 }
 
-var splitElement = function($line, totalOutterHeight, availableHeightOnPage, context) {
-  var singleInnerLineHeight         = getRegularLineHeight();
-  var totalInnerHeight              = $line.height();
-  var numberOfInnerLines            = getNumberOfInnerLines(totalInnerHeight, singleInnerLineHeight);
-  var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage(totalInnerHeight, totalOutterHeight, availableHeightOnPage, singleInnerLineHeight);
+var getSplitInfo = function($line, totalOutterHeight, availableHeightOnPage, context) {
+  var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($line, totalOutterHeight, availableHeightOnPage);
 
   // only calculate the position where element should be split if there is any space to do that
   if (linesAvailableBeforePageBreak > 0) {
     var splitPosition = calculateElementSplitPosition(linesAvailableBeforePageBreak, $line, context);
     if (splitPosition) {
       // ok, can split element
-      var innerLinesAfterPageBreak = numberOfInnerLines - linesAvailableBeforePageBreak;
-
-      splitElementOnInnerLine(splitPosition, context);
+      var heightAfterPageBreak = calculateHeightToFitText(splitPosition.textAfterPageBreak, $line);
 
       return {
-        // TODO change this
-        // need to improve calculation of height of lines after page break
-        heightAfterPageBreak: singleInnerLineHeight * innerLinesAfterPageBreak
+        splitPosition: splitPosition,
+        heightAfterPageBreak: heightAfterPageBreak
       };
     }
   }
 }
 
-var getNumberOfInnerLinesThatFitOnPage = function(totalInnerHeight, totalOutterHeight, availableHeight, singleInnerLineHeight) {
+var getNumberOfInnerLinesThatFitOnPage = function($line, totalOutterHeight, availableHeight) {
+  var singleInnerLineHeight        = getRegularLineHeight();
+  var totalInnerHeight             = $line.height();
   var margin                       = totalOutterHeight - totalInnerHeight;
   var availableHeightForInnerLines = availableHeight - margin;
   var numberOfLinesThatFit         = parseInt(availableHeightForInnerLines/singleInnerLineHeight);
@@ -354,22 +362,27 @@ var calculateElementSplitPosition = function(innerLineNumber, $line, context) {
     var columnOfEndOfLineAfterSentenceMarker = getColumnOfEndOfInnerLineOrEndOfText(columnAfterLastSentenceMarker, lineText);
     var afterLastSentenceThatFits            = [lineNumber, columnAfterLastSentenceMarker];
     var endOfLineAfterLastSentenceThatFits   = [lineNumber, columnOfEndOfLineAfterSentenceMarker];
+    var textAfterPageBreak                   = lineText.substring(columnAfterLastSentenceMarker);
 
     return {
+      textAfterPageBreak: textAfterPageBreak,
       start: afterLastSentenceThatFits,
       end: endOfLineAfterLastSentenceThatFits
     };
   }
 }
 
-var splitElementOnInnerLine = function(splitPosition, context) {
+var splitElementsOnPositions = function(splitPositions, context) {
   var attributeManager = context.documentAttributeManager;
   var cs               = context.callstack;
 
   var addPageBreak = [["splitPageBreak", true]];
 
   performNonUnduableEvent(cs, function() {
-    attributeManager.setAttributesOnRange(splitPosition.start, splitPosition.end, addPageBreak);
+    for (var i = splitPositions.length - 1; i >= 0; i--) {
+      var splitPosition = splitPositions[i];
+      attributeManager.setAttributesOnRange(splitPosition.start, splitPosition.end, addPageBreak);
+    };
   });
 }
 
@@ -394,6 +407,15 @@ var getColumnOfEndOfInnerLineOrEndOfText = function(startIndex, fullText) {
 
   // avoid errors if we reach end of text
   return Math.min(lastColumnOfText, columnOfEndOfInnerLine);
+}
+
+var calculateHeightToFitText = function(text, $originalLine) {
+  // create a clone to know the height needed
+  var $theClone = $originalLine.clone().text(text).appendTo($originalLine);
+  var height = $theClone.height();
+  $theClone.remove();
+
+  return height;
 }
 
 var performNonUnduableEvent = function(callstack, action) {

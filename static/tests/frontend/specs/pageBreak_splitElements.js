@@ -191,6 +191,52 @@ describe("ep_script_page_view - page break on split elements", function() {
         splitElements.testNonSplitPageBreakIsOn(wholeGeneral, done);
       });
     });
+
+    // when element is split, the resulting two-halves might increase the total number of lines
+    // of the element. For example, if it has two sentences with 75 chars each, the two sentences
+    // together need only 3 lines to fit, while if they are split it would need 4 lines to fit them
+    // (2 for each sentence)
+    context("and there is another full page after it", function() {
+      before(function() {
+        // build 2 pages, but leave space for 3 extra lines (3 will be used for a 3-lines-long
+        // general to be edited on the body of the test, and 1 will be the customized general
+        // created by buildTargetElement())
+        linesBeforeTargetElement = 2*GENERALS_PER_PAGE - 3;
+        var sentence = "This line should be on third page";
+        sentences = [sentence];
+        lastLineText = sentence;
+        buildTargetElement = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      it("considers the height of the resulting second half of the element split", function(done) {
+        var inner$ = helper.padInner$;
+
+        // change 57th line to be 3-lines-long (2 sentences, each ~1.25 long, so when they are
+        // split they need 2 lines each)
+        // build sentences that are ~1.25 line long (when split they need 2 lines each)
+        var sentence1 = utils.buildStringWithLength(75, "1") + ".";
+        var sentence2 = utils.buildStringWithLength(75, "2") + ".";
+        // GENERALS_PER_PAGE - 1 === line before last of 1st page
+        var $lineAtEndOfFirstPage = utils.getLine(GENERALS_PER_PAGE - 2);
+        $lineAtEndOfFirstPage.sendkeys("{selectall}");
+        $lineAtEndOfFirstPage.sendkeys(sentence1 + sentence2);
+
+        // wait for edition to be processed and pagination to be complete
+        helper.waitFor(function() {
+          var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
+          return $splitElementsWithPageBreaks.length > 0;
+        }).done(function() {
+          // 1: verify first page break was added between the two sentences of 57th line
+          var topLineOfSentence2 = sentence2.substring(0, 61);
+          splitElements.testSplitPageBreakIsOn(topLineOfSentence2, function() {
+            // 2: verify second page break was added on top of last line
+            splitElements.testNonSplitPageBreakIsOn(lastLineText, done);
+          });
+        });
+      });
+    });
   });
 
   // context("when first line of page is a very long heading", function() {
