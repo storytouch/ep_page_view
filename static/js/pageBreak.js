@@ -209,7 +209,7 @@ var calculatePageBreaks = function($lines, context) {
           currentPageHeight = splitElementInfo.heightAfterPageBreak;
 
           // mark element to be split when pagination is done
-          elementsToBeSplit.push(splitElementInfo.splitPosition);
+          elementsToBeSplit.push(splitElementInfo);
         } else {
           var blockInfo = getBlockInfo($currentLine);
 
@@ -311,25 +311,21 @@ var typeOf = function($line) {
 var getNumberOfInnerLinesOf = function($line) {
   var totalHeight = $line.height();
   var heightOfOneLine = getRegularLineHeight();
-  var numberOfInnerLines = totalHeight / heightOfOneLine;
+  var numberOfInnerLines = parseInt(totalHeight / heightOfOneLine);
 
   return numberOfInnerLines;
 }
 
 var getSplitInfo = function($line, totalOutterHeight, availableHeightOnPage, context) {
   var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($line, totalOutterHeight, availableHeightOnPage);
+  var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor($line);
 
-  // only calculate the position where element should be split if there is any space to do that
-  if (linesAvailableBeforePageBreak > 0) {
+  // only calculate the position where element should be split if there is enough space to do that
+  if (linesAvailableBeforePageBreak >= minimumLinesBeforePageBreak) {
     var splitPosition = calculateElementSplitPosition(linesAvailableBeforePageBreak, $line, context);
     if (splitPosition) {
       // ok, can split element
-      var heightAfterPageBreak = calculateHeightToFitText(splitPosition.textAfterPageBreak, $line);
-
-      return {
-        splitPosition: splitPosition,
-        heightAfterPageBreak: heightAfterPageBreak
-      };
+      return splitPosition;
     }
   }
 }
@@ -344,10 +340,16 @@ var getNumberOfInnerLinesThatFitOnPage = function($line, totalOutterHeight, avai
   return numberOfLinesThatFit;
 }
 
-var getNumberOfInnerLines = function(totalInnerHeight, singleInnerLineHeight) {
-  var numberOfInnerLines = parseInt(totalInnerHeight/singleInnerLineHeight);
+var getMinimumLinesBeforePageBreakFor = function($line) {
+  var typeOfLine = typeOf($line);
+  if (typeOfLine === "action") return 2;
+  return 1;
+}
 
-  return numberOfInnerLines;
+var getMinimumLinesAfterPageBreakFor = function($line) {
+  var typeOfLine = typeOf($line);
+  if (typeOfLine === "action" || typeOfLine === "transition") return 2;
+  return 1;
 }
 
 var calculateElementSplitPosition = function(innerLineNumber, $line, context) {
@@ -355,20 +357,51 @@ var calculateElementSplitPosition = function(innerLineNumber, $line, context) {
   var lineNumber = context.rep.lines.indexOfKey(lineId);
   var lineText   = context.rep.lines.atKey(lineId).text;
 
-  var columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(innerLineNumber, lineText);
-  // only can split element if it has a sentence that fits the available height. If no sentence
-  // marker is found, columnAfterLastSentenceMarker is 0
-  if (columnAfterLastSentenceMarker) {
-    var columnOfEndOfLineAfterSentenceMarker = getColumnOfEndOfInnerLineOrEndOfText(columnAfterLastSentenceMarker, lineText);
-    var afterLastSentenceThatFits            = [lineNumber, columnAfterLastSentenceMarker];
+  var position = findPositionWhereLineCanBeSplit(innerLineNumber, $line, context, lineText, lineNumber);
+  // if found position to split, return its split attributes
+  if (position) {
+    var columnOfEndOfLineAfterSentenceMarker = getColumnOfEndOfInnerLineOrEndOfText(position.column, lineText, $line);
+    var afterLastSentenceThatFits            = [lineNumber, position.column];
     var endOfLineAfterLastSentenceThatFits   = [lineNumber, columnOfEndOfLineAfterSentenceMarker];
-    var textAfterPageBreak                   = lineText.substring(columnAfterLastSentenceMarker);
 
     return {
-      textAfterPageBreak: textAfterPageBreak,
+      heightAfterPageBreak: position.heightAfterPageBreak,
       start: afterLastSentenceThatFits,
       end: endOfLineAfterLastSentenceThatFits
     };
+  }
+}
+
+// Find position on line that satisfies all conditions:
+// - leave minimum lines before page break
+// - leave minimum lines after page break
+// - can be split on an end-of-sentence mark and fit the available space
+//
+// Return column where line should be split (char that should be 1st on next page)
+var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, context, lineText, lineNumber) {
+  var targetInnerLine             = innerLineNumber;
+  var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor($line);
+  var minimumLinesAfterPageBreak  = getMinimumLinesAfterPageBreakFor($line);
+
+  var columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(targetInnerLine, lineText, lineNumber, context, $line);
+  // only can split element if it has a sentence that fits the available height. If no sentence
+  // marker is found, columnAfterLastSentenceMarker is 0
+  while (columnAfterLastSentenceMarker && targetInnerLine >= minimumLinesBeforePageBreak) {
+    var textAfterPageBreak   = lineText.substring(columnAfterLastSentenceMarker);
+    var heightAfterPageBreak = calculateHeightToFitText(textAfterPageBreak, $line);
+    var linesAfterPageBreak  = parseInt(heightAfterPageBreak / getRegularLineHeight());
+
+    if (linesAfterPageBreak >= minimumLinesAfterPageBreak) {
+      // found an inner line that satisfies all conditions
+      return {
+        column: columnAfterLastSentenceMarker,
+        heightAfterPageBreak: heightAfterPageBreak
+      };
+    } else {
+      // this line did not satisfy conditions; try previous one
+      targetInnerLine--;
+      columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(targetInnerLine, lineText, lineNumber, context, $line);
+    }
   }
 }
 
@@ -386,23 +419,32 @@ var splitElementsOnPositions = function(splitPositions, context) {
   });
 }
 
-var getColumnOfLastSentenceMarkerOfInnerLine = function(innerLineNumber, fullText) {
+var getColumnOfLastSentenceMarkerOfInnerLine = function(innerLineNumber, fullText, lineNumber, context, $line) {
+  var lineHasMarker = checkLineHasMarker(lineNumber, context);
+
   // get text until the end of target inner line
-  var innerLineLength = getInnerLineLengthOf();
-  var endOfTargetLine = innerLineNumber * innerLineLength;
+  var innerLineLength = getInnerLineLengthOf($line);
+  var endOfTargetLine = lineHasMarker ? 1 : 0; // include the "*" on the beginning, if line has marker
+  endOfTargetLine    += innerLineNumber * innerLineLength;
   var innerLineText   = fullText.substring(0, endOfTargetLine);
 
   // look backwards for the last sentence marker of the text
   return innerLineText.search(/[.?!;][^.?!;]*$/);
 }
 
-var getInnerLineLengthOf = function() {
+var checkLineHasMarker = function(lineNumber, context) {
+  return context.documentAttributeManager.lineHasMarker(lineNumber);
+}
+
+var getInnerLineLengthOf = function($line) {
+  var typeOfLine = typeOf($line);
+  if (typeOfLine === "transition") return 15;
   // TODO add other line types
   return 61;
 }
 
-var getColumnOfEndOfInnerLineOrEndOfText = function(startIndex, fullText) {
-  var columnOfEndOfInnerLine = startIndex + getInnerLineLengthOf();
+var getColumnOfEndOfInnerLineOrEndOfText = function(startIndex, fullText, $line) {
+  var columnOfEndOfInnerLine = startIndex + getInnerLineLengthOf($line);
   var lastColumnOfText = fullText.length;
 
   // avoid errors if we reach end of text
@@ -411,8 +453,19 @@ var getColumnOfEndOfInnerLineOrEndOfText = function(startIndex, fullText) {
 
 var calculateHeightToFitText = function(text, $originalLine) {
   // create a clone to know the height needed
-  var $theClone = $originalLine.clone().text(text).appendTo($originalLine);
-  var height = $theClone.height();
+  var $theClone = $originalLine.clone();
+  var $innerClone = $theClone.find(SCRIPT_ELEMENTS_SELECTOR);
+
+  // set the text, so we can measure the height it needs
+  var isGeneral = $innerClone.length === 0;
+  if (isGeneral) {
+    // general have no inner tag, so use the whole div
+    $theClone.text(text);
+  } else {
+    $innerClone.text(text);
+  }
+
+  var height = $theClone.appendTo($originalLine).height();
   $theClone.remove();
 
   return height;

@@ -2,7 +2,7 @@ describe("ep_script_page_view - page break on split elements", function() {
   // shortcuts for helper functions
   var utils, splitElements;
   // context-dependent values/functions
-  var linesBeforeTargetElement, buildTargetElement, lastLineText;
+  var linesBeforeTargetElement, buildTargetElement, lastLineText, sentences;
 
   before(function(){
     utils = ep_script_page_view_test_helper.utils;
@@ -23,8 +23,6 @@ describe("ep_script_page_view - page break on split elements", function() {
   });
 
   context("when first line of page is a very long general", function() {
-    var sentences;
-
     before(function() {
       // give enough space for first line of general to fit on first page
       linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
@@ -77,7 +75,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
     });
 
-    context("and there is room on previous page for more than the minimum line (1+)", function() {
+    context("and there is room on previous page for more than the minimum line (+1)", function() {
       before(function() {
         // give enough space for first 3 lines of general to fit on first page
         linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
@@ -96,8 +94,8 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
 
       it("moves the entire general for next page", function(done) {
-        var wholeGeneral = lastLineText;
-        splitElements.testNonSplitPageBreakIsOn(wholeGeneral, done);
+        var wholeElement = lastLineText;
+        splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
       });
     });
 
@@ -166,8 +164,8 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
 
         it("moves the entire general for next page", function(done) {
-          var wholeGeneral = lastLineText;
-          splitElements.testNonSplitPageBreakIsOn(wholeGeneral, done);
+          var wholeElement = lastLineText;
+          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
     });
@@ -187,8 +185,8 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
 
       it("moves the entire general for next page", function(done) {
-        var wholeGeneral = lastLineText;
-        splitElements.testNonSplitPageBreakIsOn(wholeGeneral, done);
+        var wholeElement = lastLineText;
+        splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
       });
     });
 
@@ -234,6 +232,170 @@ describe("ep_script_page_view - page break on split elements", function() {
             // 2: verify second page break was added on top of last line
             splitElements.testNonSplitPageBreakIsOn(lastLineText, done);
           });
+        });
+      });
+    });
+  });
+
+  context("when first line of page is a very long action", function() {
+    before(function() {
+      buildTargetElement = function() {
+        return utils.action(lastLineText);
+      };
+    });
+
+    context("and there is no room on previous page for minimum number of lines (2)", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 2;
+        var line1 = utils.buildStringWithLength(60, "1") + ".";
+        var line2 = utils.buildStringWithLength(60, "2") + ".";
+        var line3 = utils.buildStringWithLength(60, "3") + ".";
+        var line4 = utils.buildStringWithLength(60, "4") + ".";
+        sentences = [line1, line2, line3, line4];
+        lastLineText = line1 + line2 + line3 + line4;
+      });
+
+      it("moves the entire action for next page", function(done) {
+        var wholeElement = lastLineText;
+        splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+      });
+    });
+
+    context("and there is room on previous page for minimum number of lines (2)", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+        // build sentences that are ~1.25 line long (when split they need 2 lines each)
+        var line1 = utils.buildStringWithLength(75, "1") + ".";
+        var line2 = utils.buildStringWithLength(75, "2") + ".";
+        sentences = [line1, line2];
+        lastLineText = line1 + line2;
+      });
+
+      it("splits action between the two pages, and first page has two lines of the action", function(done) {
+        // as line is split into two blocks of 1.25 lines each, the page break will be placed on the
+        // first 61 chars of original second sentence
+        var newThirdLine = sentences[1].substring(0,61);
+        splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+      });
+
+      context("but next page will have less then the minimum lines (2) of an action", function() {
+        before(function() {
+          var line1 = utils.buildStringWithLength(60, "1") + ".";
+          var line2 = utils.buildStringWithLength(60, "2") + ".";
+          var line3 = utils.buildStringWithLength(60, "3") + ".";
+          sentences = [line1, line2, line3];
+          lastLineText = line1 + line2 + line3;
+        });
+
+        it("moves the entire action for next page", function(done) {
+          var wholeElement = lastLineText;
+          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+        });
+      });
+    });
+
+    context("and there is room on previous page for more than the minimum line (+2)", function() {
+      before(function() {
+        // give enough space for first 3 lines of action to fit on first page
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
+        var line1 = utils.buildStringWithLength(60, "1") + ".";
+        var line2 = utils.buildStringWithLength(60, "2") + ".";
+        var line3 = utils.buildStringWithLength(60, "3") + ".";
+        var line4 = utils.buildStringWithLength(60, "4") + ".";
+        var line5 = utils.buildStringWithLength(60, "5") + ".";
+        var line6 = utils.buildStringWithLength(60, "6") + ".";
+        sentences = [line1, line2, line3, line4, line5, line6];
+        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+      });
+
+      it("splits action between the two pages, and first page has as much lines as it can fit", function(done) {
+        var beforeLastLine = sentences[3];
+        splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+      });
+
+      context("but next page will have less then the minimum lines (2) of an action", function() {
+        before(function() {
+          // give enough space for first 5 lines of action to fit on first page (which would leave
+          // only one line on next page)
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 6;
+        });
+
+        it("splits action between the two pages, and second page keep the minimum lines it needs", function(done) {
+          var beforeLastLine = sentences[4];
+          splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+        });
+      });
+    });
+  });
+
+  context("when first line of page is a very long transition", function() {
+    before(function() {
+      buildTargetElement = function() {
+        return utils.transition(lastLineText);
+      };
+    });
+
+    context("and there is room on previous page for minimum number of lines (1)", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 2;
+        var line1 = utils.buildStringWithLength(14, "1") + ".";
+        // build sentence that is ~1.25 line long (when split it needs 2 lines)
+        var line2 = utils.buildStringWithLength(20, "2") + ".";
+        sentences = [line1, line2];
+        lastLineText = line1 + line2;
+      });
+
+      it("splits transition between the two pages, and first page has one line of the transition", function(done) {
+        // as line is split into two blocks, the page break will be placed on the
+        // first 15 chars of original second sentence
+        var newThirdLine = sentences[1].substring(0, 15);
+        splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+      });
+
+      context("but next page will have less then the minimum lines (2) of an transition", function() {
+        before(function() {
+          var line1 = utils.buildStringWithLength(14, "1") + ".";
+          var line2 = utils.buildStringWithLength(14, "2") + ".";
+          sentences = [line1, line2];
+          lastLineText = line1 + line2;
+        });
+
+        it("moves the entire transition for next page", function(done) {
+          var wholeElement = lastLineText;
+          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+        });
+      });
+    });
+
+    context("and there is room on previous page for more than the minimum line (+1)", function() {
+      before(function() {
+        // give enough space for first 3 lines of transition to fit on first page
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
+        var line1 = utils.buildStringWithLength(14, "1") + ".";
+        var line2 = utils.buildStringWithLength(14, "2") + ".";
+        var line3 = utils.buildStringWithLength(14, "3") + ".";
+        var line4 = utils.buildStringWithLength(14, "4") + ".";
+        var line5 = utils.buildStringWithLength(14, "5") + ".";
+        var line6 = utils.buildStringWithLength(14, "6") + ".";
+        sentences = [line1, line2, line3, line4, line5, line6];
+        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+      });
+
+      it("splits transition between the two pages, and first page has as much lines as it can fit", function(done) {
+        var beforeLastLine = sentences[3];
+        splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+      });
+
+      context("but next page will have less then the minimum lines (2) of an transition", function() {
+        before(function() {
+          // give enough space for first 5 lines of transition to fit on first page (which would leave
+          // only one line on next page)
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 6;
+        });
+
+        it("splits transition between the two pages, and second page keep the minimum lines it needs", function(done) {
+          var beforeLastLine = sentences[4];
+          splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
         });
       });
     });
