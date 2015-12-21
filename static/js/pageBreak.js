@@ -317,17 +317,24 @@ var getNumberOfInnerLinesOf = function($line) {
 }
 
 var getSplitInfo = function($line, totalOutterHeight, availableHeightOnPage, context) {
-  var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($line, totalOutterHeight, availableHeightOnPage);
-  var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor($line);
+  if (canSplit($line)) {
+    var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($line, totalOutterHeight, availableHeightOnPage);
+    var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor($line);
 
-  // only calculate the position where element should be split if there is enough space to do that
-  if (linesAvailableBeforePageBreak >= minimumLinesBeforePageBreak) {
-    var splitPosition = calculateElementSplitPosition(linesAvailableBeforePageBreak, $line, context);
-    if (splitPosition) {
-      // ok, can split element
-      return splitPosition;
+    // only calculate the position where element should be split if there is enough space to do that
+    if (linesAvailableBeforePageBreak >= minimumLinesBeforePageBreak) {
+      var splitPosition = calculateElementSplitPosition(linesAvailableBeforePageBreak, $line, context);
+      if (splitPosition) {
+        // ok, can split element
+        return splitPosition;
+      }
     }
   }
+}
+
+var canSplit = function($line) {
+  var typeOfLine = typeOf($line);
+  return typeOfLine !== "character" && typeOfLine !== "heading" && typeOfLine !== "shot";
 }
 
 var getNumberOfInnerLinesThatFitOnPage = function($line, totalOutterHeight, availableHeight) {

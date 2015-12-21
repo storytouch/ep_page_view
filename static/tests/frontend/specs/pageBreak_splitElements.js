@@ -401,24 +401,56 @@ describe("ep_script_page_view - page break on split elements", function() {
     });
   });
 
-  // context("when first line of page is a very long heading", function() {
-  //   before(function() {
-  //     linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
-  //     var line1 = utils.buildStringWithLength(61, "1");
-  //     var line2 = utils.buildStringWithLength(61, "2");
-  //     var line3 = utils.buildStringWithLength(61, "3");
-  //     var line4 = utils.buildStringWithLength(61, "4");
-  //     lastLineText = line1 + line2 + line3 + line4;
-  //     buildTargetElement = function() {
-  //       return utils.heading(lastLineText);
-  //     };
-  //   });
+  context("when first line of page is a very long heading", function() {
+    before(function() {
+      linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+      var line1 = utils.buildStringWithLength(60, "1") + ".";
+      var line2 = utils.buildStringWithLength(60, "2") + ".";
+      lastLineText = line1 + line2;
+      buildTargetElement = function() {
+        return utils.heading(lastLineText);
+      };
+    });
 
-  //   it("does not split heading into two parts, one on each page", function(done) {
-  //     var fullElementText = lastLineText;
-  //     splitElements.testSplitPageBreakIsOn(fullElementText, done);
-  //   });
-  // });
+    it("does not split heading into two parts, one on each page", function(done) {
+      var fullElementText = lastLineText;
+      splitElements.testNonSplitPageBreakIsOn(fullElementText, done);
+    });
+  });
+
+  context("when first line of page is a very long shot", function() {
+    before(function() {
+      linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+      var line1 = utils.buildStringWithLength(60, "1") + ".";
+      var line2 = utils.buildStringWithLength(60, "2") + ".";
+      lastLineText = line1 + line2;
+      buildTargetElement = function() {
+        return utils.shot(lastLineText);
+      };
+    });
+
+    it("does not split shot into two parts, one on each page", function(done) {
+      var fullElementText = lastLineText;
+      splitElements.testNonSplitPageBreakIsOn(fullElementText, done);
+    });
+  });
+
+  context("when first line of page is a very long character", function() {
+    before(function() {
+      linesBeforeTargetElement = GENERALS_PER_PAGE - 2;
+      var line1 = utils.buildStringWithLength(37, "1") + ".";
+      var line2 = utils.buildStringWithLength(37, "2") + ".";
+      lastLineText = line1 + line2;
+      buildTargetElement = function() {
+        return utils.character(lastLineText);
+      };
+    });
+
+    it("does not split character into two parts, one on each page", function(done) {
+      var fullElementText = lastLineText;
+      splitElements.testNonSplitPageBreakIsOn(fullElementText, done);
+    });
+  });
 });
 
 var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
