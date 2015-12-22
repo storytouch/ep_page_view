@@ -198,16 +198,16 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   // contexts for block type:
-  // (*) => (parenthetical || dialogue) => !(parenthetical || dialogue)
+  // (*) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
   context("when first line of page is a parenthetical", function() {
-    var buildNextLine;
+    var buildNextLine, parentheticalText;
 
     before(function() {
       linesBeforeBlock = GENERALS_PER_PAGE - 1;
       lastLineText = "last element";
       buildBlock = function() {
         var lastLineOfPreviousPage = utils.dialogue("dialogue");
-        var firstLineOfNextPage = utils.parenthetical("parenthetical");
+        var firstLineOfNextPage = utils.parenthetical(parentheticalText);
         var secondLineOfNextPage = buildNextLine();
 
         return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
@@ -221,9 +221,26 @@ describe("ep_script_page_view - page break on element blocks", function() {
         };
       });
 
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "dialogue";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      context("and parenthetical has a long text (displayed in 2 lines)", function() {
+        before(function() {
+          parentheticalText = "a very very very very very long parenthetical";
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = parentheticalText;
+          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and parenthetical has a short text (displayed in a single line)", function() {
+        before(function() {
+          parentheticalText = "parenthetical";
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "dialogue";
+          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        });
       });
     });
 
@@ -255,14 +272,14 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   context("when first line of page is a dialogue", function() {
-    var buildNextLine;
+    var buildNextLine, dialogueText;
 
     before(function() {
       linesBeforeBlock = GENERALS_PER_PAGE - 1;
       lastLineText = "last element";
       buildBlock = function() {
         var lastLineOfPreviousPage = utils.parenthetical("parenthetical");
-        var firstLineOfNextPage = utils.dialogue("dialogue");
+        var firstLineOfNextPage = utils.dialogue(dialogueText);
         var secondLineOfNextPage = buildNextLine();
 
         return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
@@ -276,9 +293,26 @@ describe("ep_script_page_view - page break on element blocks", function() {
         };
       });
 
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "parenthetical";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+      context("and dialogue has a long text (displayed in 2 lines)", function() {
+        before(function() {
+          dialogueText = "a very very very very very long dialogue";
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = dialogueText;
+          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and dialogue has a short text (displayed in a single line)", function() {
+        before(function() {
+          dialogueText = "dialogue";
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "parenthetical";
+          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        });
       });
     });
 
@@ -337,8 +371,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
       });
 
       // contexts for block type:
-      // (*) => (parenthetical || dialogue) => transition (only one line of text)
-      context("and last line of previous page is a parenthetical", function() {
+      // (*) => (parenthetical || dialogue) (only one line of text) => transition (only one line of text)
+      context("and last line of previous page is a parenthetical with a short text (displayed in a single line)", function() {
         before(function() {
           // we need to create the last 2 elements of previous page, so there will be
           // less generals before block
@@ -359,7 +393,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
         });
       });
 
-      context("and last line of previous page is a dialogue", function() {
+      context("and last line of previous page is a dialogue with a short text (displayed in a single line)", function() {
         before(function() {
           // we need to create the last 2 elements of previous page, so there will be
           // less generals before block
@@ -376,6 +410,50 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("pulls last two lines of previous page to next page", function(done) {
           var firstLineOfNextPage = "action";
+          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      // contexts for block type:
+      // (parenthetical || dialogue) (more than one line of text) => transition (only one line of text)
+      context("and last line of previous page is a parenthetical with a long text (displayed in 2 lines)", function() {
+        before(function() {
+          // we need to create the last 2 elements of previous page, so there will be
+          // less generals before block
+          linesBeforeBlock = GENERALS_PER_PAGE - 4;
+          buildBlock = function() {
+            var lineBeforeLastLineOfPreviousPage = utils.action("action");
+            var lastLineOfPreviousPage           = utils.parenthetical("a very very very very very long parenthetical");
+            var firstLineOfNextPage              = utils.transition(transitionText);
+            var secondLineOfNextPage             = utils.general(lastLineText);
+
+            return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
+          };
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "a very very very very very long parenthetical";
+          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and last line of previous page is a dialogue with a long text (displayed in 2 lines)", function() {
+        before(function() {
+          // we need to create the last 2 elements of previous page, so there will be
+          // less generals before block
+          linesBeforeBlock = GENERALS_PER_PAGE - 4;
+          buildBlock = function() {
+            var lineBeforeLastLineOfPreviousPage = utils.action("action");
+            var lastLineOfPreviousPage           = utils.dialogue("a very very very very very long dialogue");
+            var firstLineOfNextPage              = utils.transition(transitionText);
+            var secondLineOfNextPage             = utils.general(lastLineText);
+
+            return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
+          };
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "a very very very very very long dialogue";
           elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
         });
       });

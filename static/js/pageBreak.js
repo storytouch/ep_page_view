@@ -268,21 +268,31 @@ var getBlockInfo = function($currentLine) {
       blockInfo.$topOfBlock = $previousLine;
     }
     // block type:
-    // (*) => (parenthetical || dialogue) => transition (only one line of text)
-    //                                       +--------- $currentLine ----------+
-    else {
+    // (*) => (parenthetical || dialogue) (only one line of text) => transition (only one line of text)
+    //                                                               +--------- $currentLine ----------+
+    else if (getNumberOfInnerLinesOf($previousLine) === 1) {
       var $lineBeforePrevious = $previousLine.prev();
       var blockHeight = currentLineHeight + getLineHeight($previousLine) + getLineHeight($lineBeforePrevious);
       blockInfo.blockHeight = blockHeight;
       blockInfo.$topOfBlock = $lineBeforePrevious;
     }
+    // block type:
+    // (parenthetical || dialogue) (more than one line of text) => transition (only one line of text)
+    //                                                             +--------- $currentLine ----------+
+    else {
+      var blockHeight = currentLineHeight + getLineHeight($previousLine);
+      blockInfo.blockHeight = blockHeight;
+      blockInfo.$topOfBlock = $previousLine;
+    }
   }
   // block type:
-  // (*) => (parenthetical || dialogue) => !(parenthetical || dialogue)
-  //        +------ $currentLine -----+
+  // (*) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
+  //        +------------------ $currentLine -----------------+
   else if ((typeOfCurrentLine === "parenthetical" || typeOfCurrentLine === "dialogue")
      &&
-     (typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")) {
+     (typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
+     &&
+     getNumberOfInnerLinesOf($currentLine) === 1) {
     var blockHeight = currentLineHeight + getLineHeight($previousLine);
     blockInfo.blockHeight = blockHeight;
     blockInfo.$topOfBlock = $previousLine;
@@ -355,7 +365,7 @@ var getMinimumLinesBeforePageBreakFor = function($line) {
 
 var getMinimumLinesAfterPageBreakFor = function($line) {
   var typeOfLine = typeOf($line);
-  if (typeOfLine === "action" || typeOfLine === "transition") return 2;
+  if (typeOfLine === "action" || typeOfLine === "transition" || typeOfLine === "dialogue" || typeOfLine === "parenthetical") return 2;
   return 1;
 }
 
@@ -445,8 +455,10 @@ var checkLineHasMarker = function(lineNumber, context) {
 
 var getInnerLineLengthOf = function($line) {
   var typeOfLine = typeOf($line);
+  if (typeOfLine === "character") return 38;
+  if (typeOfLine === "dialogue") return 35;
   if (typeOfLine === "transition") return 15;
-  // TODO add other line types
+  if (typeOfLine === "parenthetical") return 25;
   return 61;
 }
 

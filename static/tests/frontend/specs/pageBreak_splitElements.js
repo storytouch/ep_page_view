@@ -401,6 +401,152 @@ describe("ep_script_page_view - page break on split elements", function() {
     });
   });
 
+  context("when first line of page is a very long dialogue", function() {
+    before(function() {
+      buildTargetElement = function() {
+        return utils.dialogue(lastLineText);
+      };
+    });
+
+    context("and there is room on previous page for minimum number of lines (1)", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
+        var line1 = utils.buildStringWithLength(34, "1") + ".";
+        // build sentence that is ~1.25 line long (when split it needs 2 lines)
+        var line2 = utils.buildStringWithLength(45, "2") + ".";
+        sentences = [line1, line2];
+        lastLineText = line1 + line2;
+      });
+
+      it("splits dialogue between the two pages, and first page has one line of the dialogue", function(done) {
+        // as line is split into two blocks, the page break will be placed on the
+        // first 35 chars of original second sentence
+        var newThirdLine = sentences[1].substring(0, 35);
+        splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+      });
+
+      context("but next page will have less then the minimum lines (2) of an dialogue", function() {
+        before(function() {
+          var line1 = utils.buildStringWithLength(34, "1") + ".";
+          var line2 = utils.buildStringWithLength(34, "2") + ".";
+          sentences = [line1, line2];
+          lastLineText = line1 + line2;
+        });
+
+        it("moves the entire dialogue for next page", function(done) {
+          var wholeElement = lastLineText;
+          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+        });
+      });
+    });
+
+    context("and there is room on previous page for more than the minimum line (+1)", function() {
+      before(function() {
+        // give enough space for first 3 lines of dialogue to fit on first page
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+        var line1 = utils.buildStringWithLength(34, "1") + ".";
+        var line2 = utils.buildStringWithLength(34, "2") + ".";
+        var line3 = utils.buildStringWithLength(34, "3") + ".";
+        var line4 = utils.buildStringWithLength(34, "4") + ".";
+        var line5 = utils.buildStringWithLength(34, "5") + ".";
+        var line6 = utils.buildStringWithLength(34, "6") + ".";
+        sentences = [line1, line2, line3, line4, line5, line6];
+        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+      });
+
+      it("splits dialogue between the two pages, and first page has as much lines as it can fit", function(done) {
+        var beforeLastLine = sentences[3];
+        splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+      });
+
+      context("but next page will have less then the minimum lines (2) of an dialogue", function() {
+        before(function() {
+          // give enough space for first 5 lines of dialogue to fit on first page (which would leave
+          // only one line on next page)
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 5;
+        });
+
+        it("splits dialogue between the two pages, and second page keep the minimum lines it needs", function(done) {
+          var beforeLastLine = sentences[4];
+          splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+        });
+      });
+    });
+  });
+
+  context("when first line of page is a very long parenthetical", function() {
+    before(function() {
+      buildTargetElement = function() {
+        return utils.parenthetical(lastLineText);
+      };
+    });
+
+    context("and there is room on previous page for minimum number of lines (1)", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
+        var line1 = utils.buildStringWithLength(24, "1") + ".";
+        // build sentence that is ~1.25 line long (when split it needs 2 lines)
+        var line2 = utils.buildStringWithLength(30, "2") + ".";
+        sentences = [line1, line2];
+        lastLineText = line1 + line2;
+      });
+
+      it("splits parenthetical between the two pages, and first page has one line of the parenthetical", function(done) {
+        // as line is split into two blocks, the page break will be placed on the
+        // first 25 chars of original second sentence
+        var newThirdLine = sentences[1].substring(0, 25);
+        splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+      });
+
+      context("but next page will have less then the minimum lines (2) of an parenthetical", function() {
+        before(function() {
+          var line1 = utils.buildStringWithLength(24, "1") + ".";
+          var line2 = utils.buildStringWithLength(24, "2") + ".";
+          sentences = [line1, line2];
+          lastLineText = line1 + line2;
+        });
+
+        it("moves the entire parenthetical for next page", function(done) {
+          var wholeElement = lastLineText;
+          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+        });
+      });
+    });
+
+    context("and there is room on previous page for more than the minimum line (+1)", function() {
+      before(function() {
+        // give enough space for first 3 lines of parenthetical to fit on first page
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+        var line1 = utils.buildStringWithLength(24, "1") + ".";
+        var line2 = utils.buildStringWithLength(24, "2") + ".";
+        var line3 = utils.buildStringWithLength(24, "3") + ".";
+        var line4 = utils.buildStringWithLength(24, "4") + ".";
+        var line5 = utils.buildStringWithLength(24, "5") + ".";
+        var line6 = utils.buildStringWithLength(24, "6") + ".";
+        sentences = [line1, line2, line3, line4, line5, line6];
+        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+      });
+
+      it("splits parenthetical between the two pages, and first page has as much lines as it can fit", function(done) {
+        var beforeLastLine = sentences[3];
+        splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+      });
+
+      context("but next page will have less then the minimum lines (2) of an parenthetical", function() {
+        before(function() {
+          // give enough space for first 5 lines of parenthetical to fit on first page (which would leave
+          // only one line on next page)
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 5;
+        });
+
+        it("splits parenthetical between the two pages, and second page keep the minimum lines it needs", function(done) {
+          var beforeLastLine = sentences[4];
+          splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+        });
+      });
+    });
+  });
+
   context("when first line of page is a very long heading", function() {
     before(function() {
       linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
