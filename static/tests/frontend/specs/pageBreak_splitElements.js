@@ -55,7 +55,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       // wait for edition to be processed and pagination to be complete
       helper.waitFor(function() {
         var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
-        var $firstPageBreak = $splitElementsWithPageBreaks.first();
+        var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
 
         // page break was added to third line of first very long general
         return $firstPageBreak.text() === line3;
@@ -609,7 +609,7 @@ ep_script_page_view_test_helper.splitElements = {
     expect($splitElementsWithPageBreaks.length).to.be(1);
 
     // verify page break is on targetElement
-    var $firstPageBreak = $splitElementsWithPageBreaks.first();
+    var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
     expect($firstPageBreak.text()).to.be(textAfterPageBreak);
 
     done();

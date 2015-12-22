@@ -25,7 +25,7 @@ exports.aceCreateDomLine = function(hook, context){
 
   if (cls.match('splitPageBreak')){
     var modifier = {
-      extraOpenTags: '<elementPageBreak/>',
+      extraOpenTags: '<elementPageBreak></elementPageBreak>',
       extraCloseTags: '',
       cls: ''
     };
