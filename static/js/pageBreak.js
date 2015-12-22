@@ -7,6 +7,42 @@ var REGULAR_LINES_PER_PAGE = 58;
 
 var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
 
+// number of minimum lines each element needs before a page break so it can be split in two parts
+// (default is 1)
+var MINIMUM_LINES_BEFORE_PAGE_BREAK = {
+  action: 2,
+};
+
+// number of minimum lines each element needs after a page break so it can be split in two parts
+// (default is 1)
+var MINIMUM_LINES_AFTER_PAGE_BREAK = {
+  action: 2,
+  transition: 2,
+  dialogue: 2,
+  parenthetical: 2,
+};
+
+// number of chars each element can hold in a single line
+// (default is 61)
+var CHARS_PER_LINE = {
+  character: 38,
+  dialogue: 35,
+  transition: 15,
+  parenthetical: 25,
+};
+
+// indicates if element can be split between two pages
+var CAN_BE_SPLIT = {
+  general: true,
+  action: true,
+  transition: true,
+  dialogue: true,
+  parenthetical: true,
+  heading: false,
+  character: false,
+  shot: false,
+};
+
 // HACK: page breaks are not *permanently* drawn until everything is setup on the editor.
 // To be able to have page breaks drawn when opening the script (before user starts changing
 // the script), we need to force redrawPageBreaks() to run on the first Etherpad "tic"
@@ -344,7 +380,8 @@ var getSplitInfo = function($line, totalOutterHeight, availableHeightOnPage, con
 
 var canSplit = function($line) {
   var typeOfLine = typeOf($line);
-  return typeOfLine !== "character" && typeOfLine !== "heading" && typeOfLine !== "shot";
+  var canBeSplit = CAN_BE_SPLIT[typeOfLine];
+  return canBeSplit;
 }
 
 var getNumberOfInnerLinesThatFitOnPage = function($line, totalOutterHeight, availableHeight) {
@@ -359,14 +396,14 @@ var getNumberOfInnerLinesThatFitOnPage = function($line, totalOutterHeight, avai
 
 var getMinimumLinesBeforePageBreakFor = function($line) {
   var typeOfLine = typeOf($line);
-  if (typeOfLine === "action") return 2;
-  return 1;
+  var minimumLines = MINIMUM_LINES_BEFORE_PAGE_BREAK[typeOfLine] || 1;
+  return minimumLines;
 }
 
 var getMinimumLinesAfterPageBreakFor = function($line) {
   var typeOfLine = typeOf($line);
-  if (typeOfLine === "action" || typeOfLine === "transition" || typeOfLine === "dialogue" || typeOfLine === "parenthetical") return 2;
-  return 1;
+  var minimumLines = MINIMUM_LINES_AFTER_PAGE_BREAK[typeOfLine] || 1;
+  return minimumLines;
 }
 
 var calculateElementSplitPosition = function(innerLineNumber, $line, context) {
@@ -455,11 +492,8 @@ var checkLineHasMarker = function(lineNumber, context) {
 
 var getInnerLineLengthOf = function($line) {
   var typeOfLine = typeOf($line);
-  if (typeOfLine === "character") return 38;
-  if (typeOfLine === "dialogue") return 35;
-  if (typeOfLine === "transition") return 15;
-  if (typeOfLine === "parenthetical") return 25;
-  return 61;
+  var lineLength = CHARS_PER_LINE[typeOfLine] || 61;
+  return lineLength;
 }
 
 var getColumnOfEndOfInnerLineOrEndOfText = function(startIndex, fullText, $line) {
