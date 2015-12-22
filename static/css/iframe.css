@@ -123,6 +123,19 @@
   */
   }
 
+  /* Override margin-right of elements that have a right margin defined.
+     Value should be === default margin-right (-79) - element margin-right.
+  */
+  #innerdocbody.breakPages div parenthetical elementPageBreak:before {
+    margin-right:-227px;
+  }
+  #innerdocbody.breakPages div dialogue elementPageBreak:before {
+    margin-right:-190px;
+  }
+  #innerdocbody.breakPages div transition elementPageBreak:before {
+    margin-right:-118px;
+  }
+
   .outerBackground{
     background-color:#f7f7f7 !important;
     width: 641px;
