@@ -106,10 +106,10 @@
   }
 
   #innerdocbody.breakPages div more:before,
-  #innerdocbody.breakPages div contd:before {
+  #innerdocbody.breakPages div contd:before,
+  #innerdocbody.breakPages div contd:after {
     float: left; /* need this to not allow caret to be placed on element */
     cursor: default;
-    text-transform: uppercase;
   }
 
   #innerdocbody.breakPages div more:before {
@@ -118,21 +118,46 @@
   #innerdocbody.breakPages[lang=pt-br] div more:before {
     content: "(MAIS)";
   }
+
   #innerdocbody.breakPages div contd:before {
-    content: " (CONT'D)";
+    content: attr(data-character);
+    text-transform: uppercase;
+
+    /* the following attributes are necessary to display ellipsis when character name is too long */
+    max-width: calc(100% - 64px);
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
+  /* override width because label in pt-br is shorter */
   #innerdocbody.breakPages[lang=pt-br] div contd:before {
-    content: " (CONT.)";
+    max-width: calc(100% - 58px);
+  }
+
+  #innerdocbody.breakPages div contd:after {
+    content: "(CONT'D)";
+
+    /* the following attributes are necessary to display ellipsis when character name is too long */
+    width: 64px;
+    text-align: right;
+  }
+  #innerdocbody.breakPages[lang=pt-br] div contd:after {
+    content: "(CONT.)";
+
+    /* override width because label in pt-br is shorter */
+    width: 58px;
   }
 
   /* element-specific margins */
-  #innerdocbody.breakPages div parenthetical more:before,
-  #innerdocbody.breakPages div parenthetical contd:before {
+  #innerdocbody.breakPages div parenthetical more,
+  #innerdocbody.breakPages div parenthetical contd {
     margin-left: 48px;
+    margin-right: -128px;
   }
-  #innerdocbody.breakPages div dialogue more:before,
-  #innerdocbody.breakPages div dialogue contd:before {
+  #innerdocbody.breakPages div dialogue more,
+  #innerdocbody.breakPages div dialogue contd {
     margin-left: 76px;
+    margin-right: -111px;
   }
 
   #innerdocbody.breakPages div elementPageBreak:before,

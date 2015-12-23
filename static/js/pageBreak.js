@@ -1,4 +1,5 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
+var Security = require('ep_etherpad-lite/static/js/security');
 
 // Letter
 // var REGULAR_LINES_PER_PAGE = 54;
@@ -50,6 +51,8 @@ var HAVE_MORE_AND_CONTD = {
   parenthetical: true,
 }
 
+var EMPTY_CHARACTER_NAME = "empty";
+
 // HACK: page breaks are not *permanently* drawn until everything is setup on the editor.
 // To be able to have page breaks drawn when opening the script (before user starts changing
 // the script), we need to force redrawPageBreaks() to run on the first Etherpad "tic"
@@ -58,8 +61,17 @@ var HAVE_MORE_AND_CONTD = {
 var firstPageBreakRedrawNotRunYet = true;
 
 exports.aceAttribsToClasses = function(hook, context) {
-  if(context.key === 'splitPageBreak' || context.key === 'splitPageBreakWithMoreAndContd'){
+  // simple split page break, return only the flag as class
+  if(context.key === 'splitPageBreak') {
     return [context.key];
+  }
+  // split page break with MORE/CONT'D, return splitPageBreakWithMoreAndContd:<character name>
+  else if (context.key === 'splitPageBreakWithMoreAndContd') {
+    var characterName = context.value;
+    if (characterName === EMPTY_CHARACTER_NAME) {
+      characterName = "";
+    }
+    return ['splitPageBreakWithMoreAndContd:<' + Security.escapeHTMLAttribute(characterName) + '>'];
   }
 }
 
@@ -68,7 +80,10 @@ exports.aceCreateDomLine = function(hook, context){
   var extraHTML;
 
   if (cls.match('splitPageBreakWithMoreAndContd')){
-    extraHTML = '<more></more><elementPageBreak></elementPageBreak><contd></contd>';
+    var characterName = extractCharacterNameFrom(cls);
+    extraHTML  = '<more></more>';
+    extraHTML += '<elementPageBreak></elementPageBreak>';
+    extraHTML += '<contd data-character="' + characterName + '"></contd>';
   } else if (cls.match('splitPageBreak')){
     extraHTML = '<elementPageBreak></elementPageBreak>';
   }
@@ -83,6 +98,14 @@ exports.aceCreateDomLine = function(hook, context){
   }
   return [];
 };
+
+var extractCharacterNameFrom = function(cls) {
+  var regex  = "(?:^| )splitPageBreakWithMoreAndContd:<([^>]*)>"; // "splitPageBreakWithMoreAndContd:<character name>"
+  var characterNameFound = cls.match(new RegExp(regex));
+  var characterName = characterNameFound ? characterNameFound[1] : "";
+
+  return characterName;
+}
 
 exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
@@ -200,7 +223,7 @@ var cleanPageBreaksOverSplitElements = function(context) {
   var docEnd          = [totalLines+1,0];
 
   var removePageBreak                 = [["splitPageBreak", false]];
-  var removePageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", false]];
+  var removePageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", '']];
 
   performNonUnduableEvent(cs, function() {
     attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreak);
@@ -437,11 +460,11 @@ var calculateElementSplitPosition = function(innerLineNumber, $line, context) {
     var columnOfEndOfLineAfterSentenceMarker = getColumnOfEndOfInnerLineOrEndOfText(position.column, lineText, $line);
     var afterLastSentenceThatFits            = [lineNumber, position.column];
     var endOfLineAfterLastSentenceThatFits   = [lineNumber, columnOfEndOfLineAfterSentenceMarker];
-    var shouldAddMoreAndContd                = lineShouldHaveMoreAndContd($line);
+    var moreAndContdInfo                     = getMoreAndContdInfo($line);
 
     return {
       heightAfterPageBreak: position.heightAfterPageBreak,
-      addMoreAndContd: shouldAddMoreAndContd,
+      addMoreAndContd: moreAndContdInfo,
       start: afterLastSentenceThatFits,
       end: endOfLineAfterLastSentenceThatFits
     };
@@ -481,23 +504,47 @@ var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, context, 
   }
 }
 
-var lineShouldHaveMoreAndContd = function($line) {
+var getMoreAndContdInfo = function($line) {
   var typeOfLine = typeOf($line);
-  return HAVE_MORE_AND_CONTD[typeOfLine];
+  if (HAVE_MORE_AND_CONTD[typeOfLine]) {
+    return {
+      characterName: findCharacterNameOf($line),
+    };
+  }
+  return false;
+}
+
+var findCharacterNameOf = function($line) {
+  // navigate up until find an element that is not a dialogue or parenthetical
+  // (include $line because there might be no dialogue or parenthetical before it, so the result would
+  // be empty)
+  var $firstElementOfDialogueOfBlock = $line.prevUntil("div:not(:has(dialogue,parenthetical))").andSelf().last();
+
+  // element before dialogue block should be a character -- if it is not, the text will be ""
+  var $characterBeforeDialogueBlock = $firstElementOfDialogueOfBlock.prev().find("character");
+
+  // we cannot store "" as character name, Etherpad considers this an inexistent attribute. So we
+  // store a fake value and replace it by "" when showing on editor
+  var characterName = $characterBeforeDialogueBlock.text().toUpperCase() || EMPTY_CHARACTER_NAME;
+
+  return characterName;
 }
 
 var splitElementsOnPositions = function(splitPositions, context) {
   var attributeManager = context.documentAttributeManager;
   var cs               = context.callstack;
 
-  var addPageBreak                 = [["splitPageBreak", true]];
-  var addPageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", true]];
+  var addPageBreak = [["splitPageBreak", true]];
 
   performNonUnduableEvent(cs, function() {
     for (var i = splitPositions.length - 1; i >= 0; i--) {
       var splitPosition = splitPositions[i];
 
-      var pageBreakType = splitPosition.addMoreAndContd ? addPageBreakWithMoreAndContd : addPageBreak;
+      var pageBreakType = addPageBreak;
+      if (splitPosition.addMoreAndContd) {
+        var addPageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", splitPosition.addMoreAndContd.characterName]];
+        pageBreakType = addPageBreakWithMoreAndContd;
+      }
 
       attributeManager.setAttributesOnRange(splitPosition.start, splitPosition.end, pageBreakType);
     };

@@ -438,10 +438,6 @@ describe("ep_script_page_view - page break on split elements", function() {
         splitElements.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
-      it("adds the MORE/CONT'D tags", function(done) {
-        splitElements.testSplitPageBreakHasMoreAndContd(done);
-      });
-
       context("but next page will have less then the minimum lines (2) of an dialogue", function() {
         before(function() {
           var line1 = utils.buildStringWithLength(34, "1") + ".";
@@ -453,6 +449,42 @@ describe("ep_script_page_view - page break on split elements", function() {
         it("moves the entire dialogue for next page", function(done) {
           var wholeElement = lastLineText;
           splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+        });
+      });
+
+      context("and there is no character before dialogue", function() {
+        before(function() {
+          var line1 = utils.buildStringWithLength(34, "1") + ".";
+          var line2 = utils.buildStringWithLength(45, "2") + ".";
+          sentences = [line1, line2];
+          lastLineText = line1 + line2;
+        });
+
+        it("adds the MORE/CONT'D tags with an empty character name", function(done) {
+          var characterName = "";
+          splitElements.testSplitPageBreakHasMoreAndContd(characterName, done);
+        });
+      });
+
+      context("and there is a character before dialogue", function() {
+        before(function() {
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+          var character = utils.character("joe's (V.O.)");
+          var dialogue = utils.dialogue(lastLineText);
+          buildTargetElement = function() {
+            return character + dialogue;
+          };
+        });
+        // revert changed buildTargetElement
+        after(function() {
+          buildTargetElement = function() {
+            return utils.dialogue(lastLineText);
+          };
+        });
+
+        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
+          var characterName = "JOE'S (V.O.)";
+          splitElements.testSplitPageBreakHasMoreAndContd(characterName, done);
         });
       });
     });
@@ -515,10 +547,6 @@ describe("ep_script_page_view - page break on split elements", function() {
         splitElements.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
-      it("adds the MORE/CONT'D tags", function(done) {
-        splitElements.testSplitPageBreakHasMoreAndContd(done);
-      });
-
       context("but next page will have less then the minimum lines (2) of an parenthetical", function() {
         before(function() {
           var line1 = utils.buildStringWithLength(24, "1") + ".";
@@ -530,6 +558,43 @@ describe("ep_script_page_view - page break on split elements", function() {
         it("moves the entire parenthetical for next page", function(done) {
           var wholeElement = lastLineText;
           splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+        });
+      });
+
+      context("and there is no character before parenthetical", function() {
+        before(function() {
+          var line1 = utils.buildStringWithLength(24, "1") + ".";
+          var line2 = utils.buildStringWithLength(30, "2") + ".";
+          sentences = [line1, line2];
+          lastLineText = line1 + line2;
+        });
+
+        it("adds the MORE/CONT'D tags with an empty character name", function(done) {
+          var characterName = "";
+          splitElements.testSplitPageBreakHasMoreAndContd(characterName, done);
+        });
+      });
+
+      context("and there is a character before parenthetical", function() {
+        before(function() {
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+          var character = utils.character("joe's (V.O.)");
+          var parenthetical = utils.parenthetical(lastLineText);
+          buildTargetElement = function() {
+            return character + parenthetical;
+          };
+        });
+
+        // revert changed buildTargetElement
+        after(function() {
+          buildTargetElement = function() {
+            return utils.parenthetical(lastLineText);
+          };
+        });
+
+        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
+          var characterName = "JOE'S (V.O.)";
+          splitElements.testSplitPageBreakHasMoreAndContd(characterName, done);
         });
       });
     });
@@ -664,7 +729,7 @@ ep_script_page_view_test_helper.splitElements = {
     done();
   },
 
-  testSplitPageBreakHasMoreAndContd: function(done) {
+  testSplitPageBreakHasMoreAndContd: function(expectedCharacterName, done) {
     var inner$ = helper.padInner$;
 
     // verify there is a MORE tag
@@ -674,6 +739,10 @@ ep_script_page_view_test_helper.splitElements = {
     // verify there is a CONT'D tag
     var $contdTags = inner$("div contd");
     expect($contdTags.length).to.be(1);
+
+    // verify character name is correct
+    var actualCharacterName = $contdTags.first().attr("data-character");
+    expect(actualCharacterName).to.be(expectedCharacterName);
 
     done();
   },
