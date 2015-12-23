@@ -38,6 +38,7 @@ describe("ep_script_page_view - page break on split elements", function() {
     });
 
     it("removes existing page breaks and recalculates new ones when user changes pad content", function(done) {
+      this.timeout(5000);
       var inner$ = helper.padInner$;
 
       // there should be a page break before we start testing
@@ -72,6 +73,10 @@ describe("ep_script_page_view - page break on split elements", function() {
       it("splits general between the two pages, and first page has one line of the general", function(done) {
         var secondLine = sentences[1];
         splitElements.testSplitPageBreakIsOn(secondLine, done);
+      });
+
+      it("does not add the MORE/CONT'D tags", function(done) {
+        splitElements.testSplitPageBreakDoNotHaveMoreNorContd(done);
       });
     });
 
@@ -278,6 +283,10 @@ describe("ep_script_page_view - page break on split elements", function() {
         splitElements.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
+      it("does not add the MORE/CONT'D tags", function(done) {
+        splitElements.testSplitPageBreakDoNotHaveMoreNorContd(done);
+      });
+
       context("but next page will have less then the minimum lines (2) of an action", function() {
         before(function() {
           var line1 = utils.buildStringWithLength(60, "1") + ".";
@@ -350,6 +359,10 @@ describe("ep_script_page_view - page break on split elements", function() {
         // first 15 chars of original second sentence
         var newThirdLine = sentences[1].substring(0, 15);
         splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+      });
+
+      it("does not add the MORE/CONT'D tags", function(done) {
+        splitElements.testSplitPageBreakDoNotHaveMoreNorContd(done);
       });
 
       context("but next page will have less then the minimum lines (2) of an transition", function() {
@@ -425,6 +438,10 @@ describe("ep_script_page_view - page break on split elements", function() {
         splitElements.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
+      it("adds the MORE/CONT'D tags", function(done) {
+        splitElements.testSplitPageBreakHasMoreAndContd(done);
+      });
+
       context("but next page will have less then the minimum lines (2) of an dialogue", function() {
         before(function() {
           var line1 = utils.buildStringWithLength(34, "1") + ".";
@@ -496,6 +513,10 @@ describe("ep_script_page_view - page break on split elements", function() {
         // first 25 chars of original second sentence
         var newThirdLine = sentences[1].substring(0, 25);
         splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+      });
+
+      it("adds the MORE/CONT'D tags", function(done) {
+        splitElements.testSplitPageBreakHasMoreAndContd(done);
       });
 
       context("but next page will have less then the minimum lines (2) of an parenthetical", function() {
@@ -625,6 +646,34 @@ ep_script_page_view_test_helper.splitElements = {
     // verify page break is above targetElement
     var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
     expect($firstPageBreak.text()).to.be(textAfterPageBreak);
+
+    done();
+  },
+
+  testSplitPageBreakDoNotHaveMoreNorContd: function(done) {
+    var inner$ = helper.padInner$;
+
+    // verify there is no MORE tag
+    var $moreTags = inner$("div more");
+    expect($moreTags.length).to.be(0);
+
+    // verify there is no CONT'D tag
+    var $contdTags = inner$("div contd");
+    expect($contdTags.length).to.be(0);
+
+    done();
+  },
+
+  testSplitPageBreakHasMoreAndContd: function(done) {
+    var inner$ = helper.padInner$;
+
+    // verify there is a MORE tag
+    var $moreTags = inner$("div more");
+    expect($moreTags.length).to.be(1);
+
+    // verify there is a CONT'D tag
+    var $contdTags = inner$("div contd");
+    expect($contdTags.length).to.be(1);
 
     done();
   },

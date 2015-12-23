@@ -43,6 +43,13 @@ var CAN_BE_SPLIT = {
   shot: false,
 };
 
+// indicates if element should have MORE/CONT'D when split between pages
+// (default is false)
+var HAVE_MORE_AND_CONTD = {
+  dialogue: true,
+  parenthetical: true,
+}
+
 // HACK: page breaks are not *permanently* drawn until everything is setup on the editor.
 // To be able to have page breaks drawn when opening the script (before user starts changing
 // the script), we need to force redrawPageBreaks() to run on the first Etherpad "tic"
@@ -51,17 +58,24 @@ var CAN_BE_SPLIT = {
 var firstPageBreakRedrawNotRunYet = true;
 
 exports.aceAttribsToClasses = function(hook, context) {
-  if(context.key === 'splitPageBreak'){
+  if(context.key === 'splitPageBreak' || context.key === 'splitPageBreakWithMoreAndContd'){
     return [context.key];
   }
 }
 
 exports.aceCreateDomLine = function(hook, context){
   var cls = context.cls;
+  var extraHTML;
 
-  if (cls.match('splitPageBreak')){
+  if (cls.match('splitPageBreakWithMoreAndContd')){
+    extraHTML = '<more></more><elementPageBreak></elementPageBreak><contd></contd>';
+  } else if (cls.match('splitPageBreak')){
+    extraHTML = '<elementPageBreak></elementPageBreak>';
+  }
+
+  if (extraHTML){
     var modifier = {
-      extraOpenTags: '<elementPageBreak></elementPageBreak>',
+      extraOpenTags: extraHTML,
       extraCloseTags: '',
       cls: ''
     };
@@ -184,10 +198,13 @@ var cleanPageBreaksOverSplitElements = function(context) {
   var totalLines      = context.rep.lines.length();
   var docStart        = [0,0];
   var docEnd          = [totalLines+1,0];
-  var removePageBreak = [["splitPageBreak", false]];
+
+  var removePageBreak                 = [["splitPageBreak", false]];
+  var removePageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", false]];
 
   performNonUnduableEvent(cs, function() {
     attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreak);
+    attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreakWithMoreAndContd);
   });
 }
 
@@ -240,13 +257,16 @@ var calculatePageBreaks = function($lines, context) {
 
         var availableHeightOnPage = maxPageHeight - currentPageHeight;
         var splitElementInfo = getSplitInfo($currentLine, lineHeight, availableHeightOnPage, context);
+        // can we split current line?
         if (splitElementInfo) {
           // restart counting page height again
           currentPageHeight = splitElementInfo.heightAfterPageBreak;
 
           // mark element to be split when pagination is done
           elementsToBeSplit.push(splitElementInfo);
-        } else {
+        }
+        // is it a block of lines? (A block can have only a single line too)
+        else {
           var blockInfo = getBlockInfo($currentLine);
 
           currentPageHeight = blockInfo.blockHeight;
@@ -417,9 +437,11 @@ var calculateElementSplitPosition = function(innerLineNumber, $line, context) {
     var columnOfEndOfLineAfterSentenceMarker = getColumnOfEndOfInnerLineOrEndOfText(position.column, lineText, $line);
     var afterLastSentenceThatFits            = [lineNumber, position.column];
     var endOfLineAfterLastSentenceThatFits   = [lineNumber, columnOfEndOfLineAfterSentenceMarker];
+    var shouldAddMoreAndContd                = lineShouldHaveMoreAndContd($line);
 
     return {
       heightAfterPageBreak: position.heightAfterPageBreak,
+      addMoreAndContd: shouldAddMoreAndContd,
       start: afterLastSentenceThatFits,
       end: endOfLineAfterLastSentenceThatFits
     };
@@ -459,16 +481,25 @@ var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, context, 
   }
 }
 
+var lineShouldHaveMoreAndContd = function($line) {
+  var typeOfLine = typeOf($line);
+  return HAVE_MORE_AND_CONTD[typeOfLine];
+}
+
 var splitElementsOnPositions = function(splitPositions, context) {
   var attributeManager = context.documentAttributeManager;
   var cs               = context.callstack;
 
-  var addPageBreak = [["splitPageBreak", true]];
+  var addPageBreak                 = [["splitPageBreak", true]];
+  var addPageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", true]];
 
   performNonUnduableEvent(cs, function() {
     for (var i = splitPositions.length - 1; i >= 0; i--) {
       var splitPosition = splitPositions[i];
-      attributeManager.setAttributesOnRange(splitPosition.start, splitPosition.end, addPageBreak);
+
+      var pageBreakType = splitPosition.addMoreAndContd ? addPageBreakWithMoreAndContd : addPageBreak;
+
+      attributeManager.setAttributesOnRange(splitPosition.start, splitPosition.end, pageBreakType);
     };
   });
 }

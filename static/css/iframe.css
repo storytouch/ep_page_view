@@ -99,8 +99,40 @@
   }
 */
 
-  #innerdocbody.breakPages div elementPageBreak {
+  #innerdocbody.breakPages div elementPageBreak,
+  #innerdocbody.breakPages div more,
+  #innerdocbody.breakPages div contd {
     display: block;
+  }
+
+  #innerdocbody.breakPages div more:before,
+  #innerdocbody.breakPages div contd:before {
+    float: left; /* need this to not allow caret to be placed on element */
+    cursor: default;
+    text-transform: uppercase;
+  }
+
+  #innerdocbody.breakPages div more:before {
+    content: "(MORE)";
+  }
+  #innerdocbody.breakPages[lang=pt-br] div more:before {
+    content: "(MAIS)";
+  }
+  #innerdocbody.breakPages div contd:before {
+    content: " (CONT'D)";
+  }
+  #innerdocbody.breakPages[lang=pt-br] div contd:before {
+    content: " (CONT.)";
+  }
+
+  /* element-specific margins */
+  #innerdocbody.breakPages div parenthetical more:before,
+  #innerdocbody.breakPages div parenthetical contd:before {
+    margin-left: 48px;
+  }
+  #innerdocbody.breakPages div dialogue more:before,
+  #innerdocbody.breakPages div dialogue contd:before {
+    margin-left: 76px;
   }
 
   #innerdocbody.breakPages div elementPageBreak:before,
