@@ -374,6 +374,20 @@ var getBlockInfo = function($currentLine) {
       blockInfo.$topOfBlock = $previousLine;
     }
     // block type:
+    // character => (parenthetical || dialogue) (only one line of text) => (parenthetical || dialogue)
+    //                                                                     +------ $currentLine -----+
+    else if ((typeOfPreviousLine === "parenthetical" || typeOfPreviousLine === "dialogue")
+      &&
+      getNumberOfInnerLinesOf($previousLine) === 1) {
+      var $lineBeforePrevious = $previousLine.prev();
+      var typeOfLineBeforePrevious = typeOf($lineBeforePrevious);
+      if (typeOfLineBeforePrevious === "character") {
+        var blockHeight = currentLineHeight + getLineHeight($previousLine) + getLineHeight($lineBeforePrevious);
+        blockInfo.blockHeight = blockHeight;
+        blockInfo.$topOfBlock = $lineBeforePrevious;
+      }
+    }
+    // block type:
     // !(character) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
     //                 +------------------ $currentLine -----------------+
     else if ((typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
