@@ -365,8 +365,25 @@ var getBlockInfo = function($currentLine) {
     }
   }
   // block type:
-  // (*) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
-  //        +------------------ $currentLine -----------------+
+  // character => (parenthetical || dialogue)
+  //              +------ $currentLine -----+
+  else if (typeOfCurrentLine === "parenthetical" || typeOfCurrentLine === "dialogue") {
+    if (typeOfPreviousLine === "character") {
+      var blockHeight = currentLineHeight + getLineHeight($previousLine);
+      blockInfo.blockHeight = blockHeight;
+      blockInfo.$topOfBlock = $previousLine;
+    }
+    // block type:
+    // !(character) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
+    //                 +------------------ $currentLine -----------------+
+    else if ((typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
+      &&
+      getNumberOfInnerLinesOf($currentLine) === 1) {
+      var blockHeight = currentLineHeight + getLineHeight($previousLine);
+      blockInfo.blockHeight = blockHeight;
+      blockInfo.$topOfBlock = $previousLine;
+    }
+  }
   else if ((typeOfCurrentLine === "parenthetical" || typeOfCurrentLine === "dialogue")
      &&
      (typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
