@@ -1,12 +1,11 @@
 describe("ep_script_page_view - page break on split elements", function() {
   // shortcuts for helper functions
-  var utils, splitElements;
+  var utils;
   // context-dependent values/functions
   var linesBeforeTargetElement, buildTargetElement, lastLineText, sentences;
 
   before(function(){
     utils = ep_script_page_view_test_helper.utils;
-    splitElements = ep_script_page_view_test_helper.splitElements;
   });
 
   beforeEach(function(cb){
@@ -42,7 +41,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       var inner$ = helper.padInner$;
 
       // there should be a page break before we start testing
-      var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
+      var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
       expect($splitElementsWithPageBreaks.length).to.be(1);
 
       // create another very long general before the last one, so pagination needs to be re-done
@@ -55,14 +54,14 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       // wait for edition to be processed and pagination to be complete
       helper.waitFor(function() {
-        var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
+        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
         var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
 
         // page break was added to third line of first very long general
         return $firstPageBreak.text() === line3;
       }).done(function() {
         // now there should be only a single page break (on the first very long general)
-        var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
+        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
         expect($splitElementsWithPageBreaks.length).to.be(1);
 
         done();
@@ -72,11 +71,11 @@ describe("ep_script_page_view - page break on split elements", function() {
     context("and there is room on previous page for minimum number of lines (1)", function() {
       it("splits general between the two pages, and first page has one line of the general", function(done) {
         var secondLine = sentences[1];
-        splitElements.testSplitPageBreakIsOn(secondLine, done);
+        utils.testSplitPageBreakIsOn(secondLine, done);
       });
 
       it("does not add the MORE/CONT'D tags", function(done) {
-        splitElements.testSplitPageBreakDoNotHaveMoreNorContd(done);
+        utils.testPageBreakDoNotHaveMoreNorContd(done);
       });
     });
 
@@ -88,7 +87,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       it("splits general between the two pages, and first page has as much lines as it can fit", function(done) {
         var lastLine = sentences[3];
-        splitElements.testSplitPageBreakIsOn(lastLine, done);
+        utils.testSplitPageBreakIsOn(lastLine, done);
       });
     });
 
@@ -100,7 +99,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       it("moves the entire general for next page", function(done) {
         var wholeElement = lastLineText;
-        splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+        utils.testNonSplitPageBreakIsOn(wholeElement, done);
       });
     });
 
@@ -119,7 +118,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         var inner$ = helper.padInner$;
 
         // there should be a page break before we start testing
-        var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
+        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
         expect($splitElementsWithPageBreaks.length).to.be(1);
 
         // edit one element
@@ -157,7 +156,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       it("splits general at the end of first sentence", function(done) {
         var lastSentence = sentences[1];
-        splitElements.testSplitPageBreakIsOn(lastSentence, done);
+        utils.testSplitPageBreakIsOn(lastSentence, done);
       });
 
       context("and there is no delimiter for end of sentence", function() {
@@ -170,7 +169,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("moves the entire general for next page", function(done) {
           var wholeElement = lastLineText;
-          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
     });
@@ -191,7 +190,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       it("moves the entire general for next page", function(done) {
         var wholeElement = lastLineText;
-        splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+        utils.testNonSplitPageBreakIsOn(wholeElement, done);
       });
     });
 
@@ -228,14 +227,14 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         // wait for edition to be processed and pagination to be complete
         helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
+          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
           return $splitElementsWithPageBreaks.length > 0;
         }).done(function() {
           // 1: verify first page break was added between the two sentences of 57th line
           var topLineOfSentence2 = sentence2.substring(0, 61);
-          splitElements.testSplitPageBreakIsOn(topLineOfSentence2, function() {
+          utils.testSplitPageBreakIsOn(topLineOfSentence2, function() {
             // 2: verify second page break was added on top of last line
-            splitElements.testNonSplitPageBreakIsOn(lastLineText, done);
+            utils.testNonSplitPageBreakIsOn(lastLineText, done);
           });
         });
       });
@@ -262,7 +261,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       it("moves the entire action for next page", function(done) {
         var wholeElement = lastLineText;
-        splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+        utils.testNonSplitPageBreakIsOn(wholeElement, done);
       });
     });
 
@@ -280,11 +279,11 @@ describe("ep_script_page_view - page break on split elements", function() {
         // as line is split into two blocks of 1.25 lines each, the page break will be placed on the
         // first 61 chars of original second sentence
         var newThirdLine = sentences[1].substring(0,61);
-        splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+        utils.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
       it("does not add the MORE/CONT'D tags", function(done) {
-        splitElements.testSplitPageBreakDoNotHaveMoreNorContd(done);
+        utils.testPageBreakDoNotHaveMoreNorContd(done);
       });
 
       context("but next page will have less then the minimum lines (2) of an action", function() {
@@ -298,7 +297,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("moves the entire action for next page", function(done) {
           var wholeElement = lastLineText;
-          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
     });
@@ -319,7 +318,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       it("splits action between the two pages, and first page has as much lines as it can fit", function(done) {
         var beforeLastLine = sentences[3];
-        splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+        utils.testSplitPageBreakIsOn(beforeLastLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of an action", function() {
@@ -331,7 +330,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("splits action between the two pages, and second page keep the minimum lines it needs", function(done) {
           var beforeLastLine = sentences[4];
-          splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+          utils.testSplitPageBreakIsOn(beforeLastLine, done);
         });
       });
     });
@@ -358,11 +357,11 @@ describe("ep_script_page_view - page break on split elements", function() {
         // as line is split into two blocks, the page break will be placed on the
         // first 15 chars of original second sentence
         var newThirdLine = sentences[1].substring(0, 15);
-        splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+        utils.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
       it("does not add the MORE/CONT'D tags", function(done) {
-        splitElements.testSplitPageBreakDoNotHaveMoreNorContd(done);
+        utils.testPageBreakDoNotHaveMoreNorContd(done);
       });
 
       context("but next page will have less then the minimum lines (2) of an transition", function() {
@@ -375,7 +374,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("moves the entire transition for next page", function(done) {
           var wholeElement = lastLineText;
-          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
     });
@@ -396,7 +395,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       it("splits transition between the two pages, and first page has as much lines as it can fit", function(done) {
         var beforeLastLine = sentences[3];
-        splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+        utils.testSplitPageBreakIsOn(beforeLastLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of an transition", function() {
@@ -408,7 +407,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("splits transition between the two pages, and second page keep the minimum lines it needs", function(done) {
           var beforeLastLine = sentences[4];
-          splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+          utils.testSplitPageBreakIsOn(beforeLastLine, done);
         });
       });
     });
@@ -435,7 +434,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // as line is split into two blocks, the page break will be placed on the
         // first 35 chars of original second sentence
         var newThirdLine = sentences[1].substring(0, 35);
-        splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+        utils.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of an dialogue", function() {
@@ -448,7 +447,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("moves the entire dialogue for next page", function(done) {
           var wholeElement = lastLineText;
-          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
 
@@ -462,7 +461,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("adds the MORE/CONT'D tags with an empty character name", function(done) {
           var characterName = "";
-          splitElements.testSplitPageBreakHasMoreAndContd(characterName, done);
+          utils.testPageBreakHasMoreAndContd(characterName, done);
         });
       });
 
@@ -484,7 +483,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
           var characterName = "JOE'S (V.O.)";
-          splitElements.testSplitPageBreakHasMoreAndContd(characterName, done);
+          utils.testPageBreakHasMoreAndContd(characterName, done);
         });
       });
     });
@@ -505,7 +504,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       it("splits dialogue between the two pages, and first page has as much lines as it can fit", function(done) {
         var beforeLastLine = sentences[3];
-        splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+        utils.testSplitPageBreakIsOn(beforeLastLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of an dialogue", function() {
@@ -517,7 +516,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("splits dialogue between the two pages, and second page keep the minimum lines it needs", function(done) {
           var beforeLastLine = sentences[4];
-          splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+          utils.testSplitPageBreakIsOn(beforeLastLine, done);
         });
       });
     });
@@ -544,7 +543,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // as line is split into two blocks, the page break will be placed on the
         // first 25 chars of original second sentence
         var newThirdLine = sentences[1].substring(0, 25);
-        splitElements.testSplitPageBreakIsOn(newThirdLine, done);
+        utils.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of an parenthetical", function() {
@@ -557,7 +556,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("moves the entire parenthetical for next page", function(done) {
           var wholeElement = lastLineText;
-          splitElements.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
 
@@ -571,7 +570,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("adds the MORE/CONT'D tags with an empty character name", function(done) {
           var characterName = "";
-          splitElements.testSplitPageBreakHasMoreAndContd(characterName, done);
+          utils.testPageBreakHasMoreAndContd(characterName, done);
         });
       });
 
@@ -594,7 +593,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
           var characterName = "JOE'S (V.O.)";
-          splitElements.testSplitPageBreakHasMoreAndContd(characterName, done);
+          utils.testPageBreakHasMoreAndContd(characterName, done);
         });
       });
     });
@@ -615,7 +614,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       it("splits parenthetical between the two pages, and first page has as much lines as it can fit", function(done) {
         var beforeLastLine = sentences[3];
-        splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+        utils.testSplitPageBreakIsOn(beforeLastLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of an parenthetical", function() {
@@ -627,7 +626,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("splits parenthetical between the two pages, and second page keep the minimum lines it needs", function(done) {
           var beforeLastLine = sentences[4];
-          splitElements.testSplitPageBreakIsOn(beforeLastLine, done);
+          utils.testSplitPageBreakIsOn(beforeLastLine, done);
         });
       });
     });
@@ -646,7 +645,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
     it("does not split heading into two parts, one on each page", function(done) {
       var fullElementText = lastLineText;
-      splitElements.testNonSplitPageBreakIsOn(fullElementText, done);
+      utils.testNonSplitPageBreakIsOn(fullElementText, done);
     });
   });
 
@@ -663,7 +662,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
     it("does not split shot into two parts, one on each page", function(done) {
       var fullElementText = lastLineText;
-      splitElements.testNonSplitPageBreakIsOn(fullElementText, done);
+      utils.testNonSplitPageBreakIsOn(fullElementText, done);
     });
   });
 
@@ -680,70 +679,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
     it("does not split character into two parts, one on each page", function(done) {
       var fullElementText = lastLineText;
-      splitElements.testNonSplitPageBreakIsOn(fullElementText, done);
+      utils.testNonSplitPageBreakIsOn(fullElementText, done);
     });
   });
 });
-
-var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
-ep_script_page_view_test_helper.splitElements = {
-  testSplitPageBreakIsOn: function(textAfterPageBreak, done) {
-    var inner$ = helper.padInner$;
-
-    // verify there is one page break
-    var $splitElementsWithPageBreaks = inner$("div elementPageBreak");
-    expect($splitElementsWithPageBreaks.length).to.be(1);
-
-    // verify page break is on targetElement
-    var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
-    expect($firstPageBreak.text()).to.be(textAfterPageBreak);
-
-    done();
-  },
-
-  testNonSplitPageBreakIsOn: function(textAfterPageBreak, done) {
-    var inner$ = helper.padInner$;
-
-    // verify there is one page break
-    var $elementsWithPageBreaksOnTop = inner$("div.pageBreak");
-    expect($elementsWithPageBreaksOnTop.length).to.be(1);
-
-    // verify page break is above targetElement
-    var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
-    expect($firstPageBreak.text()).to.be(textAfterPageBreak);
-
-    done();
-  },
-
-  testSplitPageBreakDoNotHaveMoreNorContd: function(done) {
-    var inner$ = helper.padInner$;
-
-    // verify there is no MORE tag
-    var $moreTags = inner$("div more");
-    expect($moreTags.length).to.be(0);
-
-    // verify there is no CONT'D tag
-    var $contdTags = inner$("div contd");
-    expect($contdTags.length).to.be(0);
-
-    done();
-  },
-
-  testSplitPageBreakHasMoreAndContd: function(expectedCharacterName, done) {
-    var inner$ = helper.padInner$;
-
-    // verify there is a MORE tag
-    var $moreTags = inner$("div more");
-    expect($moreTags.length).to.be(1);
-
-    // verify there is a CONT'D tag
-    var $contdTags = inner$("div contd");
-    expect($contdTags.length).to.be(1);
-
-    // verify character name is correct
-    var actualCharacterName = $contdTags.first().attr("data-character");
-    expect(actualCharacterName).to.be(expectedCharacterName);
-
-    done();
-  },
-}

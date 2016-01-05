@@ -82,4 +82,64 @@ ep_script_page_view_test_helper.utils = {
     var $undoButton = chrome$(".buttonicon-undo");
     $undoButton.click();
   },
+
+  testSplitPageBreakIsOn: function(textAfterPageBreak, done) {
+    var inner$ = helper.padInner$;
+
+    // verify there is one page break
+    var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+    expect($splitElementsWithPageBreaks.length).to.be(1);
+
+    // verify page break is on targetElement
+    var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
+    expect($firstPageBreak.text()).to.be(textAfterPageBreak);
+
+    done();
+  },
+
+  testNonSplitPageBreakIsOn: function(textAfterPageBreak, done) {
+    var inner$ = helper.padInner$;
+
+    // verify there is one page break
+    var $elementsWithPageBreaksOnTop = inner$("div nonSplitPageBreak").parent();
+    expect($elementsWithPageBreaksOnTop.length).to.be(1);
+
+    // verify page break is above targetElement
+    var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
+    expect($firstPageBreak.text()).to.be(textAfterPageBreak);
+
+    done();
+  },
+
+  testPageBreakDoNotHaveMoreNorContd: function(done) {
+    var inner$ = helper.padInner$;
+
+    // verify there is no MORE tag
+    var $moreTags = inner$("div more");
+    expect($moreTags.length).to.be(0);
+
+    // verify there is no CONT'D tag
+    var $contdTags = inner$("div contd");
+    expect($contdTags.length).to.be(0);
+
+    done();
+  },
+
+  testPageBreakHasMoreAndContd: function(expectedCharacterName, done) {
+    var inner$ = helper.padInner$;
+
+    // verify there is a MORE tag
+    var $moreTags = inner$("div more");
+    expect($moreTags.length).to.be(1);
+
+    // verify there is a CONT'D tag
+    var $contdTags = inner$("div contd");
+    expect($contdTags.length).to.be(1);
+
+    // verify character name is correct
+    var actualCharacterName = $contdTags.first().attr("data-character");
+    expect(actualCharacterName).to.be(expectedCharacterName);
+
+    done();
+  },
 }

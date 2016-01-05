@@ -8,6 +8,9 @@ var REGULAR_LINES_PER_PAGE = 58;
 
 var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
 
+var CLEAN_SPLIT_PAGE_BREAKS_OPERATION = [["splitPageBreak", false]];
+var CLEAN_SPLIT_PAGE_BREAKS_WITH_MORE_AND_CONTD_OPERATION = [["splitPageBreakWithMoreAndContd", '']];
+
 // number of minimum lines each element needs before a page break so it can be split in two parts
 // (default is 1)
 var MINIMUM_LINES_BEFORE_PAGE_BREAK = {
@@ -61,18 +64,42 @@ var EMPTY_CHARACTER_NAME = "empty";
 var firstPageBreakRedrawNotRunYet = true;
 
 exports.aceAttribsToClasses = function(hook, context) {
-  // simple split page break, return only the flag as class
-  if(context.key === 'splitPageBreak') {
+  // simple page break, return only the flag as class
+  if(context.key === 'splitPageBreak' || context.key === 'nonSplitPageBreak') {
     return [context.key];
   }
-  // split page break with MORE/CONT'D, return splitPageBreakWithMoreAndContd:<character name>
-  else if (context.key === 'splitPageBreakWithMoreAndContd') {
+  // page break with MORE/CONT'D, return context.key and characterName:<character name>
+  else if (context.key === 'splitPageBreakWithMoreAndContd' || context.key === 'nonSplitPageBreakWithMoreAndContd') {
     var characterName = context.value;
     if (characterName === EMPTY_CHARACTER_NAME) {
       characterName = "";
     }
-    return ['splitPageBreakWithMoreAndContd:<' + Security.escapeHTMLAttribute(characterName) + '>'];
+    return [context.key, 'characterName:<' + Security.escapeHTMLAttribute(characterName) + '>'];
   }
+}
+
+exports.aceDomLineProcessLineAttributes = function(name, context){
+  var cls = context.cls;
+  var extraHTML;
+
+  if (cls.match('nonSplitPageBreakWithMoreAndContd')) {
+    var characterName = extractCharacterNameFrom(cls);
+    extraHTML  = '<more class="nonSplit"></more>';
+    extraHTML += '<nonSplitPageBreak></nonSplitPageBreak>';
+    extraHTML += '<contdLine><contd class="nonSplit" data-character="' + characterName + '"></contd></contdLine>';
+  } else if (cls.match('nonSplitPageBreak')) {
+    extraHTML = '<nonSplitPageBreak></nonSplitPageBreak>';
+  }
+
+  if (extraHTML) {
+    var modifier = {
+      preHtml: extraHTML,
+      postHtml: '',
+      processedMarker: true
+    };
+    return [modifier];
+  }
+  return [];
 }
 
 exports.aceCreateDomLine = function(hook, context){
@@ -82,10 +109,10 @@ exports.aceCreateDomLine = function(hook, context){
   if (cls.match('splitPageBreakWithMoreAndContd')){
     var characterName = extractCharacterNameFrom(cls);
     extraHTML  = '<more></more>';
-    extraHTML += '<elementPageBreak></elementPageBreak>';
+    extraHTML += '<splitPageBreak></splitPageBreak>';
     extraHTML += '<contd data-character="' + characterName + '"></contd>';
   } else if (cls.match('splitPageBreak')){
-    extraHTML = '<elementPageBreak></elementPageBreak>';
+    extraHTML = '<splitPageBreak></splitPageBreak>';
   }
 
   if (extraHTML){
@@ -100,7 +127,7 @@ exports.aceCreateDomLine = function(hook, context){
 };
 
 var extractCharacterNameFrom = function(cls) {
-  var regex  = "(?:^| )splitPageBreakWithMoreAndContd:<([^>]*)>"; // "splitPageBreakWithMoreAndContd:<character name>"
+  var regex  = "(?:^| )characterName:<([^>]*)>"; // "characterName:<character name>"
   var characterNameFound = cls.match(new RegExp(regex));
   var characterName = characterNameFound ? characterNameFound[1] : "";
 
@@ -126,14 +153,15 @@ exports.aceEditEvent = function(hook, context) {
 }
 
 var redrawPageBreaks = function(context) {
-  var $lines = cleanPageBreaks(context);
+  cleanPageBreaks(context);
 
+  var $lines = getPadInner().find("div");
   var pageBreaksInfo = calculatePageBreaks($lines, context);
   var $linesWithPageBreaks = pageBreaksInfo.linesWithPageBreaks;
   var splitPositions = pageBreaksInfo.splitPositions;
 
   // add page break markers to selected lines
-  $linesWithPageBreaks.addClass("pageBreak");
+  breakPagesOnElements($linesWithPageBreaks, context);
 
   // split elements that are in the middle of a page break
   splitElementsOnPositions(splitPositions, context);
@@ -199,36 +227,32 @@ var needInitialPageBreakRedraw = function(callstack) {
 }
 
 var cleanPageBreaks = function(context) {
-  cleanPageBreaksOverSplitElements(context);
-
-  // need to get lines after cleaning page breaks over split elements, otherwise pad content
-  // would change and we would work over "old" references to pad elements
-  var $lines = getPadInner().find("div");
-
-  cleanPageBreaksOverWholeElements($lines);
-
-  return $lines;
-}
-
-var cleanPageBreaksOverWholeElements = function($lines) {
-  $lines.removeClass("pageBreak");
-}
-
-var cleanPageBreaksOverSplitElements = function(context) {
   var attributeManager = context.documentAttributeManager;
   var cs               = context.callstack;
-
-  var totalLines      = context.rep.lines.length();
-  var docStart        = [0,0];
-  var docEnd          = [totalLines+1,0];
-
-  var removePageBreak                 = [["splitPageBreak", false]];
-  var removePageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", '']];
+  var totalLines       = context.rep.lines.length();
 
   performNonUnduableEvent(cs, function() {
-    attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreak);
-    attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreakWithMoreAndContd);
+    cleanPageBreaksOverWholeElements(attributeManager, totalLines);
+    cleanPageBreaksOverSplitElements(attributeManager, totalLines);
   });
+}
+
+var cleanPageBreaksOverWholeElements = function(attributeManager, totalLines) {
+  for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
+    attributeManager.removeAttributeOnLine(lineNumber, "nonSplitPageBreak");
+    attributeManager.removeAttributeOnLine(lineNumber, "nonSplitPageBreakWithMoreAndContd");
+  };
+}
+
+var cleanPageBreaksOverSplitElements = function(attributeManager, totalLines) {
+  var docStart = [0,0];
+  var docEnd   = [totalLines+1,0];
+
+  var removePageBreak                 = CLEAN_SPLIT_PAGE_BREAKS_OPERATION;
+  var removePageBreakWithMoreAndContd = CLEAN_SPLIT_PAGE_BREAKS_WITH_MORE_AND_CONTD_OPERATION;
+
+  attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreak);
+  attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreakWithMoreAndContd);
 }
 
 var calculatePageBreaks = function($lines, context) {
@@ -549,7 +573,7 @@ var findCharacterNameOf = function($line) {
   // navigate up until find an element that is not a dialogue or parenthetical
   // (include $line because there might be no dialogue or parenthetical before it, so the result would
   // be empty)
-  var $firstElementOfDialogueOfBlock = $line.prevUntil("div:not(:has(dialogue,parenthetical))").andSelf().last();
+  var $firstElementOfDialogueOfBlock = $line.prevUntil("div:not(:has(dialogue,parenthetical))").andSelf().first();
 
   // element before dialogue block should be a character -- if it is not, the text will be ""
   var $characterBeforeDialogueBlock = $firstElementOfDialogueOfBlock.prev().find("character");
@@ -559,6 +583,36 @@ var findCharacterNameOf = function($line) {
   var characterName = $characterBeforeDialogueBlock.text().toUpperCase() || EMPTY_CHARACTER_NAME;
 
   return characterName;
+}
+
+var breakPagesOnElements = function($linesWithPageBreaks, context) {
+  var attributeManager = context.documentAttributeManager;
+  var cs               = context.callstack;
+  var lines            = context.rep.lines;
+
+  performNonUnduableEvent(cs, function() {
+    $linesWithPageBreaks.each(function() {
+      var attributeName = "nonSplitPageBreak";
+      var attributeValue = true;
+
+      if (hasMoreAndContd($(this))) {
+        attributeName = "nonSplitPageBreakWithMoreAndContd";
+        attributeValue = findCharacterNameOf($(this));
+      }
+
+      var lineId     = $(this).attr("id");
+      var lineNumber = lines.indexOfKey(lineId);
+      attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
+    });
+  });
+}
+
+var hasMoreAndContd = function($line) {
+  var lineIsParentheticalOrDialogue = $line.has("parenthetical, dialogue").length > 0;
+  var previousLineIsParentheticalOrDialogue = $line.prev().has("parenthetical, dialogue").length > 0;
+  var hasMoreAndContd = lineIsParentheticalOrDialogue && previousLineIsParentheticalOrDialogue;
+
+  return hasMoreAndContd;
 }
 
 var splitElementsOnPositions = function(splitPositions, context) {

@@ -99,17 +99,38 @@
   }
 */
 
-  #innerdocbody.breakPages div elementPageBreak,
+  #innerdocbody.breakPages div splitPageBreak,
+  #innerdocbody.breakPages div nonSplitPageBreak,
+  #innerdocbody.breakPages div contdLine,
   #innerdocbody.breakPages div more,
   #innerdocbody.breakPages div contd {
     display: block;
   }
 
   #innerdocbody.breakPages div more:before,
+  #innerdocbody.breakPages div contdLine,
   #innerdocbody.breakPages div contd:before,
   #innerdocbody.breakPages div contd:after {
     float: left; /* need this to not allow caret to be placed on element */
     cursor: default;
+  }
+
+  /* align with character left margin */
+  #innerdocbody.breakPages div more.nonSplit:before,
+  #innerdocbody.breakPages div contdLine {
+    margin-left: 153px;
+  }
+  /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
+  #innerdocbody.breakPages div more.nonSplit:before {
+    margin-right: 200px;
+  }
+  #innerdocbody.breakPages div contdLine {
+    /* define max-width because available width for non-split page breaks is the full page width */
+    /* 153px === character margin left; 16px === character margin right */
+    max-width: calc(100% - 153px - 16px);
+
+    /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
+    margin-right: 64px;
   }
 
   #innerdocbody.breakPages div more:before {
@@ -148,7 +169,7 @@
     width: 58px;
   }
 
-  /* element-specific margins */
+  /* element-specific margins to align with character left margin */
   #innerdocbody.breakPages div parenthetical more,
   #innerdocbody.breakPages div parenthetical contd {
     margin-left: 48px;
@@ -160,8 +181,8 @@
     margin-right: -111px;
   }
 
-  #innerdocbody.breakPages div elementPageBreak:before,
-  #innerdocbody.breakPages div.pageBreak:before {
+  #innerdocbody.breakPages div splitPageBreak:before,
+  #innerdocbody.breakPages div nonSplitPageBreak:before {
     content: "";
     width:641px;
     margin-right:-79px;
@@ -183,13 +204,16 @@
   /* Override margin-right of elements that have a right margin defined.
      Value should be === default margin-right (-79) - element margin-right.
   */
-  #innerdocbody.breakPages div parenthetical elementPageBreak:before {
+  #innerdocbody.breakPages div parenthetical splitPageBreak:before,
+  #innerdocbody.breakPages div parenthetical nonSplitPageBreak:before {
     margin-right:-227px;
   }
-  #innerdocbody.breakPages div dialogue elementPageBreak:before {
+  #innerdocbody.breakPages div dialogue splitPageBreak:before,
+  #innerdocbody.breakPages div dialogue nonSplitPageBreak:before {
     margin-right:-190px;
   }
-  #innerdocbody.breakPages div transition elementPageBreak:before {
+  #innerdocbody.breakPages div transition splitPageBreak:before,
+  #innerdocbody.breakPages div transition nonSplitPageBreak:before {
     margin-right:-118px;
   }
 

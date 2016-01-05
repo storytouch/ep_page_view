@@ -5,13 +5,12 @@ var GENERALS_PER_PAGE = 58;
 
 describe("ep_script_page_view - page break on element blocks", function() {
   // shortcuts for helper functions
-  var utils, elementBlocks;
+  var utils;
   // context-dependent values/functions
   var linesBeforeBlock, buildBlock, lastLineText;
 
   before(function(){
     utils = ep_script_page_view_test_helper.utils;
-    elementBlocks = ep_script_page_view_test_helper.elementBlocks;
   });
 
   beforeEach(function(cb){
@@ -52,7 +51,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "heading";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
 
@@ -65,7 +64,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "shot";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
 
@@ -80,7 +79,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("does not pull last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "action";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
   });
@@ -108,7 +107,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "heading";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
 
@@ -121,7 +120,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "shot";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
 
@@ -136,7 +135,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("does not pull last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "character";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
   });
@@ -164,7 +163,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "heading";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
 
@@ -177,22 +176,26 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "shot";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
 
     context("and last line of previous page is something else", function() {
       before(function() {
-        // need to increase line number, as transitions have lower margin
-        linesBeforeBlock = GENERALS_PER_PAGE - 2;
+        // need to increase line number, as dialogues have lower margin
+        linesBeforeBlock = GENERALS_PER_PAGE - 1;
         buildLastLineOfPreviousPage = function() {
-          return utils.transition("transition");
+          return utils.dialogue("dialogue");
         };
       });
 
       it("does not pull last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "another general";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+      });
+
+      it("does not add the MORE/CONT'D tags", function(done) {
+        utils.testPageBreakDoNotHaveMoreNorContd(done);
       });
     });
   });
@@ -215,7 +218,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "character";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
 
@@ -248,7 +251,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("pulls character and dialogue of previous page to next page", function(done) {
           var firstLineOfNextPage = "character";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
 
@@ -260,7 +263,12 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("does not pull any line of previous page to next page", function(done) {
           var firstLineOfNextPage = parentheticalText;
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+
+        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
+          var characterName = "CHARACTER";
+          utils.testPageBreakHasMoreAndContd(characterName, done);
         });
       });
     });
@@ -296,7 +304,11 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
           it("does not pull last line of previous page to next page", function(done) {
             var firstLineOfNextPage = parentheticalText;
-            elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+          });
+
+          it("does not add the MORE/CONT'D tags", function(done) {
+            utils.testPageBreakDoNotHaveMoreNorContd(done);
           });
         });
 
@@ -307,7 +319,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
           it("pulls last line of previous page to next page", function(done) {
             var firstLineOfNextPage = "general";
-            elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
           });
         });
       });
@@ -321,7 +333,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("does not pull last line of previous page to next page", function(done) {
           var firstLineOfNextPage = "parenthetical";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
 
@@ -334,7 +346,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("does not pull last line of previous page to next page", function(done) {
           var firstLineOfNextPage = "parenthetical";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
     });
@@ -358,7 +370,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "character";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
 
@@ -391,7 +403,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("pulls character and parenthetical of previous page to next page", function(done) {
           var firstLineOfNextPage = "character";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
 
@@ -403,7 +415,12 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("does not pull any line of previous page to next page", function(done) {
           var firstLineOfNextPage = dialogueText;
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+
+        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
+          var characterName = "CHARACTER";
+          utils.testPageBreakHasMoreAndContd(characterName, done);
         });
       });
     });
@@ -439,7 +456,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
           it("does not pull last line of previous page to next page", function(done) {
             var firstLineOfNextPage = dialogueText;
-            elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
           });
         });
 
@@ -450,7 +467,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
           it("pulls last line of previous page to next page", function(done) {
             var firstLineOfNextPage = "general";
-            elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
           });
         });
       });
@@ -464,7 +481,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("does not pull last line of previous page to next page", function(done) {
           var firstLineOfNextPage = "dialogue";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
 
@@ -477,7 +494,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("does not pull last line of previous page to next page", function(done) {
           var firstLineOfNextPage = "dialogue";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
     });
@@ -507,7 +524,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "action";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
 
       // contexts for block type:
@@ -529,7 +546,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("pulls last two lines of previous page to next page", function(done) {
           var firstLineOfNextPage = "action";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
 
@@ -550,7 +567,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("pulls last two lines of previous page to next page", function(done) {
           var firstLineOfNextPage = "action";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
 
@@ -573,7 +590,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("pulls last line of previous page to next page", function(done) {
           var firstLineOfNextPage = "a very very very very very long parenthetical";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
 
@@ -594,7 +611,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
         it("pulls last line of previous page to next page", function(done) {
           var firstLineOfNextPage = "a very very very very very long dialogue";
-          elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
         });
       });
     });
@@ -607,25 +624,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("does not pull last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "very long transition";
-        elementBlocks.testPageBreakIsOn(firstLineOfNextPage, done);
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
   });
 });
-
-var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
-ep_script_page_view_test_helper.elementBlocks = {
-  testPageBreakIsOn: function(textOfFirstLineOfPage, done) {
-    var inner$ = helper.padInner$;
-
-    // verify there is one page break
-    var $linesWithPageBreaks = inner$("div.pageBreak");
-    expect($linesWithPageBreaks.length).to.be(1);
-
-    // verify page break is on top of block
-    var $firstPageBreak = $linesWithPageBreaks.first();
-    expect($firstPageBreak.text()).to.be(textOfFirstLineOfPage);
-
-    done();
-  },
-}
