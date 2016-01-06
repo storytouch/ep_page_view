@@ -18,7 +18,8 @@ exports.buildHtmlWithPageBreaks = function(cls) {
     var characterName = utils.extractCharacterNameFromClass(cls);
     extraHTML  = '<more class="nonSplit"></more>';
     extraHTML += '<nonSplitPageBreak></nonSplitPageBreak>';
-    extraHTML += '<contdLine><contd class="nonSplit" data-character="' + characterName + '"></contd></contdLine>';
+    // Bug fix: contenteditable=false avoids caret being placed on CONT'D line
+    extraHTML += '<contdLine contenteditable="false"><contd class="nonSplit" data-character="' + characterName + '"></contd></contdLine>';
   } else if (cls.match(PAGE_BREAKS_ATTRIB)) {
     extraHTML = '<nonSplitPageBreak></nonSplitPageBreak>';
   }
