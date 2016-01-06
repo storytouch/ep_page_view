@@ -56,13 +56,6 @@ var HAVE_MORE_AND_CONTD = {
 
 var EMPTY_CHARACTER_NAME = "empty";
 
-// HACK: page breaks are not *permanently* drawn until everything is setup on the editor.
-// To be able to have page breaks drawn when opening the script (before user starts changing
-// the script), we need to force redrawPageBreaks() to run on the first Etherpad "tic"
-// ("idleWorkTimer" event). This flag controls when to execute this first run of
-// redrawPageBreaks()
-var firstPageBreakRedrawNotRunYet = true;
-
 exports.aceRegisterBlockElements = function(hook, context) {
   return ["line_with_page_break"];
 }
@@ -145,16 +138,8 @@ exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
   if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;
 
-  var cs = context.callstack;
-
-  // force redrawPageBreaks() to run. See notes on firstPageBreakRedrawNotRunYet for more details
-  if (needInitialPageBreakRedraw(cs)) {
-    redrawPageBreaks(context);
-    firstPageBreakRedrawNotRunYet = false;
-  }
-
   // don't do anything if text did not change
-  if(!cs.docTextChanged) return;
+  if(!context.callstack.docTextChanged) return;
 
   redrawPageBreaks(context);
 }
@@ -227,10 +212,6 @@ var calculateRegularLineHeight = function() {
 var getFloatValueOfCSSProperty = function($element, property){
   var valueString = $element.css(property);
   return parseFloat(valueString);
-}
-
-var needInitialPageBreakRedraw = function(callstack) {
-  return firstPageBreakRedrawNotRunYet && callstack.editEvent.eventType === "idleWorkTimer";
 }
 
 var cleanPageBreaks = function(context) {
