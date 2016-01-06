@@ -130,7 +130,7 @@
     max-width: calc(100% - 153px - 16px);
 
     /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
-    margin-right: 64px;
+    margin-right: 80px;
   }
 
   #innerdocbody.breakPages div more:before {
