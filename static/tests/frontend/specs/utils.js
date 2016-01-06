@@ -83,6 +83,15 @@ ep_script_page_view_test_helper.utils = {
     $undoButton.click();
   },
 
+  linesAfterPageBreaks: function() {
+    var inner$ = helper.padInner$;
+
+    var $elementsWithPageBreaksOnBottom = inner$("div nonSplitPageBreak").closest("div");
+    var $linesAfterPageBreaks = $elementsWithPageBreaksOnBottom.next();
+
+    return $linesAfterPageBreaks;
+  },
+
   testSplitPageBreakIsOn: function(textAfterPageBreak, done) {
     var inner$ = helper.padInner$;
 
@@ -98,10 +107,10 @@ ep_script_page_view_test_helper.utils = {
   },
 
   testNonSplitPageBreakIsOn: function(textAfterPageBreak, done) {
-    var inner$ = helper.padInner$;
+    var utils = ep_script_page_view_test_helper.utils;
 
     // verify there is one page break
-    var $elementsWithPageBreaksOnTop = inner$("div nonSplitPageBreak").parent();
+    var $elementsWithPageBreaksOnTop = utils.linesAfterPageBreaks();
     expect($elementsWithPageBreaksOnTop.length).to.be(1);
 
     // verify page break is above targetElement

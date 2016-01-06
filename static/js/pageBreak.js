@@ -63,6 +63,10 @@ var EMPTY_CHARACTER_NAME = "empty";
 // redrawPageBreaks()
 var firstPageBreakRedrawNotRunYet = true;
 
+exports.aceRegisterBlockElements = function(hook, context) {
+  return ["line_with_page_break"];
+}
+
 exports.aceAttribsToClasses = function(hook, context) {
   // simple page break, return only the flag as class
   if(context.key === 'splitPageBreak' || context.key === 'nonSplitPageBreak') {
@@ -92,9 +96,12 @@ exports.aceDomLineProcessLineAttributes = function(name, context){
   }
 
   if (extraHTML) {
+    // Bug fix: lines with page break need to be wrapped by a registered block element
+    // (see aceRegisterBlockElements), otherwise caret will start moving alone when placed
+    // on those lines
     var modifier = {
-      preHtml: extraHTML,
-      postHtml: '',
+      preHtml: '<line_with_page_break>',
+      postHtml: extraHTML + '</line_with_page_break>',
       processedMarker: true
     };
     return [modifier];
@@ -585,13 +592,18 @@ var findCharacterNameOf = function($line) {
   return characterName;
 }
 
-var breakPagesOnElements = function($linesWithPageBreaks, context) {
+var breakPagesOnElements = function($linesAfterPageBreaks, context) {
   var attributeManager = context.documentAttributeManager;
   var cs               = context.callstack;
   var lines            = context.rep.lines;
 
+  // Bug fix: if we place page breaks before the element, caret will start moving alone
+  // when placed on an element immediately after page break; to avoid that, we place page
+  // break after the last element of previous page, instead of first element of next page
+  var $linesBeforePageBreaks = $linesAfterPageBreaks.prev();
+
   performNonUnduableEvent(cs, function() {
-    $linesWithPageBreaks.each(function() {
+    $linesBeforePageBreaks.each(function() {
       var attributeName = "nonSplitPageBreak";
       var attributeValue = true;
 
@@ -609,8 +621,8 @@ var breakPagesOnElements = function($linesWithPageBreaks, context) {
 
 var hasMoreAndContd = function($line) {
   var lineIsParentheticalOrDialogue = $line.has("parenthetical, dialogue").length > 0;
-  var previousLineIsParentheticalOrDialogue = $line.prev().has("parenthetical, dialogue").length > 0;
-  var hasMoreAndContd = lineIsParentheticalOrDialogue && previousLineIsParentheticalOrDialogue;
+  var nextLineIsParentheticalOrDialogue = $line.next().has("parenthetical, dialogue").length > 0;
+  var hasMoreAndContd = lineIsParentheticalOrDialogue && nextLineIsParentheticalOrDialogue;
 
   return hasMoreAndContd;
 }

@@ -2,12 +2,13 @@
   "parts": [
     {
       "name": "page_view",
-      "post": ["ep_script_elements/main"],
+      "pre": ["ep_script_elements/main"],
       "client_hooks": {
         "postAceInit": "ep_script_page_view/static/js/page_view",
         "aceEditorCSS": "ep_script_page_view/static/js/page_view",
         "aceAttribsToClasses": "ep_script_page_view/static/js/pageBreak",
         "aceDomLineProcessLineAttributes": "ep_script_page_view/static/js/pageBreak",
+        "aceRegisterBlockElements": "ep_script_page_view/static/js/pageBreak",
         "aceCreateDomLine": "ep_script_page_view/static/js/pageBreak",
         "aceEditEvent": "ep_script_page_view/static/js/pageBreak"
       },

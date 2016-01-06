@@ -45,7 +45,7 @@ describe("ep_script_page_view - page break main tests", function() {
       var inner$ = helper.padInner$;
 
       // verify there is no page break yet
-      var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+      var $linesWithPageBreaks = utils.linesAfterPageBreaks();
       expect($linesWithPageBreaks.length).to.be(0);
 
       // create another full page
@@ -59,10 +59,10 @@ describe("ep_script_page_view - page break main tests", function() {
 
       // wait for new page to be created
       helper.waitFor(function() {
-        var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+        var $linesWithPageBreaks = utils.linesAfterPageBreaks();
         return $linesWithPageBreaks.length === 2;
       }).done(function() {
-        var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+        var $linesWithPageBreaks = utils.linesAfterPageBreaks();
         var $firstPageBreak = $linesWithPageBreaks.first();
         var $secondPageBreak = $linesWithPageBreaks.last();
 
@@ -99,7 +99,7 @@ describe("ep_script_page_view - page break main tests", function() {
         var inner$ = helper.padInner$;
 
         // at this point script has 3 full pages + 5 (empty) lines on top of then (2 on page 2, 3 on page 3)
-        var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+        var $linesWithPageBreaks = utils.linesAfterPageBreaks();
         expect($linesWithPageBreaks.length).to.be(2);
 
         // add new line (should be placed on next page)
@@ -108,10 +108,10 @@ describe("ep_script_page_view - page break main tests", function() {
 
         // wait for new page to be created
         helper.waitFor(function() {
-          var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+          var $linesWithPageBreaks = utils.linesAfterPageBreaks();
           return $linesWithPageBreaks.length === 3;
         }).done(function() {
-          var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+          var $linesWithPageBreaks = utils.linesAfterPageBreaks();
           var $firstPageBreak = $linesWithPageBreaks.first();
           var $secondPageBreak = $linesWithPageBreaks.slice(1,1);
           var $thirdPageBreak = $linesWithPageBreaks.last();
@@ -156,11 +156,11 @@ describe("ep_script_page_view - page break main tests", function() {
 
           // wait for all page breaks to be created (there should be 3)
           helper.waitFor(function() {
-            var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+            var $linesWithPageBreaks = utils.linesAfterPageBreaks();
             return $linesWithPageBreaks.length === 3;
           }).done(function() {
             // verify 4th page has 3 lines
-            var $firstLineOf3rdPage = inner$("div nonSplitPageBreak").parent().last();
+            var $firstLineOf3rdPage = utils.linesAfterPageBreaks().last();
             // 1st line of page has nonSplitPageBreak, so it won't be returned by nextAll()
             var linesAfterFirstLineOf3rdPage = $firstLineOf3rdPage.nextAll("div").length;
             var linesOn3rdPage = linesAfterFirstLineOf3rdPage + 1;
@@ -207,10 +207,10 @@ describe("ep_script_page_view - page break main tests", function() {
 
           // wait for new page to be created
           helper.waitFor(function() {
-            var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+            var $linesWithPageBreaks = utils.linesAfterPageBreaks();
             return $linesWithPageBreaks.length === 1;
           }).done(function() {
-            var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+            var $linesWithPageBreaks = utils.linesAfterPageBreaks();
             expect($linesWithPageBreaks.text()).to.be(veryLongLineText);
 
             done();
@@ -317,8 +317,6 @@ ep_script_page_view_test_helper.pageBreak = {
   // returns a function that will build the HTML content of a page full of element
   pageFullOfElementsBuilder: function(elementsPerPage, elementBuilder) {
     return function(text) {
-      var utils = ep_script_page_view_test_helper.utils;
-
       var script = "";
       for (var i = 0; i < elementsPerPage; i++) {
         script += elementBuilder(text);
@@ -330,9 +328,10 @@ ep_script_page_view_test_helper.pageBreak = {
 
   testItFitsXLinesPerPage: function(elementBuilder, pageBuilder, done) {
     var inner$ = helper.padInner$;
+    var utils = ep_script_page_view_test_helper.utils;
 
     // verify there is no page break yet
-    var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+    var $linesWithPageBreaks = utils.linesAfterPageBreaks();
     expect($linesWithPageBreaks.length).to.be(0);
 
     // create another full page
@@ -346,10 +345,10 @@ ep_script_page_view_test_helper.pageBreak = {
 
     // wait for new page to be created
     helper.waitFor(function() {
-      var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+      var $linesWithPageBreaks = utils.linesAfterPageBreaks();
       return $linesWithPageBreaks.length === 2;
     }).done(function() {
-      var $linesWithPageBreaks = inner$("div nonSplitPageBreak").parent();
+      var $linesWithPageBreaks = utils.linesAfterPageBreaks();
       var $firstPageBreak = $linesWithPageBreaks.first();
       var $secondPageBreak = $linesWithPageBreaks.last();
 
