@@ -85,8 +85,8 @@ var cleanPageBreaks = function(context) {
   var totalLines       = context.rep.lines.length();
 
   utils.performNonUnduableEvent(cs, function() {
-    paginationNonSplit.cleanPageBreaks(attributeManager, totalLines);
-    paginationSplit.cleanPageBreaks(attributeManager, totalLines);
+    paginationNonSplit.cleanPageBreaks(context);
+    paginationSplit.cleanPageBreaks(context);
   });
 }
 

@@ -27,11 +27,19 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   return extraHTML;
 }
 
-exports.cleanPageBreaks = function(attributeManager, totalLines) {
-  for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
+exports.cleanPageBreaks = function(context) {
+  var attributeManager = context.documentAttributeManager;
+  var lines            = context.rep.lines;
+
+  var $linesWithPageBreaks = utils.getPadInner().find("nonSplitPageBreak").closest("div");
+
+  $linesWithPageBreaks.each(function() {
+    var lineId     = $(this).attr("id");
+    var lineNumber = lines.indexOfKey(lineId);
+
     attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB);
     attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
-  };
+  });
 }
 
 exports.savePageBreaks = function($linesAfterPageBreaks, context) {

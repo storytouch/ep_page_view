@@ -232,15 +232,23 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   return extraHTML;
 }
 
-exports.cleanPageBreaks = function(attributeManager, totalLines) {
-  var docStart = [0,0];
-  var docEnd   = [totalLines+1,0];
+exports.cleanPageBreaks = function(context) {
+  var attributeManager = context.documentAttributeManager;
+  var lines            = context.rep.lines;
 
-  var removePageBreak                 = CLEAN_PAGE_BREAKS_OPERATION;
-  var removePageBreakWithMoreAndContd = CLEAN_PAGE_BREAKS_WITH_MORE_AND_CONTD_OPERATION;
+  var $linesWithPageBreaks = utils.getPadInner().find("splitPageBreak").closest("div");
 
-  attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreak);
-  attributeManager.setAttributesOnRange(docStart, docEnd, removePageBreakWithMoreAndContd);
+  $linesWithPageBreaks.each(function() {
+    var lineId     = $(this).attr("id");
+    var lineNumber = lines.indexOfKey(lineId);
+
+    // clear attribute on the whole line (easier to implement + has no undesired side effects)
+    var docStart = [lineNumber,0];
+    var docEnd   = [lineNumber+1,0];
+
+    attributeManager.setAttributesOnRange(docStart, docEnd, CLEAN_PAGE_BREAKS_OPERATION);
+    attributeManager.setAttributesOnRange(docStart, docEnd, CLEAN_PAGE_BREAKS_WITH_MORE_AND_CONTD_OPERATION);
+  });
 }
 
 exports.savePageBreaks = function(splitPositions, context) {
