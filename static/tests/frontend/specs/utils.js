@@ -39,6 +39,9 @@ ep_script_page_view_test_helper.utils = {
   },
 
   cleanPad: function(callback) {
+    // make tests run faster, as the delay is only defined to improve usability
+    helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.paginationDelay = 0;
+
     var inner$ = helper.padInner$;
     var $padContent = inner$("#innerdocbody");
     $padContent.html("");
@@ -95,60 +98,82 @@ ep_script_page_view_test_helper.utils = {
   testSplitPageBreakIsOn: function(textAfterPageBreak, done) {
     var inner$ = helper.padInner$;
 
-    // verify there is one page break
-    var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-    expect($splitElementsWithPageBreaks.length).to.be(1);
+    // wait for pagination to be finished
+    helper.waitFor(function() {
+      var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+      return $splitElementsWithPageBreaks.length > 0;
+    }).done(function() {
+      // verify page break is on targetElement
+      var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+      var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
+      expect($firstPageBreak.text()).to.be(textAfterPageBreak);
 
-    // verify page break is on targetElement
-    var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
-    expect($firstPageBreak.text()).to.be(textAfterPageBreak);
-
-    done();
+      done();
+    });
   },
 
   testNonSplitPageBreakIsOn: function(textAfterPageBreak, done) {
     var utils = ep_script_page_view_test_helper.utils;
 
-    // verify there is one page break
-    var $elementsWithPageBreaksOnTop = utils.linesAfterPageBreaks();
-    expect($elementsWithPageBreaksOnTop.length).to.be(1);
+    // wait for pagination to be finished
+    helper.waitFor(function() {
+      var $elementsWithPageBreaksOnTop = utils.linesAfterPageBreaks();
+      return $elementsWithPageBreaksOnTop.length > 0;
+    }).done(function() {
+      // verify page break is above targetElement
+      var $elementsWithPageBreaksOnTop = utils.linesAfterPageBreaks();
+      var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
+      expect($firstPageBreak.text()).to.be(textAfterPageBreak);
 
-    // verify page break is above targetElement
-    var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
-    expect($firstPageBreak.text()).to.be(textAfterPageBreak);
-
-    done();
+      done();
+    });
   },
 
   testPageBreakDoNotHaveMoreNorContd: function(done) {
     var inner$ = helper.padInner$;
+    var utils = ep_script_page_view_test_helper.utils;
 
-    // verify there is no MORE tag
-    var $moreTags = inner$("div more");
-    expect($moreTags.length).to.be(0);
+    // wait for pagination to be finished
+    helper.waitFor(function() {
+      var $splitPageBreaks = inner$("div splitPageBreak");
+      var $nonSplitPageBreaks = utils.linesAfterPageBreaks();
+      return ($splitPageBreaks.length + $nonSplitPageBreaks.length) > 0;
+    }).done(function() {
+      // verify there is no MORE tag
+      var $moreTags = inner$("div more");
+      expect($moreTags.length).to.be(0);
 
-    // verify there is no CONT'D tag
-    var $contdTags = inner$("div contd");
-    expect($contdTags.length).to.be(0);
+      // verify there is no CONT'D tag
+      var $contdTags = inner$("div contd");
+      expect($contdTags.length).to.be(0);
 
-    done();
+      done();
+    });
   },
 
   testPageBreakHasMoreAndContd: function(expectedCharacterName, done) {
     var inner$ = helper.padInner$;
+    var utils = ep_script_page_view_test_helper.utils;
 
-    // verify there is a MORE tag
-    var $moreTags = inner$("div more");
-    expect($moreTags.length).to.be(1);
+    // wait for pagination to be finished
+    helper.waitFor(function() {
+      var $splitPageBreaks = inner$("div splitPageBreak");
+      var $nonSplitPageBreaks = utils.linesAfterPageBreaks();
+      return ($splitPageBreaks.length + $nonSplitPageBreaks.length) > 0;
+    }).done(function() {
+      // verify there is a MORE tag
+      var $moreTags = inner$("div more");
+      expect($moreTags.length).to.be(1);
 
-    // verify there is a CONT'D tag
-    var $contdTags = inner$("div contd");
-    expect($contdTags.length).to.be(1);
+      // verify there is a CONT'D tag
+      var $contdTags = inner$("div contd");
+      expect($contdTags.length).to.be(1);
 
-    // verify character name is correct
-    var actualCharacterName = $contdTags.first().attr("data-character");
-    expect(actualCharacterName).to.be(expectedCharacterName);
+      // verify character name is correct
+      var actualCharacterName = $contdTags.first().attr("data-character");
+      expect(actualCharacterName).to.be(expectedCharacterName);
 
-    done();
+      done();
+    });
   },
 }

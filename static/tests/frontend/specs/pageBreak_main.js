@@ -42,35 +42,9 @@ describe("ep_script_page_view - page break main tests", function() {
     });
 
     it("fits " + GENERALS_PER_PAGE + " lines in a page", function(done) {
-      var inner$ = helper.padInner$;
-
-      // verify there is no page break yet
-      var $linesWithPageBreaks = utils.linesAfterPageBreaks();
-      expect($linesWithPageBreaks.length).to.be(0);
-
-      // create another full page
-      var secondPage = pageBreak.scriptWithPageFullOfGenerals("2nd page");
-      var $lastLine = inner$("div").last();
-      $lastLine.append("<br/>" + secondPage);
-
-      // add new line (should be placed on next page)
-      var $lastLine = inner$("div").last();
-      $lastLine.append("1st of 3rd page");
-
-      // wait for new page to be created
-      helper.waitFor(function() {
-        var $linesWithPageBreaks = utils.linesAfterPageBreaks();
-        return $linesWithPageBreaks.length === 2;
-      }).done(function() {
-        var $linesWithPageBreaks = utils.linesAfterPageBreaks();
-        var $firstPageBreak = $linesWithPageBreaks.first();
-        var $secondPageBreak = $linesWithPageBreaks.last();
-
-        expect($firstPageBreak.text()).to.be("2nd page");
-        expect($secondPageBreak.text()).to.be("1st of 3rd page");
-
-        done();
-      });
+      var elementBuilder = utils.general;
+      var pageBuilder    = pageBreak.pageFullOfElementsBuilder(GENERALS_PER_PAGE, utils.general);
+      pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
     });
 
     // this scenario is a workaround to the limitation of CSS :after/:before, which is not
@@ -98,29 +72,32 @@ describe("ep_script_page_view - page break main tests", function() {
       it("ignores empty lines on top of pages", function(done) {
         var inner$ = helper.padInner$;
 
-        // at this point script has 3 full pages + 5 (empty) lines on top of then (2 on page 2, 3 on page 3)
-        var $linesWithPageBreaks = utils.linesAfterPageBreaks();
-        expect($linesWithPageBreaks.length).to.be(2);
-
-        // add new line (should be placed on next page)
-        var $lastLine = inner$("div").last();
-        $lastLine.append("<br/>1st of 4th page");
-
-        // wait for new page to be created
+        // wait for pagination to be complete
         helper.waitFor(function() {
+          // at this point script has 3 full pages + 5 (empty) lines on top of then (2 on page 2, 3 on page 3)
           var $linesWithPageBreaks = utils.linesAfterPageBreaks();
-          return $linesWithPageBreaks.length === 3;
+          return $linesWithPageBreaks.length === 2;
         }).done(function() {
-          var $linesWithPageBreaks = utils.linesAfterPageBreaks();
-          var $firstPageBreak = $linesWithPageBreaks.first();
-          var $secondPageBreak = $linesWithPageBreaks.slice(1,1);
-          var $thirdPageBreak = $linesWithPageBreaks.last();
+          // add new line (should be placed on next page)
+          var $lastLine = inner$("div").last();
+          $lastLine.append("<br/>1st of 4th page");
 
-          expect($firstPageBreak.text()).to.be(""); // empty line on top of page 2
-          expect($secondPageBreak.text()).to.be(""); // empty line on top of page 3
-          expect($thirdPageBreak.text()).to.be("1st of 4th page");
+          // wait for new page to be created
+          helper.waitFor(function() {
+            var $linesWithPageBreaks = utils.linesAfterPageBreaks();
+            return $linesWithPageBreaks.length === 3;
+          }).done(function() {
+            var $linesWithPageBreaks = utils.linesAfterPageBreaks();
+            var $firstPageBreak = $linesWithPageBreaks.first();
+            var $secondPageBreak = $linesWithPageBreaks.slice(1,1);
+            var $thirdPageBreak = $linesWithPageBreaks.last();
 
-          done();
+            expect($firstPageBreak.text()).to.be(""); // empty line on top of page 2
+            expect($secondPageBreak.text()).to.be(""); // empty line on top of page 3
+            expect($thirdPageBreak.text()).to.be("1st of 4th page");
+
+            done();
+          });
         });
       });
 
@@ -182,7 +159,7 @@ describe("ep_script_page_view - page break main tests", function() {
       it("fits " + HEADINGS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.heading;
         var pageBuilder    = scriptBuilder;
-        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, done);
+        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
 
       // this is valid for some other elements too (but not for generals)
@@ -227,7 +204,7 @@ describe("ep_script_page_view - page break main tests", function() {
       it("fits " + ACTIONS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.action;
         var pageBuilder    = scriptBuilder;
-        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, done);
+        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
@@ -239,7 +216,7 @@ describe("ep_script_page_view - page break main tests", function() {
       it("fits " + CHARACTERS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.character;
         var pageBuilder    = scriptBuilder;
-        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, done);
+        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
@@ -251,7 +228,7 @@ describe("ep_script_page_view - page break main tests", function() {
       it("fits " + PARENTHETICALS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.parenthetical;
         var pageBuilder    = scriptBuilder;
-        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, done);
+        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
@@ -263,7 +240,7 @@ describe("ep_script_page_view - page break main tests", function() {
       it("fits " + DIALOGUES_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.dialogue;
         var pageBuilder    = scriptBuilder;
-        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, done);
+        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
@@ -275,7 +252,7 @@ describe("ep_script_page_view - page break main tests", function() {
       it("fits " + TRANSITIONS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.transition;
         var pageBuilder    = scriptBuilder;
-        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, done);
+        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
@@ -287,7 +264,7 @@ describe("ep_script_page_view - page break main tests", function() {
       it("fits " + SHOTS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.shot;
         var pageBuilder    = scriptBuilder;
-        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, done);
+        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
   });
@@ -326,7 +303,9 @@ ep_script_page_view_test_helper.pageBreak = {
     }
   },
 
-  testItFitsXLinesPerPage: function(elementBuilder, pageBuilder, done) {
+  testItFitsXLinesPerPage: function(elementBuilder, pageBuilder, test, done) {
+    test.timeout(5000);
+
     var inner$ = helper.padInner$;
     var utils = ep_script_page_view_test_helper.utils;
 
@@ -347,7 +326,7 @@ ep_script_page_view_test_helper.pageBreak = {
     helper.waitFor(function() {
       var $linesWithPageBreaks = utils.linesAfterPageBreaks();
       return $linesWithPageBreaks.length === 2;
-    }).done(function() {
+    }, 3000).done(function() {
       var $linesWithPageBreaks = utils.linesAfterPageBreaks();
       var $firstPageBreak = $linesWithPageBreaks.first();
       var $secondPageBreak = $linesWithPageBreaks.last();

@@ -49,14 +49,14 @@ var HAVE_MORE_AND_CONTD = {
   parenthetical: true,
 }
 
-exports.getSplitInfo = function($line, totalOutterHeight, availableHeightOnPage, context) {
+exports.getSplitInfo = function($line, totalOutterHeight, availableHeightOnPage, attributeManager, rep) {
   if (canSplit($line)) {
     var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($line, totalOutterHeight, availableHeightOnPage);
     var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor($line);
 
     // only calculate the position where element should be split if there is enough space to do that
     if (linesAvailableBeforePageBreak >= minimumLinesBeforePageBreak) {
-      var splitPosition = calculateElementSplitPosition(linesAvailableBeforePageBreak, $line, context);
+      var splitPosition = calculateElementSplitPosition(linesAvailableBeforePageBreak, $line, attributeManager, rep);
       if (splitPosition) {
         // ok, can split element
         return splitPosition;
@@ -93,12 +93,12 @@ var getMinimumLinesAfterPageBreakFor = function($line) {
   return minimumLines;
 }
 
-var calculateElementSplitPosition = function(innerLineNumber, $line, context) {
+var calculateElementSplitPosition = function(innerLineNumber, $line, attributeManager, rep) {
   var lineId     = $line.attr("id");
-  var lineNumber = context.rep.lines.indexOfKey(lineId);
-  var lineText   = context.rep.lines.atKey(lineId).text;
+  var lineNumber = rep.lines.indexOfKey(lineId);
+  var lineText   = rep.lines.atKey(lineId).text;
 
-  var position = findPositionWhereLineCanBeSplit(innerLineNumber, $line, context, lineText, lineNumber);
+  var position = findPositionWhereLineCanBeSplit(innerLineNumber, $line, attributeManager, lineText, lineNumber);
   // if found position to split, return its split attributes
   if (position) {
     var columnOfEndOfLineAfterSentenceMarker = getColumnOfEndOfInnerLineOrEndOfText(position.column, lineText, $line);
@@ -121,12 +121,12 @@ var calculateElementSplitPosition = function(innerLineNumber, $line, context) {
 // - can be split on an end-of-sentence mark and fit the available space
 //
 // Return column where line should be split (char that should be 1st on next page)
-var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, context, lineText, lineNumber) {
+var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, attributeManager, lineText, lineNumber) {
   var targetInnerLine             = innerLineNumber;
   var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor($line);
   var minimumLinesAfterPageBreak  = getMinimumLinesAfterPageBreakFor($line);
 
-  var columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(targetInnerLine, lineText, lineNumber, context, $line);
+  var columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(targetInnerLine, lineText, lineNumber, attributeManager, $line);
   // only can split element if it has a sentence that fits the available height. If no sentence
   // marker is found, columnAfterLastSentenceMarker is 0
   while (columnAfterLastSentenceMarker && targetInnerLine >= minimumLinesBeforePageBreak) {
@@ -143,7 +143,7 @@ var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, context, 
     } else {
       // this line did not satisfy conditions; try previous one
       targetInnerLine--;
-      columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(targetInnerLine, lineText, lineNumber, context, $line);
+      columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(targetInnerLine, lineText, lineNumber, attributeManager, $line);
     }
   }
 }
@@ -158,8 +158,8 @@ var getMoreAndContdInfo = function($line) {
   return false;
 }
 
-var getColumnOfLastSentenceMarkerOfInnerLine = function(innerLineNumber, fullText, lineNumber, context, $line) {
-  var lineHasMarker = checkLineHasMarker(lineNumber, context);
+var getColumnOfLastSentenceMarkerOfInnerLine = function(innerLineNumber, fullText, lineNumber, attributeManager, $line) {
+  var lineHasMarker = checkLineHasMarker(lineNumber, attributeManager);
 
   // get text until the end of target inner line
   var innerLineLength = getInnerLineLengthOf($line);
@@ -171,8 +171,8 @@ var getColumnOfLastSentenceMarkerOfInnerLine = function(innerLineNumber, fullTex
   return innerLineText.search(/[.?!;][^.?!;]*$/);
 }
 
-var checkLineHasMarker = function(lineNumber, context) {
-  return context.documentAttributeManager.lineHasMarker(lineNumber);
+var checkLineHasMarker = function(lineNumber, attributeManager) {
+  return attributeManager.lineHasMarker(lineNumber);
 }
 
 var getInnerLineLengthOf = function($line) {
@@ -232,15 +232,12 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   return extraHTML;
 }
 
-exports.cleanPageBreaks = function(context) {
-  var attributeManager = context.documentAttributeManager;
-  var lines            = context.rep.lines;
-
+exports.cleanPageBreaks = function(attributeManager, rep) {
   var $linesWithPageBreaks = utils.getPadInner().find("splitPageBreak").closest("div");
 
   $linesWithPageBreaks.each(function() {
     var lineId     = $(this).attr("id");
-    var lineNumber = lines.indexOfKey(lineId);
+    var lineNumber = rep.lines.indexOfKey(lineId);
 
     // clear attribute on the whole line (easier to implement + has no undesired side effects)
     var docStart = [lineNumber,0];
@@ -251,23 +248,18 @@ exports.cleanPageBreaks = function(context) {
   });
 }
 
-exports.savePageBreaks = function(splitPositions, context) {
-  var attributeManager = context.documentAttributeManager;
-  var cs               = context.callstack;
-
+exports.savePageBreaks = function(splitPositions, attributeManager) {
   var addPageBreak = [["splitPageBreak", true]];
 
-  utils.performNonUnduableEvent(cs, function() {
-    for (var i = splitPositions.length - 1; i >= 0; i--) {
-      var splitPosition = splitPositions[i];
+  for (var i = splitPositions.length - 1; i >= 0; i--) {
+    var splitPosition = splitPositions[i];
 
-      var pageBreakType = addPageBreak;
-      if (splitPosition.addMoreAndContd) {
-        var addPageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", splitPosition.addMoreAndContd.characterName]];
-        pageBreakType = addPageBreakWithMoreAndContd;
-      }
+    var pageBreakType = addPageBreak;
+    if (splitPosition.addMoreAndContd) {
+      var addPageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", splitPosition.addMoreAndContd.characterName]];
+      pageBreakType = addPageBreakWithMoreAndContd;
+    }
 
-      attributeManager.setAttributesOnRange(splitPosition.start, splitPosition.end, pageBreakType);
-    };
-  });
+    attributeManager.setAttributesOnRange(splitPosition.start, splitPosition.end, pageBreakType);
+  };
 }

@@ -41,30 +41,32 @@ describe("ep_script_page_view - page break on split elements", function() {
       var inner$ = helper.padInner$;
 
       // there should be a page break before we start testing
-      var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-      expect($splitElementsWithPageBreaks.length).to.be(1);
-
-      // create another very long general before the last one, so pagination needs to be re-done
-      var $threeLinesGeneral = inner$("div").last().prev();
-      var line1 = utils.buildStringWithLength(60, "A") + ".";
-      var line2 = utils.buildStringWithLength(60, "B") + ".";
-      var line3 = utils.buildStringWithLength(60, "C") + ".";
-      $threeLinesGeneral.sendkeys("{selectall}");
-      $threeLinesGeneral.sendkeys(line1 + line2 + line3);
-
-      // wait for edition to be processed and pagination to be complete
       helper.waitFor(function() {
         var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-        var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
-
-        // page break was added to third line of first very long general
-        return $firstPageBreak.text() === line3;
+        return $splitElementsWithPageBreaks.length === 1;
       }).done(function() {
-        // now there should be only a single page break (on the first very long general)
-        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-        expect($splitElementsWithPageBreaks.length).to.be(1);
+        // create another very long general before the last one, so pagination needs to be re-done
+        var $threeLinesGeneral = inner$("div").last().prev();
+        var line1 = utils.buildStringWithLength(60, "A") + ".";
+        var line2 = utils.buildStringWithLength(60, "B") + ".";
+        var line3 = utils.buildStringWithLength(60, "C") + ".";
+        $threeLinesGeneral.sendkeys("{selectall}");
+        $threeLinesGeneral.sendkeys(line1 + line2 + line3);
 
-        done();
+        // wait for edition to be processed and pagination to be complete
+        helper.waitFor(function() {
+          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+          var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
+
+          // page break was added to third line of first very long general
+          return $firstPageBreak.text() === line3;
+        }, 3000).done(function() {
+          // now there should be only a single page break (on the first very long general)
+          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+          expect($splitElementsWithPageBreaks.length).to.be(1);
+
+          done();
+        });
       });
     });
 
@@ -118,27 +120,29 @@ describe("ep_script_page_view - page break on split elements", function() {
         var inner$ = helper.padInner$;
 
         // there should be a page break before we start testing
-        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-        expect($splitElementsWithPageBreaks.length).to.be(1);
+        helper.waitFor(function() {
+          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+          return $splitElementsWithPageBreaks.length === 1;
+        }).done(function() {
+          // edit one element
+          var $elementToBeEdited = inner$("div").last().prev();
+          var originalText = $elementToBeEdited.text();
+          $elementToBeEdited.sendkeys("{selectall}");
+          $elementToBeEdited.sendkeys("Now I'm edited!");
 
-        // edit one element
-        var $elementToBeEdited = inner$("div").last().prev();
-        var originalText = $elementToBeEdited.text();
-        $elementToBeEdited.sendkeys("{selectall}");
-        $elementToBeEdited.sendkeys("Now I'm edited!");
+          // first UNDO: should revert edition made on previous step
+          utils.undo();
+          var $elementToBeEdited = inner$("div").last().prev();
+          expect($elementToBeEdited.text()).to.be(originalText);
 
-        // first UNDO: should revert edition made on previous step
-        utils.undo();
-        var $elementToBeEdited = inner$("div").last().prev();
-        expect($elementToBeEdited.text()).to.be(originalText);
+          // second UNDO: should revert full script creation
+          utils.undo();
+          var padText = inner$("#innerdocbody").text();
+          expect(padText).to.be("");
 
-        // second UNDO: should revert full script creation
-        utils.undo();
-        var padText = inner$("#innerdocbody").text();
-        expect(padText).to.be("");
-
-        done();
-      })
+          done();
+        });
+      });
     });
 
     context("and first sentence ends in the middle of last line that fits", function() {
@@ -213,6 +217,8 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
 
       it("considers the height of the resulting second half of the element split", function(done) {
+        this.timeout(5000);
+
         var inner$ = helper.padInner$;
 
         // change 57th line to be 3-lines-long (2 sentences, each ~1.25 long, so when they are
@@ -229,7 +235,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         helper.waitFor(function() {
           var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
           return $splitElementsWithPageBreaks.length > 0;
-        }).done(function() {
+        }, 3000).done(function() {
           // 1: verify first page break was added between the two sentences of 57th line
           var topLineOfSentence2 = sentence2.substring(0, 61);
           utils.testSplitPageBreakIsOn(topLineOfSentence2, function() {

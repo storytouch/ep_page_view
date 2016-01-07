@@ -27,45 +27,36 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   return extraHTML;
 }
 
-exports.cleanPageBreaks = function(context) {
-  var attributeManager = context.documentAttributeManager;
-  var lines            = context.rep.lines;
-
+exports.cleanPageBreaks = function(attributeManager, rep) {
   var $linesWithPageBreaks = utils.getPadInner().find("nonSplitPageBreak").closest("div");
 
   $linesWithPageBreaks.each(function() {
     var lineId     = $(this).attr("id");
-    var lineNumber = lines.indexOfKey(lineId);
+    var lineNumber = rep.lines.indexOfKey(lineId);
 
     attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB);
     attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
   });
 }
 
-exports.savePageBreaks = function($linesAfterPageBreaks, context) {
-  var attributeManager = context.documentAttributeManager;
-  var cs               = context.callstack;
-  var lines            = context.rep.lines;
-
+exports.savePageBreaks = function($linesAfterPageBreaks, attributeManager, rep) {
   // Bug fix: if we place page breaks before the element, caret will start moving alone
   // when placed on an element immediately after page break; to avoid that, we place page
   // break after the last element of previous page, instead of first element of next page
   var $linesBeforePageBreaks = $linesAfterPageBreaks.prev();
 
-  utils.performNonUnduableEvent(cs, function() {
-    $linesBeforePageBreaks.each(function() {
-      var attributeName = PAGE_BREAKS_ATTRIB;
-      var attributeValue = true;
+  $linesBeforePageBreaks.each(function() {
+    var attributeName = PAGE_BREAKS_ATTRIB;
+    var attributeValue = true;
 
-      if (hasMoreAndContd($(this))) {
-        attributeName = PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
-        attributeValue = utils.findCharacterNameOf($(this));
-      }
+    if (hasMoreAndContd($(this))) {
+      attributeName = PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
+      attributeValue = utils.findCharacterNameOf($(this));
+    }
 
-      var lineId     = $(this).attr("id");
-      var lineNumber = lines.indexOfKey(lineId);
-      attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
-    });
+    var lineId     = $(this).attr("id");
+    var lineNumber = rep.lines.indexOfKey(lineId);
+    attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
   });
 }
 

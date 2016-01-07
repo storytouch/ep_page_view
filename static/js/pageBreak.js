@@ -59,38 +59,64 @@ exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
   if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;
 
-  // don't do anything if text did not change
-  if(!context.callstack.docTextChanged) return;
+  if(context.callstack.type === 'pagination') {
+    // we are ready to re-run pagination
+    reRunPagination(context);
+  } else {
+    // don't do anything if text did not change
+    if(!context.callstack.docTextChanged) return;
 
-  redrawPageBreaks(context);
+    resetTimerToRunPagination(context);
+  }
 }
 
-var redrawPageBreaks = function(context) {
-  cleanPageBreaks(context);
+var paginationTimer;
+var resetTimerToRunPagination = function(context) {
+  // define delay if not defined yet
+  clientVars.plugins.plugins.ep_script_page_view.paginationDelay = clientVars.plugins.plugins.ep_script_page_view.paginationDelay || 500;
 
-  var pageBreaksInfo = calculatePageBreaks(context);
-  var $linesWithPageBreaks = pageBreaksInfo.linesWithPageBreaks;
-  var splitPositions = pageBreaksInfo.splitPositions;
+  var editorInfo = context.editorInfo;
 
-  // add page break markers to selected lines
-  paginationNonSplit.savePageBreaks($linesWithPageBreaks, context);
-
-  // split elements that are in the middle of a page break
-  paginationSplit.savePageBreaks(splitPositions, context);
+  // to avoid lagging while user is typing, we set a timeout to postpone pagination until
+  // edition had stopped (0.5s)
+  clearTimeout(paginationTimer);
+  paginationTimer = setTimeout(function() {
+    editorInfo.ace_callWithAce(function(ace) {
+      // do nothing here, we handle pagination on aceEditEvent
+    }, 'pagination');
+  }, clientVars.plugins.plugins.ep_script_page_view.paginationDelay);
 }
 
-var cleanPageBreaks = function(context) {
+var reRunPagination = function(context) {
+  var callstack        = context.callstack;
   var attributeManager = context.documentAttributeManager;
-  var cs               = context.callstack;
-  var totalLines       = context.rep.lines.length();
+  var rep              = context.rep;
 
-  utils.performNonUnduableEvent(cs, function() {
-    paginationNonSplit.cleanPageBreaks(context);
-    paginationSplit.cleanPageBreaks(context);
+  cleanPageBreaks(callstack, attributeManager, rep);
+
+  var pageBreaksInfo = calculatePageBreaks(attributeManager, rep);
+
+  savePageBreaks(pageBreaksInfo, callstack, attributeManager, rep);
+}
+
+var cleanPageBreaks = function(callstack, attributeManager, rep) {
+  utils.performNonUnduableEvent(callstack, function() {
+    paginationNonSplit.cleanPageBreaks(attributeManager, rep);
+    paginationSplit.cleanPageBreaks(attributeManager, rep);
   });
 }
 
-var calculatePageBreaks = function(context) {
+var savePageBreaks = function(pageBreaksInfo, callstack, attributeManager, rep) {
+  var $linesWithPageBreaks = pageBreaksInfo.linesWithPageBreaks;
+  var splitPositions = pageBreaksInfo.splitPositions;
+
+  utils.performNonUnduableEvent(callstack, function() {
+    paginationNonSplit.savePageBreaks($linesWithPageBreaks, attributeManager, rep);
+    paginationSplit.savePageBreaks(splitPositions, attributeManager);
+  });
+}
+
+var calculatePageBreaks = function(attributeManager, rep) {
   var maxPageHeight = getMaxPageHeight();
   var $lines = utils.getPadInner().find("div");
   var $linesWithPageBreaks = $();
@@ -139,7 +165,7 @@ var calculatePageBreaks = function(context) {
         skippingEmptyLines = false;
 
         var availableHeightOnPage = maxPageHeight - currentPageHeight;
-        var splitElementInfo = paginationSplit.getSplitInfo($currentLine, lineHeight, availableHeightOnPage, context);
+        var splitElementInfo = paginationSplit.getSplitInfo($currentLine, lineHeight, availableHeightOnPage, attributeManager, rep);
         // can we split current line?
         if (splitElementInfo) {
           // restart counting page height again
