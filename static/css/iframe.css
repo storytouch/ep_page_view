@@ -121,16 +121,16 @@
     margin-left: 153px;
   }
   /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
-  #innerdocbody.breakPages div more.nonSplit:before {
+  #innerdocbody.breakPages div more:before {
     margin-right: 200px;
+  }
+  #innerdocbody.breakPages div contd:after {
+    margin-right: 80px;
   }
   #innerdocbody.breakPages div contdLine {
     /* define max-width because available width for non-split page breaks is the full page width */
     /* 153px === character margin left; 16px === character margin right */
     max-width: calc(100% - 153px - 16px);
-
-    /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
-    margin-right: 80px;
   }
 
   #innerdocbody.breakPages div more:before {
