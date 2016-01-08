@@ -59,15 +59,43 @@ exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
   if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;
 
-  if(context.callstack.type === 'pagination') {
-    // we are ready to re-run pagination
-    reRunPagination(context);
+  if(isAPaginationEvent(context)) {
+    // only proceed if pagination was scheduled by me.
+    // This avoids getting an error if two users have the same pad opened
+    if(isPaginatedByMe(context)) {
+      // we are ready to re-run pagination
+      reRunPagination(context);
+    }
   } else {
-    // don't do anything if text did not change
-    if(!context.callstack.docTextChanged) return;
+    // don't do anything if text did not change or if user was not the one who made the text change
+    if(!context.callstack.docTextChanged || !isEditedByMe(context)) return;
 
     resetTimerToRunPagination(context);
   }
+}
+
+// based on similar method from ep_autocomp
+var isEditedByMe = function(context) {
+  var eventType = context.callstack.type;
+  var editedByMe = (eventType === "idleWorkTimer" || eventType === "handleKeyEvent");
+
+  return editedByMe;
+}
+
+var isPaginatedByMe = function(context) {
+  var eventType = context.callstack.type;
+  var myPaginationEvent = myPaginationEventType();
+
+  return myPaginationEvent === eventType;
+}
+
+var isAPaginationEvent = function(context) {
+  var eventType = context.callstack.type;
+  return eventType.match('^pagination-');
+}
+
+var myPaginationEventType = function() {
+  return "pagination-" + clientVars.userId;
 }
 
 var paginationTimer;
@@ -83,7 +111,7 @@ var resetTimerToRunPagination = function(context) {
   paginationTimer = setTimeout(function() {
     editorInfo.ace_callWithAce(function(ace) {
       // do nothing here, we handle pagination on aceEditEvent
-    }, 'pagination');
+    }, myPaginationEventType());
   }, clientVars.plugins.plugins.ep_script_page_view.paginationDelay);
 }
 
