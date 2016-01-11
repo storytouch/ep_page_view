@@ -119,12 +119,17 @@ var reRunPagination = function(context) {
   var callstack        = context.callstack;
   var attributeManager = context.documentAttributeManager;
   var rep              = context.rep;
+  var editorInfo       = context.editorInfo;
 
   cleanPageBreaks(callstack, attributeManager, rep);
 
   var pageBreaksInfo = calculatePageBreaks(attributeManager, rep);
 
   savePageBreaks(pageBreaksInfo, callstack, attributeManager, rep);
+
+  // Bug fix: for some reason Etherpad is moving caret to next line when user edits line with
+  // page break. To avoid that, we force caret to be placed where rep is
+  editorInfo.ace_updateBrowserSelectionFromRep();
 }
 
 var cleanPageBreaks = function(callstack, attributeManager, rep) {
