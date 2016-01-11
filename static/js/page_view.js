@@ -50,7 +50,7 @@ exports.postAceInit = function(hook, context){
 
   /* init */
   /* from URL param */
-  var enablePageBreaks = (getParam("pagebreak") == "true"); // if the url param is set
+  var enablePageBreaks = (getParam("pagebreak") !== "false"); // enable pagination by default
   if(enablePageBreaks){
     $innerdocbody.addClass('breakPages');
     clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled = true;
