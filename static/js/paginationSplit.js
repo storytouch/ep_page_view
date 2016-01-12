@@ -224,7 +224,7 @@ exports.buildHtmlWithPageBreaks = function(cls) {
     var characterName = utils.extractCharacterNameFromClass(cls);
     extraHTML  = '<more></more>';
     extraHTML += '<splitPageBreak></splitPageBreak>';
-    extraHTML += '<contd data-character="' + characterName + '"></contd>';
+    extraHTML += '<contdLine contenteditable="false"><contd data-character="' + characterName + '"></contd></contdLine>';
   } else if (cls.match(PAGE_BREAKS_ATTRIB)) {
     extraHTML = '<splitPageBreak></splitPageBreak>';
   }
