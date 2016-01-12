@@ -1,3 +1,8 @@
+body{
+  /* page numbering (initial value is 1): */
+  counter-reset: page 1;
+}
+
 .innerPV{
   background-color:#fff;
 }
@@ -215,6 +220,33 @@
   #innerdocbody.breakPages div transition splitPageBreak:before,
   #innerdocbody.breakPages div transition nonSplitPageBreak:before {
     margin-right:-118px;
+  }
+
+  /* page number: */
+  #innerdocbody.breakPages div splitPageBreak:after,
+  #innerdocbody.breakPages div nonSplitPageBreak:after {
+    margin-top: -38px;
+    margin-right: 4px;
+    float: right;
+
+    /* page numbering: */
+    counter-increment: page;
+    content: counter(page) ".";
+  }
+  /* Override margin-right of elements that have a right margin defined.
+     Value should be === default margin-right (4) - element margin-right.
+  */
+  #innerdocbody.breakPages div parenthetical splitPageBreak:after,
+  #innerdocbody.breakPages div parenthetical nonSplitPageBreak:after {
+    margin-right:-144px;
+  }
+  #innerdocbody.breakPages div dialogue splitPageBreak:after,
+  #innerdocbody.breakPages div dialogue nonSplitPageBreak:after {
+    margin-right:-107px;
+  }
+  #innerdocbody.breakPages div transition splitPageBreak:after,
+  #innerdocbody.breakPages div transition nonSplitPageBreak:after {
+    margin-right:-35px;
   }
 
   .outerBackground{
