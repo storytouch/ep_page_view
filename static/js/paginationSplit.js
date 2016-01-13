@@ -126,7 +126,7 @@ var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, attribute
   var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor($line);
   var minimumLinesAfterPageBreak  = getMinimumLinesAfterPageBreakFor($line);
 
-  var columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(targetInnerLine, lineText, lineNumber, attributeManager, $line);
+  var columnAfterLastSentenceMarker = getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine(targetInnerLine, lineText, lineNumber, attributeManager, $line);
   // only can split element if it has a sentence that fits the available height. If no sentence
   // marker is found, columnAfterLastSentenceMarker is 0
   while (columnAfterLastSentenceMarker && targetInnerLine >= minimumLinesBeforePageBreak) {
@@ -143,7 +143,7 @@ var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, attribute
     } else {
       // this line did not satisfy conditions; try previous one
       targetInnerLine--;
-      columnAfterLastSentenceMarker = 1 + getColumnOfLastSentenceMarkerOfInnerLine(targetInnerLine, lineText, lineNumber, attributeManager, $line);
+      columnAfterLastSentenceMarker = getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine(targetInnerLine, lineText, lineNumber, attributeManager, $line);
     }
   }
 }
@@ -158,7 +158,7 @@ var getMoreAndContdInfo = function($line) {
   return false;
 }
 
-var getColumnOfLastSentenceMarkerOfInnerLine = function(innerLineNumber, fullText, lineNumber, attributeManager, $line) {
+var getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine = function(innerLineNumber, fullText, lineNumber, attributeManager, $line) {
   var lineHasMarker = checkLineHasMarker(lineNumber, attributeManager);
 
   // get text until the end of target inner line
@@ -168,7 +168,12 @@ var getColumnOfLastSentenceMarkerOfInnerLine = function(innerLineNumber, fullTex
   var innerLineText   = fullText.substring(0, endOfTargetLine);
 
   // look backwards for the last sentence marker of the text
-  return innerLineText.search(/[.?!;][^.?!;]*$/);
+  var sentenceMarkerPosition = /^(.*[.?!;]\s*)[^.?!;]*$/.exec(innerLineText);
+  if (sentenceMarkerPosition && sentenceMarkerPosition[1]) {
+    var firstCharAfterMarkerAndWhitespaces = sentenceMarkerPosition[1].length;
+    return firstCharAfterMarkerAndWhitespaces;
+  }
+  return 0;
 }
 
 var checkLineHasMarker = function(lineNumber, attributeManager) {

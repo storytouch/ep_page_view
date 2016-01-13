@@ -245,6 +245,28 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
       });
     });
+
+    context("and there are whitespaces after last punctuation mark of line that fits on previous page", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
+        var sentence1 = utils.buildStringWithLength(45, "1") + ".     ";
+        var sentence2 = utils.buildStringWithLength(45, "2") + ".";
+        sentences = [sentence1, sentence2];
+        // we need another line with anything because target general has whitespaces, and
+        // function to generate script will never recognize last line of text is the one
+        // expected (because of those whitespaces)
+        var anything = "anything";
+        lastLineText = anything;
+        buildTargetElement = function() {
+          return utils.general(sentence1 + sentence2) + utils.general(anything);
+        };
+      });
+
+      it("leaves whitespaces on previous page", function(done) {
+        var lastSentence = sentences[1];
+        utils.testSplitPageBreakIsOn(lastSentence, done);
+      });
+    });
   });
 
   context("when first line of page is a very long action", function() {
