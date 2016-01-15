@@ -126,7 +126,7 @@ body{
   /* align with character left margin */
   #innerdocbody.breakPages div more.nonSplit:before,
   #innerdocbody.breakPages div contdLine.nonSplit {
-    margin-left: 153px;
+    margin-left: 152px;
   }
   /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
   #innerdocbody.breakPages div more:before {
@@ -143,9 +143,9 @@ body{
   }
   #innerdocbody.breakPages div contdLine.nonSplit {
     /* define max & min width because available width for non-split page breaks is the full page width */
-    /* 153px === character margin left; 16px === character margin right; -116px === CONT'D right margin */
-    max-width: calc(100% - 153px - 16px + 116px);
-    min-width: calc(100% - 153px - 16px);
+    /* 152px === character margin left; 16px === character margin right; -116px === CONT'D right margin */
+    max-width: calc(100% - 152px - 16px + 116px);
+    min-width: calc(100% - 152px - 16px);
   }
 
   #innerdocbody.breakPages div more:before {
