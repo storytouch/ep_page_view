@@ -65,6 +65,14 @@ ep_script_page_view_test_helper.utils = {
     return line;
   },
 
+  getLineWhereCaretIs: function() {
+    var inner$ = helper.padInner$;
+    var nodeWhereCaretIs = inner$.document.getSelection().anchorNode;
+    var $lineWhereCaretIs = $(nodeWhereCaretIs).closest("div");
+
+    return $lineWhereCaretIs;
+  },
+
   buildStringWithLength: function(length, text) {
     return text.repeat(length);
   },
@@ -86,7 +94,7 @@ ep_script_page_view_test_helper.utils = {
     $undoButton.click();
   },
 
-  linesAfterPageBreaks: function() {
+  linesAfterNonSplitPageBreaks: function() {
     var inner$ = helper.padInner$;
 
     var $elementsWithPageBreaksOnBottom = inner$("div nonSplitPageBreak").closest("div");
@@ -95,18 +103,28 @@ ep_script_page_view_test_helper.utils = {
     return $linesAfterPageBreaks;
   },
 
-  testSplitPageBreakIsOn: function(textAfterPageBreak, done) {
+  linesAfterSplitPageBreaks: function() {
     var inner$ = helper.padInner$;
+
+    var $elementsWithPageBreaksOnBottom = inner$("div splitPageBreak").closest("div");
+    var $linesAfterPageBreaks = $elementsWithPageBreaksOnBottom.next();
+
+    return $linesAfterPageBreaks;
+  },
+
+  testSplitPageBreakIsOn: function(textAfterPageBreak, done) {
+    var utils = ep_script_page_view_test_helper.utils;
 
     // wait for pagination to be finished
     helper.waitFor(function() {
-      var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-      return $splitElementsWithPageBreaks.length > 0;
-    }).done(function() {
+      var $elementsWithPageBreaksOnTop = utils.linesAfterSplitPageBreaks();
+      return $elementsWithPageBreaksOnTop.length > 0;
+    }, 2000).done(function() {
       // verify page break is on targetElement
-      var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-      var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
-      expect($firstPageBreak.text()).to.be(textAfterPageBreak);
+      var $elementsWithPageBreaksOnTop = utils.linesAfterSplitPageBreaks();
+      var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
+      var startWithTextAfterPageBreak = new RegExp("^" + textAfterPageBreak);
+      expect($firstPageBreak.text()).to.match(startWithTextAfterPageBreak);
 
       done();
     });
@@ -117,11 +135,11 @@ ep_script_page_view_test_helper.utils = {
 
     // wait for pagination to be finished
     helper.waitFor(function() {
-      var $elementsWithPageBreaksOnTop = utils.linesAfterPageBreaks();
+      var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
       return $elementsWithPageBreaksOnTop.length > 0;
     }).done(function() {
       // verify page break is above targetElement
-      var $elementsWithPageBreaksOnTop = utils.linesAfterPageBreaks();
+      var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
       var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
       expect($firstPageBreak.text()).to.be(textAfterPageBreak);
 
@@ -136,7 +154,7 @@ ep_script_page_view_test_helper.utils = {
     // wait for pagination to be finished
     helper.waitFor(function() {
       var $splitPageBreaks = inner$("div splitPageBreak");
-      var $nonSplitPageBreaks = utils.linesAfterPageBreaks();
+      var $nonSplitPageBreaks = utils.linesAfterNonSplitPageBreaks();
       return ($splitPageBreaks.length + $nonSplitPageBreaks.length) > 0;
     }).done(function() {
       // verify there is no MORE tag
@@ -158,7 +176,7 @@ ep_script_page_view_test_helper.utils = {
     // wait for pagination to be finished
     helper.waitFor(function() {
       var $splitPageBreaks = inner$("div splitPageBreak");
-      var $nonSplitPageBreaks = utils.linesAfterPageBreaks();
+      var $nonSplitPageBreaks = utils.linesAfterNonSplitPageBreaks();
       return ($splitPageBreaks.length + $nonSplitPageBreaks.length) > 0;
     }).done(function() {
       // verify there is a MORE tag

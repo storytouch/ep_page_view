@@ -27,7 +27,9 @@ exports.aceAttribsToClasses = function(hook, context) {
 }
 
 exports.aceDomLineProcessLineAttributes = function(name, context) {
-  var extraHTML = paginationNonSplit.buildHtmlWithPageBreaks(context.cls);
+  var extraHTML = paginationNonSplit.buildHtmlWithPageBreaks(context.cls) ||
+                  paginationSplit.buildHtmlWithPageBreaks(context.cls);
+
   if (extraHTML) {
     // Bug fix: lines with page break need to be wrapped by a registered block element
     // (see aceRegisterBlockElements), otherwise caret will start moving alone when placed
@@ -42,35 +44,26 @@ exports.aceDomLineProcessLineAttributes = function(name, context) {
   return [];
 }
 
-exports.aceCreateDomLine = function(hook, context){
-  var extraHTML = paginationSplit.buildHtmlWithPageBreaks(context.cls);
-  if (extraHTML){
-    var modifier = {
-      extraOpenTags: extraHTML,
-      extraCloseTags: '',
-      cls: ''
-    };
-    return [modifier];
-  }
-  return [];
-};
-
 exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
   if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;
 
-  if(isAPaginationEvent(context)) {
+  if (isAPaginationEvent(context)) {
     // only proceed if pagination was scheduled by me.
     // This avoids getting an error if two users have the same pad opened
-    if(isPaginatedByMe(context)) {
-      // we are ready to re-run pagination
-      reRunPagination(context);
+    if (isPaginationScheduledByMe(context)) {
+      if (readyFor2ndPhaseOfPagination(context)) {
+        continuePagination(context);
+      } else {
+        // we are ready to restart pagination
+        restartPagination(context);
+      }
     }
   } else {
     // don't do anything if text did not change or if user was not the one who made the text change
-    if(!context.callstack.docTextChanged || !isEditedByMe(context)) return;
+    if (!context.callstack.docTextChanged || !isEditedByMe(context)) return;
 
-    resetTimerToRunPagination(context);
+    resetTimerToRestartPagination(context);
   }
 }
 
@@ -82,11 +75,9 @@ var isEditedByMe = function(context) {
   return editedByMe;
 }
 
-var isPaginatedByMe = function(context) {
+var isPaginationScheduledByMe = function(context) {
   var eventType = context.callstack.type;
-  var myPaginationEvent = myPaginationEventType();
-
-  return myPaginationEvent === eventType;
+  return eventType.match('^pagination-.*' + clientVars.userId);
 }
 
 var isAPaginationEvent = function(context) {
@@ -94,12 +85,23 @@ var isAPaginationEvent = function(context) {
   return eventType.match('^pagination-');
 }
 
+var readyFor2ndPhaseOfPagination = function(context) {
+  var eventType = context.callstack.type;
+  var myPaginationEvent = myPaginationEventType();
+
+  return myPaginationEvent === eventType;
+}
+
+var myPaginationRestartEventType = function() {
+  return "pagination-restart-" + clientVars.userId;
+}
+
 var myPaginationEventType = function() {
   return "pagination-" + clientVars.userId;
 }
 
 var paginationTimer;
-var resetTimerToRunPagination = function(context) {
+var resetTimerToRestartPagination = function(context) {
   // define delay if not defined yet
   clientVars.plugins.plugins.ep_script_page_view.paginationDelay = clientVars.plugins.plugins.ep_script_page_view.paginationDelay || 500;
 
@@ -111,41 +113,51 @@ var resetTimerToRunPagination = function(context) {
   paginationTimer = setTimeout(function() {
     editorInfo.ace_callWithAce(function(ace) {
       // do nothing here, we handle pagination on aceEditEvent
-    }, myPaginationEventType());
+    }, myPaginationRestartEventType());
   }, clientVars.plugins.plugins.ep_script_page_view.paginationDelay);
 }
 
-var reRunPagination = function(context) {
+var restartPagination = function(context) {
   var callstack        = context.callstack;
   var attributeManager = context.documentAttributeManager;
   var rep              = context.rep;
   var editorInfo       = context.editorInfo;
 
-  cleanPageBreaks(callstack, attributeManager, rep);
+  cleanPageBreaks(callstack, attributeManager, rep, editorInfo);
+}
+
+var cleanPageBreaks = function(callstack, attributeManager, rep, editorInfo) {
+  utils.performNonUnduableEvent(callstack, function() {
+    paginationNonSplit.cleanPageBreaks(attributeManager, rep);
+    paginationSplit.cleanPageBreaks(attributeManager, rep, editorInfo);
+  });
+
+  // schedule pagination
+  setTimeout(function() {
+    editorInfo.ace_callWithAce(function(ace) {
+      // do nothing here, we handle pagination on aceEditEvent
+    }, myPaginationEventType());
+  }, 0);
+}
+
+var continuePagination = function(context) {
+  var callstack        = context.callstack;
+  var attributeManager = context.documentAttributeManager;
+  var rep              = context.rep;
+  var editorInfo       = context.editorInfo;
 
   var pageBreaksInfo = calculatePageBreaks(attributeManager, rep);
 
-  savePageBreaks(pageBreaksInfo, callstack, attributeManager, rep);
-
-  // Bug fix: for some reason Etherpad is moving caret to next line when user edits line with
-  // page break. To avoid that, we force caret to be placed where rep is
-  editorInfo.ace_updateBrowserSelectionFromRep();
+  savePageBreaks(pageBreaksInfo, callstack, attributeManager, rep, editorInfo);
 }
 
-var cleanPageBreaks = function(callstack, attributeManager, rep) {
-  utils.performNonUnduableEvent(callstack, function() {
-    paginationNonSplit.cleanPageBreaks(attributeManager, rep);
-    paginationSplit.cleanPageBreaks(attributeManager, rep);
-  });
-}
-
-var savePageBreaks = function(pageBreaksInfo, callstack, attributeManager, rep) {
+var savePageBreaks = function(pageBreaksInfo, callstack, attributeManager, rep, editorInfo) {
   var $linesWithPageBreaks = pageBreaksInfo.linesWithPageBreaks;
   var splitPositions = pageBreaksInfo.splitPositions;
 
   utils.performNonUnduableEvent(callstack, function() {
     paginationNonSplit.savePageBreaks($linesWithPageBreaks, attributeManager, rep);
-    paginationSplit.savePageBreaks(splitPositions, attributeManager);
+    paginationSplit.savePageBreaks(splitPositions, attributeManager, rep, editorInfo);
   });
 }
 

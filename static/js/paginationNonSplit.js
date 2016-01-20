@@ -28,15 +28,22 @@ exports.buildHtmlWithPageBreaks = function(cls) {
 }
 
 exports.cleanPageBreaks = function(attributeManager, rep) {
-  var $linesWithPageBreaks = utils.getPadInner().find("nonSplitPageBreak").closest("div");
+  var totalLines = rep.lines.length();
+  for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
+    if (lineHasPageBreak(lineNumber, attributeManager)) {
+      removePageBreak(lineNumber, attributeManager);
+    }
+  }
+}
 
-  $linesWithPageBreaks.each(function() {
-    var lineId     = $(this).attr("id");
-    var lineNumber = rep.lines.indexOfKey(lineId);
+var lineHasPageBreak = function(lineNumber, attributeManager) {
+  return attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB) ||
+         attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
+}
 
-    attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB);
-    attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
-  });
+var removePageBreak = function(lineNumber, attributeManager) {
+  attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB);
+  attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
 }
 
 exports.savePageBreaks = function($linesAfterPageBreaks, attributeManager, rep) {

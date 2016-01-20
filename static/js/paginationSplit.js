@@ -3,9 +3,6 @@ var utils = require('./utils');
 var PAGE_BREAKS_ATTRIB                     = "splitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "splitPageBreakWithMoreAndContd";
 
-var CLEAN_PAGE_BREAKS_OPERATION                     = [[PAGE_BREAKS_ATTRIB, false]];
-var CLEAN_PAGE_BREAKS_WITH_MORE_AND_CONTD_OPERATION = [[PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB, '']];
-
 // number of minimum lines each element needs before a page break so it can be split in two parts
 // (default is 1)
 var MINIMUM_LINES_BEFORE_PAGE_BREAK = {
@@ -101,16 +98,13 @@ var calculateElementSplitPosition = function(innerLineNumber, $line, attributeMa
   var position = findPositionWhereLineCanBeSplit(innerLineNumber, $line, attributeManager, lineText, lineNumber);
   // if found position to split, return its split attributes
   if (position) {
-    var columnOfEndOfLineAfterSentenceMarker = getColumnOfEndOfInnerLineOrEndOfText(position.column, lineText, $line);
-    var afterLastSentenceThatFits            = [lineNumber, position.column];
-    var endOfLineAfterLastSentenceThatFits   = [lineNumber, columnOfEndOfLineAfterSentenceMarker];
-    var moreAndContdInfo                     = getMoreAndContdInfo($line);
+    var afterLastSentenceThatFits = [lineNumber, position.column];
+    var moreAndContdInfo          = getMoreAndContdInfo($line);
 
     return {
       heightAfterPageBreak: position.heightAfterPageBreak,
       addMoreAndContd: moreAndContdInfo,
       start: afterLastSentenceThatFits,
-      end: endOfLineAfterLastSentenceThatFits
     };
   }
 }
@@ -186,14 +180,6 @@ var getInnerLineLengthOf = function($line) {
   return lineLength;
 }
 
-var getColumnOfEndOfInnerLineOrEndOfText = function(startIndex, fullText, $line) {
-  var columnOfEndOfInnerLine = startIndex + getInnerLineLengthOf($line);
-  var lastColumnOfText = fullText.length;
-
-  // avoid errors if we reach end of text
-  return Math.min(lastColumnOfText, columnOfEndOfInnerLine);
-}
-
 var calculateHeightToFitText = function(text, $originalLine) {
   // create a clone to know the height needed
   var $theClone = $originalLine.clone();
@@ -237,34 +223,73 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   return extraHTML;
 }
 
-exports.cleanPageBreaks = function(attributeManager, rep) {
-  var $linesWithPageBreaks = utils.getPadInner().find("splitPageBreak").closest("div");
-
-  $linesWithPageBreaks.each(function() {
-    var lineId     = $(this).attr("id");
-    var lineNumber = rep.lines.indexOfKey(lineId);
-
-    // clear attribute on the whole line (easier to implement + has no undesired side effects)
-    var docStart = [lineNumber,0];
-    var docEnd   = [lineNumber+1,0];
-
-    attributeManager.setAttributesOnRange(docStart, docEnd, CLEAN_PAGE_BREAKS_OPERATION);
-    attributeManager.setAttributesOnRange(docStart, docEnd, CLEAN_PAGE_BREAKS_WITH_MORE_AND_CONTD_OPERATION);
-  });
+exports.cleanPageBreaks = function(attributeManager, rep, editorInfo) {
+  var totalLines = rep.lines.length();
+  for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
+    if (lineHasPageBreak(lineNumber, attributeManager)) {
+      var lineText = rep.lines.atIndex(lineNumber).text;
+      mergeLines(lineNumber, lineText, editorInfo);
+      removePageBreakBetweenLines(lineNumber, attributeManager);
+    }
+  }
 }
 
-exports.savePageBreaks = function(splitPositions, attributeManager) {
-  var addPageBreak = [["splitPageBreak", true]];
+var lineHasPageBreak = function(lineNumber, attributeManager) {
+  return attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB) ||
+         attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
+}
 
+var removePageBreakBetweenLines = function(lineNumber, attributeManager) {
+  attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB);
+  attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
+}
+
+var mergeLines = function(lineNumber, lineText, editorInfo) {
+  var lineLength = lineText.length;
+  var start = [lineNumber, lineLength];
+  var end = [lineNumber+1, 0];
+
+  // remove "\n" at the end of the line
+  editorInfo.ace_replaceRange(start, end, "");
+}
+
+exports.savePageBreaks = function(splitPositions, attributeManager, rep, editorInfo) {
   for (var i = splitPositions.length - 1; i >= 0; i--) {
     var splitPosition = splitPositions[i];
 
-    var pageBreakType = addPageBreak;
-    if (splitPosition.addMoreAndContd) {
-      var addPageBreakWithMoreAndContd = [["splitPageBreakWithMoreAndContd", splitPosition.addMoreAndContd.characterName]];
-      pageBreakType = addPageBreakWithMoreAndContd;
-    }
-
-    attributeManager.setAttributesOnRange(splitPosition.start, splitPosition.end, pageBreakType);
+    splitLine(splitPosition, attributeManager, editorInfo);
+    addPageBreakBetweenLines(splitPosition, attributeManager);
   };
+}
+
+var splitLine = function(splitPosition, attributeManager, editorInfo) {
+  var lineNumber = splitPosition.start[0];
+  var typeOfLineToBeSplit = getLineTypeOf(lineNumber, attributeManager);
+
+  editorInfo.ace_replaceRange(splitPosition.start, splitPosition.start, "\n");
+
+  // we need to make sure both halves of the split line have the same type
+  setTypeOfSecondHalfOfLine(lineNumber, typeOfLineToBeSplit, attributeManager);
+}
+
+var getLineTypeOf = function(lineNumber, attributeManager) {
+  return attributeManager.getAttributeOnLine(lineNumber, "script_element");
+}
+
+var setTypeOfSecondHalfOfLine = function(lineNumber, lineType, attributeManager) {
+  if (lineType) {
+    attributeManager.setAttributeOnLine(lineNumber+1, 'script_element', lineType);
+  }
+}
+
+var addPageBreakBetweenLines = function(splitPosition, attributeManager) {
+  var lineNumber = splitPosition.start[0];
+  var attributeName = PAGE_BREAKS_ATTRIB;
+  var attributeValue = true;
+  if (splitPosition.addMoreAndContd) {
+    attributeName = PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
+    attributeValue = splitPosition.addMoreAndContd.characterName;
+  }
+
+  attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
 }

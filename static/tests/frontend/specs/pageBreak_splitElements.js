@@ -36,6 +36,60 @@ describe("ep_script_page_view - page break on split elements", function() {
       };
     });
 
+    it("splits the original line into two separated lines", function(done) {
+      var inner$ = helper.padInner$;
+
+      // there should be a page break before we start testing
+      helper.waitFor(function() {
+        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+        return $splitElementsWithPageBreaks.length === 1;
+      }).done(function() {
+        var $lines = inner$("div");
+        var textOnLastDiv = sentences[1] + sentences[2] + sentences[3];
+        var textOnDivBeforeLast = sentences[0];
+
+        expect($lines.last().text()).to.be(textOnLastDiv);
+        expect($lines.last().prev().text()).to.be(textOnDivBeforeLast);
+
+        done();
+      });
+    });
+
+    it("merges split line back into a single line when it does not have a pageBreak anymore", function(done) {
+      this.timeout(5000);
+      var inner$ = helper.padInner$;
+
+      // there should be a page break before we start testing
+      helper.waitFor(function() {
+        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+        return $splitElementsWithPageBreaks.length === 1;
+      }).done(function() {
+        // create another very long general before the last one, so pagination needs to be re-done
+        // (The extra ".prev()" is because we insert a "\n" when line is split between pages)
+        var $threeLinesGeneral = inner$("div").last().prev().prev();
+        var line1 = utils.buildStringWithLength(60, "A") + ".";
+        var line2 = utils.buildStringWithLength(60, "B") + ".";
+        var line3 = utils.buildStringWithLength(60, "C") + ".";
+        $threeLinesGeneral.sendkeys("{selectall}");
+        $threeLinesGeneral.sendkeys(line1 + line2 + line3);
+
+        // wait for edition to be processed and pagination to be complete
+        helper.waitFor(function() {
+          var $splitElementsWithPageBreaks = utils.linesAfterSplitPageBreaks();
+          var $firstPageBreak = $splitElementsWithPageBreaks.first();
+
+          // page break was added to third line of first very long general
+          return $firstPageBreak.text() === line3;
+        }, 3000).done(function() {
+          // now the last line should had been merged back to the original line
+          var $lastLine = inner$("div").last();
+          expect($lastLine.text()).to.be(lastLineText);
+
+          done();
+        });
+      });
+    });
+
     it("removes existing page breaks and recalculates new ones when user changes pad content", function(done) {
       this.timeout(5000);
       var inner$ = helper.padInner$;
@@ -46,7 +100,8 @@ describe("ep_script_page_view - page break on split elements", function() {
         return $splitElementsWithPageBreaks.length === 1;
       }).done(function() {
         // create another very long general before the last one, so pagination needs to be re-done
-        var $threeLinesGeneral = inner$("div").last().prev();
+        // (The extra ".prev()" is because we insert a "\n" when line is split between pages)
+        var $threeLinesGeneral = inner$("div").last().prev().prev();
         var line1 = utils.buildStringWithLength(60, "A") + ".";
         var line2 = utils.buildStringWithLength(60, "B") + ".";
         var line3 = utils.buildStringWithLength(60, "C") + ".";
@@ -55,8 +110,8 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         // wait for edition to be processed and pagination to be complete
         helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-          var $firstPageBreak = $splitElementsWithPageBreaks.first().parent();
+          var $splitElementsWithPageBreaks = utils.linesAfterSplitPageBreaks();
+          var $firstPageBreak = $splitElementsWithPageBreaks.first();
 
           // page break was added to third line of first very long general
           return $firstPageBreak.text() === line3;
@@ -221,26 +276,31 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         var inner$ = helper.padInner$;
 
-        // change 57th line to be 3-lines-long (2 sentences, each ~1.25 long, so when they are
-        // split they need 2 lines each)
-        // build sentences that are ~1.25 line long (when split they need 2 lines each)
-        var sentence1 = utils.buildStringWithLength(75, "1") + ".";
-        var sentence2 = utils.buildStringWithLength(75, "2") + ".";
-        // GENERALS_PER_PAGE - 1 === line before last of 1st page
-        var $lineAtEndOfFirstPage = utils.getLine(GENERALS_PER_PAGE - 2);
-        $lineAtEndOfFirstPage.sendkeys("{selectall}");
-        $lineAtEndOfFirstPage.sendkeys(sentence1 + sentence2);
-
-        // wait for edition to be processed and pagination to be complete
+        // there should be a page break before we start testing
         helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-          return $splitElementsWithPageBreaks.length > 0;
-        }, 3000).done(function() {
-          // 1: verify first page break was added between the two sentences of 57th line
-          var topLineOfSentence2 = sentence2.substring(0, 61);
-          utils.testSplitPageBreakIsOn(topLineOfSentence2, function() {
-            // 2: verify second page break was added on top of last line
-            utils.testNonSplitPageBreakIsOn(lastLineText, done);
+          var $splitElementsWithPageBreaks = inner$("div nonSplitPageBreak");
+          return $splitElementsWithPageBreaks.length === 1;
+        }).done(function() {
+          // change 57th line to be 3-lines-long (2 sentences, each ~1.25 long, so when they are
+          // split they need 2 lines each)
+          // build sentences that are ~1.25 line long (when split they need 2 lines each)
+          var sentence1 = utils.buildStringWithLength(75, "1") + ".";
+          var sentence2 = utils.buildStringWithLength(75, "2") + ".";
+          // GENERALS_PER_PAGE - 1 === line before last of 1st page
+          var $lineAtEndOfFirstPage = utils.getLine(GENERALS_PER_PAGE - 2);
+          $lineAtEndOfFirstPage.sendkeys("{selectall}");
+          $lineAtEndOfFirstPage.sendkeys(sentence1 + sentence2);
+
+          // wait for edition to be processed and pagination to be complete
+          helper.waitFor(function() {
+            var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+            return $splitElementsWithPageBreaks.length > 0;
+          }, 3000).done(function() {
+            // 1: verify first page break was added between the two sentences of 57th line
+            utils.testSplitPageBreakIsOn(sentence2, function() {
+              // 2: verify second page break was added on top of last line
+              utils.testNonSplitPageBreakIsOn(lastLineText, done);
+            });
           });
         });
       });
@@ -304,14 +364,58 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
 
       it("splits action between the two pages, and first page has two lines of the action", function(done) {
-        // as line is split into two blocks of 1.25 lines each, the page break will be placed on the
-        // first 61 chars of original second sentence
-        var newThirdLine = sentences[1].substring(0,61);
+        var newThirdLine = sentences[1];
         utils.testSplitPageBreakIsOn(newThirdLine, done);
+      });
+
+      it("keeps the two halves of the line as actions", function(done) {
+        var inner$ = helper.padInner$;
+
+        // there should be a page break before we start testing
+        helper.waitFor(function() {
+          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+          return $splitElementsWithPageBreaks.length === 1;
+        }).done(function() {
+          var $secondHalfOfAction = inner$("div").last();
+          var $firstHalfOfAction = $secondHalfOfAction.prev();
+
+          var secondHalfIsAnAction = $secondHalfOfAction.find("action").length > 0;
+          var firstHalfIsAnAction = $firstHalfOfAction.find("action").length > 0;
+
+          expect(firstHalfIsAnAction).to.be(true);
+          expect(secondHalfIsAnAction).to.be(true);
+
+          done();
+        });
       });
 
       it("does not add the MORE/CONT'D tags", function(done) {
         utils.testPageBreakDoNotHaveMoreNorContd(done);
+      });
+
+      context("and user edits last line of previous page", function() {
+        it("merges the split line and paginate again", function(done) {
+          this.timeout(6000);
+          var inner$ = helper.padInner$;
+
+          // there should be a page break before we start testing
+          helper.waitFor(function() {
+            var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+            return $splitElementsWithPageBreaks.length === 1;
+          }).done(function() {
+            // edit last line of previous page
+            var $lastLineOfFirstPage = inner$("div").last().prev();
+            $lastLineOfFirstPage.sendkeys("{selectall}{rightarrow}");
+            $lastLineOfFirstPage.sendkeys("something");
+
+            // new content should be moved to next page
+            var newLastLine = "something" + sentences[1];
+            helper.waitFor(function() {
+              var $lastLine = inner$("div").last();
+              return $lastLine.text() === newLastLine;
+            }, 2000).done(done);
+          });
+        });
       });
 
       context("but next page will have less then the minimum lines (2) of an action", function() {
@@ -384,7 +488,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       it("splits transition between the two pages, and first page has one line of the transition", function(done) {
         // as line is split into two blocks, the page break will be placed on the
         // first 15 chars of original second sentence
-        var newThirdLine = sentences[1].substring(0, 15);
+        var newThirdLine = sentences[1];
         utils.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
@@ -461,7 +565,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       it("splits dialogue between the two pages, and first page has one line of the dialogue", function(done) {
         // as line is split into two blocks, the page break will be placed on the
         // first 35 chars of original second sentence
-        var newThirdLine = sentences[1].substring(0, 35);
+        var newThirdLine = sentences[1];
         utils.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
@@ -570,7 +674,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       it("splits parenthetical between the two pages, and first page has one line of the parenthetical", function(done) {
         // as line is split into two blocks, the page break will be placed on the
         // first 25 chars of original second sentence
-        var newThirdLine = sentences[1].substring(0, 25);
+        var newThirdLine = sentences[1];
         utils.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
