@@ -3,6 +3,8 @@ var utils = require('./utils');
 var PAGE_BREAKS_ATTRIB                     = "splitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "splitPageBreakWithMoreAndContd";
 
+var PAGE_BREAK_TAG = "splitPageBreak";
+
 // number of minimum lines each element needs before a page break so it can be split in two parts
 // (default is 1)
 var MINIMUM_LINES_BEFORE_PAGE_BREAK = {
@@ -214,10 +216,10 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   if (cls.match(PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB)) {
     var characterName = utils.extractCharacterNameFromClass(cls);
     extraHTML  = '<more></more>';
-    extraHTML += '<splitPageBreak></splitPageBreak>';
+    extraHTML += '<'+PAGE_BREAK_TAG+'></'+PAGE_BREAK_TAG+'>';
     extraHTML += '<contdLine contenteditable="false"><contd data-character="' + characterName + '"></contd></contdLine>';
   } else if (cls.match(PAGE_BREAKS_ATTRIB)) {
-    extraHTML = '<splitPageBreak></splitPageBreak>';
+    extraHTML = '<'+PAGE_BREAK_TAG+'></'+PAGE_BREAK_TAG+'>';
   }
 
   return extraHTML;
@@ -292,4 +294,8 @@ var addPageBreakBetweenLines = function(splitPosition, attributeManager) {
   }
 
   attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
+}
+
+exports.lineHasPageBreak = function($node) {
+  return $node.find(PAGE_BREAK_TAG).length > 0;
 }

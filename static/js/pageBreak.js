@@ -44,6 +44,13 @@ exports.aceDomLineProcessLineAttributes = function(name, context) {
   return [];
 }
 
+exports.acePostWriteDomLineHTML = function(hook, context) {
+  var $node = $(context.node);
+  if (paginationSplit.lineHasPageBreak($node)) {
+    $node.addClass("firstHalf");
+  }
+}
+
 exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
   if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;

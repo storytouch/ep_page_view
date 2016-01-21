@@ -229,6 +229,15 @@ body{
     margin-right:-118px;
   }
 
+  /* hide ")" from 1st half of split parenthetical: */
+  #innerdocbody.breakPages div.firstHalf parenthetical:after {
+    display: none;
+  }
+  /* hide "(" from 2nd half of split parenthetical: */
+  #innerdocbody.breakPages div.firstHalf + div parenthetical:before {
+    display: none;
+  }
+
   /* page number: */
   #innerdocbody.breakPages div splitPageBreak:after,
   #innerdocbody.breakPages div nonSplitPageBreak:after {
