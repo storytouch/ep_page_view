@@ -124,27 +124,27 @@ body{
   }
 
   /* align with character left margin */
-  #innerdocbody.breakPages div more.nonSplit:before,
-  #innerdocbody.breakPages div contdLine.nonSplit {
+  #innerdocbody.breakPages div more:before,
+  #innerdocbody.breakPages div contdLine {
     margin-left: 152px;
   }
   /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
   #innerdocbody.breakPages div more:before {
-    margin-right: 200px;
+    margin-right: 242px;
   }
   #innerdocbody.breakPages div contd:after {
-    margin-right: 116px;
+    margin-right: 222px;
   }
 
   #innerdocbody.breakPages div contdLine {
-    max-width: calc(100% - 16px + 116px);
+    max-width: calc(100% - 16px + 222px);
     min-width: calc(100% - 16px);
-    margin-right: -116px; /* CONT'D right margin */
+    margin-right: -222px; /* CONT'D right margin */
   }
-  #innerdocbody.breakPages div contdLine.nonSplit {
+  #innerdocbody.breakPages div contdLine {
     /* define max & min width because available width for non-split page breaks is the full page width */
-    /* 152px === character margin left; 16px === character margin right; -116px === CONT'D right margin */
-    max-width: calc(100% - 152px - 16px + 116px);
+    /* 152px === character margin left; 16px === character margin right; -222px === CONT'D right margin */
+    max-width: calc(100% - 152px - 16px + 222px);
     min-width: calc(100% - 152px - 16px);
   }
 
@@ -160,14 +160,14 @@ body{
     text-transform: uppercase;
 
     /* the following attributes are necessary to display ellipsis when character name is too long */
-    max-width: calc(100% - 64px - 116px); /* 64px: CONT'D width; 116px: CONT'D right margin */
+    max-width: calc(100% - 64px - 222px); /* 64px: CONT'D width; 222px: CONT'D right margin */
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
   }
   /* override width because label in pt-br is shorter */
   #innerdocbody.breakPages[lang=pt-br] div contd:before {
-    max-width: calc(100% - 58px - 116px);
+    max-width: calc(100% - 58px - 222px);
   }
 
   #innerdocbody.breakPages div contd:after {
@@ -182,18 +182,6 @@ body{
 
     /* override width because label in pt-br is shorter */
     width: 58px;
-  }
-
-  /* element-specific margins to align with character left margin */
-  #innerdocbody.breakPages div parenthetical more,
-  #innerdocbody.breakPages div parenthetical contd {
-    margin-left: 48px;
-    margin-right: -128px;
-  }
-  #innerdocbody.breakPages div dialogue more,
-  #innerdocbody.breakPages div dialogue contd {
-    margin-left: 76px;
-    margin-right: -111px;
   }
 
   #innerdocbody.breakPages div splitPageBreak:before,
@@ -216,19 +204,6 @@ body{
   */
   }
 
-  /* Override margin-right of elements that have a right margin defined.
-     Value should be === default margin-right (-79) - element margin-right.
-  */
-  #innerdocbody.breakPages div parenthetical splitPageBreak:before {
-    margin-right:-227px;
-  }
-  #innerdocbody.breakPages div dialogue splitPageBreak:before {
-    margin-right:-190px;
-  }
-  #innerdocbody.breakPages div transition splitPageBreak:before {
-    margin-right:-118px;
-  }
-
   /* hide ")" from 1st half of split parenthetical: */
   #innerdocbody.breakPages div.firstHalf parenthetical:after {
     display: none;
@@ -248,18 +223,6 @@ body{
     /* page numbering: */
     counter-increment: page;
     content: counter(page) ".";
-  }
-  /* Override margin-right of elements that have a right margin defined.
-     Value should be === default margin-right (4) - element margin-right.
-  */
-  #innerdocbody.breakPages div parenthetical splitPageBreak:after {
-    margin-right:-144px;
-  }
-  #innerdocbody.breakPages div dialogue splitPageBreak:after {
-    margin-right:-107px;
-  }
-  #innerdocbody.breakPages div transition splitPageBreak:after {
-    margin-right:-35px;
   }
 
   .outerBackground{
