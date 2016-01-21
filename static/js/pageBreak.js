@@ -48,45 +48,54 @@ exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
   if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;
 
-  if (isAPaginationEvent(context)) {
+  var eventType = context.callstack.type;
+
+  // pagination was previously scheduled
+  if (isAPaginationEvent(eventType)) {
     // only proceed if pagination was scheduled by me.
     // This avoids getting an error if two users have the same pad opened
-    if (isPaginationScheduledByMe(context)) {
-      if (readyFor2ndPhaseOfPagination(context)) {
+    if (isPaginationScheduledByMe(eventType)) {
+      if (readyFor2ndPhaseOfPagination(eventType)) {
         continuePagination(context);
       } else {
         // we are ready to restart pagination
         restartPagination(context);
       }
     }
-  } else {
+  }
+  // user changed the type of one of the lines
+  else if (isAChangeOnElementType(eventType)) {
+    restartPagination(context);
+  }
+  // any other edition on the pad
+  else {
     // don't do anything if text did not change or if user was not the one who made the text change
-    if (!context.callstack.docTextChanged || !isEditedByMe(context)) return;
+    if (!context.callstack.docTextChanged || !isEditedByMe(eventType)) return;
 
     resetTimerToRestartPagination(context);
   }
 }
 
 // based on similar method from ep_autocomp
-var isEditedByMe = function(context) {
-  var eventType = context.callstack.type;
+var isEditedByMe = function(eventType) {
   var editedByMe = (eventType === "idleWorkTimer" || eventType === "handleKeyEvent");
 
   return editedByMe;
 }
 
-var isPaginationScheduledByMe = function(context) {
-  var eventType = context.callstack.type;
+var isAChangeOnElementType = function(eventType) {
+  return eventType === 'insertscriptelement';
+}
+
+var isPaginationScheduledByMe = function(eventType) {
   return eventType.match('^pagination-.*' + clientVars.userId);
 }
 
-var isAPaginationEvent = function(context) {
-  var eventType = context.callstack.type;
+var isAPaginationEvent = function(eventType) {
   return eventType.match('^pagination-');
 }
 
-var readyFor2ndPhaseOfPagination = function(context) {
-  var eventType = context.callstack.type;
+var readyFor2ndPhaseOfPagination = function(eventType) {
   var myPaginationEvent = myPaginationEventType();
 
   return myPaginationEvent === eventType;

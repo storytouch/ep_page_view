@@ -49,7 +49,7 @@ describe("ep_script_page_view - page break main tests", function() {
 
     // this scenario is a workaround to the limitation of CSS :after/:before, which is not
     // displayed correctly on some elements (including <br>)
-    context("when pages > 1 have empty lines on the top of the page", function() {
+    context("and pages > 1 have empty lines on the top of the page", function() {
       var FIRST_LINE_OF_PAGE_2 = GENERALS_PER_PAGE;
       var FIRST_LINE_OF_PAGE_3 = 2*GENERALS_PER_PAGE + 2; // there are 2 empty lines on top of page 2
 
@@ -145,6 +145,34 @@ describe("ep_script_page_view - page break main tests", function() {
 
             done();
           });
+        });
+      });
+    });
+
+    context("and one of the lines has its type changed", function() {
+      it("updates pagination", function(done) {
+        var inner$ = helper.padInner$;
+
+        // create a script with 2 pages full of generals and a 3rd page with a single general
+        var elementBuilder = utils.general;
+        var pageBuilder    = pageBreak.pageFullOfElementsBuilder(GENERALS_PER_PAGE, utils.general);
+        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, function() {
+          // change second line to action, so all lines will be shifted down one position
+          var $secondLine = inner$("div").first().next();
+          $secondLine.sendkeys("{selectall}");
+          utils.changeToElement(utils.ACTION, function() {
+            // wait for pagination to be completed
+            helper.waitFor(function() {
+              var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+              var $firstPageBreak = $linesWithPageBreaks.first();
+              var $secondPageBreak = $linesWithPageBreaks.last();
+              var $lineAfterSecondPageBreak = $secondPageBreak.next();
+
+              return ($firstPageBreak.text() === "1st page") &&
+                     ($secondPageBreak.text() === "2nd page") &&
+                     ($lineAfterSecondPageBreak.text() === "1st of 3rd page");
+            }, 3000).done(done);
+          }, 1);
         });
       });
     });
