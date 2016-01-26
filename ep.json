@@ -10,6 +10,7 @@
         "aceDomLineProcessLineAttributes": "ep_script_page_view/static/js/pageBreak",
         "acePostWriteDomLineHTML": "ep_script_page_view/static/js/pageBreak",
         "aceRegisterBlockElements": "ep_script_page_view/static/js/pageBreak",
+        "collectContentPre": "ep_script_page_view/static/js/paginationSplit",
         "aceEditEvent": "ep_script_page_view/static/js/pageBreak"
       },
       "hooks": {

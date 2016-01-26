@@ -90,7 +90,19 @@ exports.buildCharacterNameToClass = function(value) {
   return 'characterName:<' + Security.escapeHTMLAttribute(characterName) + '>';
 }
 
-exports.extractCharacterNameFromClass = function(cls) {
+exports.buildPageBreakWithMoreAndContd = function(cls, tagName) {
+  var extraHTML;
+  var characterName = extractCharacterNameFromClass(cls);
+
+  extraHTML = '<more></more>';
+  extraHTML += '<'+tagName+'></'+tagName+'>';
+  // Bug fix: contenteditable=false avoids caret being placed on CONT'D line
+  extraHTML += '<contdLine contenteditable="false"><contd data-character="' + characterName + '"></contd></contdLine>';
+
+  return extraHTML;
+}
+
+var extractCharacterNameFromClass = function(cls) {
   var regex  = "(?:^| )characterName:<([^>]*)>"; // "characterName:<character name>"
   var characterNameFound = cls.match(new RegExp(regex));
   var characterName = characterNameFound ? characterNameFound[1] : "";

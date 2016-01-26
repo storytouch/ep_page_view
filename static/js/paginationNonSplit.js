@@ -15,16 +15,24 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   var extraHTML;
 
   if (cls.match(PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB)) {
-    var characterName = utils.extractCharacterNameFromClass(cls);
-    extraHTML  = '<more class="nonSplit"></more>';
-    extraHTML += '<nonSplitPageBreak></nonSplitPageBreak>';
-    // Bug fix: contenteditable=false avoids caret being placed on CONT'D line
-    extraHTML += '<contdLine class="nonSplit" contenteditable="false"><contd class="nonSplit" data-character="' + characterName + '"></contd></contdLine>';
+    extraHTML = utils.buildPageBreakWithMoreAndContd(cls, 'nonSplitPageBreak');
   } else if (cls.match(PAGE_BREAKS_ATTRIB)) {
     extraHTML = '<nonSplitPageBreak></nonSplitPageBreak>';
   }
 
-  return extraHTML;
+  // Bug fix: lines with page break need to be wrapped by a registered block element
+  // (see blockElements), otherwise caret will start moving alone when placed
+  // on those lines
+  if (extraHTML) {
+    return {
+      preHtml: '<line_with_page_break>',
+      postHtml: extraHTML + '</line_with_page_break>'
+    };
+  }
+}
+
+exports.blockElements = function() {
+  return ['line_with_page_break'];
 }
 
 exports.cleanPageBreaks = function(attributeManager, rep) {

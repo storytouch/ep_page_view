@@ -219,7 +219,7 @@ ep_script_page_view_test_helper.utils = {
     helper.waitFor(function() {
       var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
       return $elementsWithPageBreaksOnTop.length > 0;
-    }).done(function() {
+    }, 2000).done(function() {
       // verify page break is above targetElement
       var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
       var $firstPageBreak = $elementsWithPageBreaksOnTop.first();

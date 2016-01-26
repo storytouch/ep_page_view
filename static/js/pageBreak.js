@@ -1,4 +1,5 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
+var _ = require('ep_etherpad-lite/static/js/underscore');
 
 var utils              = require('./utils');
 var paginationBlocks   = require('./paginationBlocks');
@@ -11,7 +12,7 @@ var paginationNonSplit = require('./paginationNonSplit');
 var REGULAR_LINES_PER_PAGE = 58;
 
 exports.aceRegisterBlockElements = function(hook, context) {
-  return ["line_with_page_break", "line_after_page_break"];
+  return _.union(paginationSplit.blockElements(), paginationNonSplit.blockElements());
 }
 
 exports.aceAttribsToClasses = function(hook, context) {
@@ -35,24 +36,10 @@ exports.aceDomLineProcessLineAttributes = function(hook, context) {
   var extraHTML = paginationNonSplit.buildHtmlWithPageBreaks(context.cls) ||
                   paginationSplit.buildHtmlWithPageBreaks(context.cls);
 
-  // Bug fix: lines with page break need to be wrapped by a registered block element
-  // (see aceRegisterBlockElements), otherwise caret will start moving alone when placed
-  // on those lines
   if (extraHTML) {
     var modifier = {
-      preHtml: '<line_with_page_break>',
-      postHtml: extraHTML + '</line_with_page_break>',
-      processedMarker: true
-    };
-    return [modifier];
-  }
-  // Bug fix: lines after page break need to be wrapped by a registered block element
-  // (see aceRegisterBlockElements), otherwise caret will start moving alone when placed
-  // on those lines
-  else if (paginationSplit.isAfterPageBreak(context.cls)) {
-    var modifier = {
-      preHtml: '<line_after_page_break>',
-      postHtml: '</line_after_page_break>',
+      preHtml: extraHTML.preHtml,
+      postHtml: extraHTML.postHtml,
       processedMarker: true
     };
     return [modifier];
@@ -63,7 +50,7 @@ exports.aceDomLineProcessLineAttributes = function(hook, context) {
 // we need this to adjust layout of parentheticals split between pages
 exports.acePostWriteDomLineHTML = function(hook, context) {
   var $node = $(context.node);
-  if (paginationSplit.lineHasPageBreak($node)) {
+  if (paginationSplit.lineHasSplitPageBreak($node)) {
     $node.addClass("firstHalf");
   }
 }

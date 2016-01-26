@@ -126,6 +126,38 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
     });
 
+    it("merges lines and split them again when user adds text to the end of first half of the split", function(done) {
+      this.timeout(6000);
+
+      var inner$ = helper.padInner$;
+
+      // there should be a page break before we start testing
+      helper.waitFor(function() {
+        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+        return $splitElementsWithPageBreaks.length === 1;
+      }).done(function() {
+        // write something on fist half of split line
+        var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+        $firstHalfOfSplitLine.sendkeys("{selectall}{rightarrow}");
+        $firstHalfOfSplitLine.sendkeys("something");
+
+        var textBeforePageBreak = sentences[0];
+        var textAfterPageBreak = "something" + sentences[1] + sentences[2] + sentences[3];
+
+        // wait for pagination to finish
+        helper.waitFor(function() {
+          var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+          return $firstHalfOfSplitLine.text() === textBeforePageBreak;
+        }, 3000).done(function() {
+          var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").first().next();
+
+          expect($secondHalfOfSplitLine.text()).to.be(textAfterPageBreak);
+
+          done();
+        });
+      });
+    });
+
     context("and there is room on previous page for minimum number of lines (1)", function() {
       it("splits general between the two pages, and first page has one line of the general", function(done) {
         var secondLine = sentences[1];

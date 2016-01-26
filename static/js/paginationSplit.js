@@ -9,6 +9,10 @@ var SECOND_HALF_ATTRIB = "splitSecondHalf";
 
 var PAGE_BREAK_TAG = "splitPageBreak";
 
+var FIRST_HALF_TAG                     = "split_first_half";
+var FIRST_HALF_WITH_MORE_AND_CONTD_TAG = "split_with_more_and_contd_first_half";
+var SECOND_HALF_TAG                    = "split_second_half";
+
 // number of minimum lines each element needs before a page break so it can be split in two parts
 // (default is 1)
 var MINIMUM_LINES_BEFORE_PAGE_BREAK = {
@@ -218,19 +222,51 @@ exports.isAfterPageBreak = function(cls) {
   return cls.match(SECOND_HALF_ATTRIB);
 }
 
+// Bug fix: if user edits first half of split line, for some reason Etherpad is loosing the page break
+// line attribute. So we need to collect it:
+exports.collectContentPre = function(hook, context) {
+  var tname = context.tname;
+  var state = context.state;
+  var lineAttributes = state.lineAttributes
+
+  if (tname === FIRST_HALF_TAG) {
+    lineAttributes[PAGE_BREAKS_ATTRIB] = true;
+  } else if (tname === FIRST_HALF_WITH_MORE_AND_CONTD_TAG) {
+    lineAttributes[PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB] = true;
+  }
+}
+
 exports.buildHtmlWithPageBreaks = function(cls) {
   var extraHTML;
 
   if (cls.match(PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB)) {
-    var characterName = utils.extractCharacterNameFromClass(cls);
-    extraHTML  = '<more></more>';
-    extraHTML += '<'+PAGE_BREAK_TAG+'></'+PAGE_BREAK_TAG+'>';
-    extraHTML += '<contdLine contenteditable="false"><contd data-character="' + characterName + '"></contd></contdLine>';
+    extraHTML = utils.buildPageBreakWithMoreAndContd(cls, PAGE_BREAK_TAG);
+
+    return {
+      preHtml: '<'+FIRST_HALF_WITH_MORE_AND_CONTD_TAG+'>',
+      postHtml: extraHTML + '</'+FIRST_HALF_WITH_MORE_AND_CONTD_TAG+'>'
+    };
   } else if (cls.match(PAGE_BREAKS_ATTRIB)) {
     extraHTML = '<'+PAGE_BREAK_TAG+'></'+PAGE_BREAK_TAG+'>';
-  }
 
-  return extraHTML;
+    return {
+      preHtml: '<'+FIRST_HALF_TAG+'>',
+      postHtml: extraHTML + '</'+FIRST_HALF_TAG+'>'
+    };
+  }
+  // Bug fix: lines after page break need to be wrapped by a registered block element
+  // (see blockElements), otherwise caret will start moving alone when placed
+  // on those lines
+  else if (exports.isAfterPageBreak(cls)) {
+    return {
+      preHtml: '<'+SECOND_HALF_TAG+'>',
+      postHtml: '</'+SECOND_HALF_TAG+'>'
+    };
+  }
+}
+
+exports.blockElements = function() {
+  return [FIRST_HALF_TAG, FIRST_HALF_WITH_MORE_AND_CONTD_TAG, SECOND_HALF_TAG];
 }
 
 exports.cleanPageBreaks = function(attributeManager, rep, editorInfo) {
@@ -329,6 +365,6 @@ var addPageBreakBetweenLines = function(splitPosition, attributeManager) {
   attributeManager.setAttributeOnLine(lineNumber+1, SECOND_HALF_ATTRIB, splitId);
 }
 
-exports.lineHasPageBreak = function($node) {
+exports.lineHasSplitPageBreak = function($node) {
   return $node.find(PAGE_BREAK_TAG).length > 0;
 }
