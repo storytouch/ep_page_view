@@ -1,7 +1,11 @@
 var utils = require('./utils');
+var randomString = require('ep_etherpad-lite/static/js/pad_utils').randomString;
 
 var PAGE_BREAKS_ATTRIB                     = "splitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "splitPageBreakWithMoreAndContd";
+
+var FIRST_HALF_ATTRIB = "splitFirstHalf";
+var SECOND_HALF_ATTRIB = "splitSecondHalf";
 
 var PAGE_BREAK_TAG = "splitPageBreak";
 
@@ -210,6 +214,10 @@ exports.isPageBreakWithMoreAndContdAttrib = function(contextKey) {
   return contextKey === PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
 }
 
+exports.isAfterPageBreak = function(cls) {
+  return cls.match(SECOND_HALF_ATTRIB);
+}
+
 exports.buildHtmlWithPageBreaks = function(cls) {
   var extraHTML;
 
@@ -228,12 +236,21 @@ exports.buildHtmlWithPageBreaks = function(cls) {
 exports.cleanPageBreaks = function(attributeManager, rep, editorInfo) {
   var totalLines = rep.lines.length();
   for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
-    if (lineHasPageBreak(lineNumber, attributeManager)) {
+    // remove marker(s) of a split line
+    if (lineIsFirstHalfOfSplit(lineNumber, attributeManager)) {
       var lineText = rep.lines.atIndex(lineNumber).text;
-      mergeLines(lineNumber, lineText, editorInfo);
+      mergeLines(lineNumber, lineText, attributeManager, editorInfo);
+      removeMarkersOfLineSplit(lineNumber, attributeManager);
+    }
+    // remove marker of a page break
+    if (lineHasPageBreak(lineNumber, attributeManager)) {
       removePageBreakBetweenLines(lineNumber, attributeManager);
     }
   }
+}
+
+var lineIsFirstHalfOfSplit = function(lineNumber, attributeManager) {
+  return attributeManager.getAttributeOnLine(lineNumber, FIRST_HALF_ATTRIB);
 }
 
 var lineHasPageBreak = function(lineNumber, attributeManager) {
@@ -246,13 +263,24 @@ var removePageBreakBetweenLines = function(lineNumber, attributeManager) {
   attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
 }
 
-var mergeLines = function(lineNumber, lineText, editorInfo) {
-  var lineLength = lineText.length;
-  var start = [lineNumber, lineLength];
-  var end = [lineNumber+1, 0];
+var removeMarkersOfLineSplit = function(lineNumber, attributeManager) {
+  attributeManager.removeAttributeOnLine(lineNumber, FIRST_HALF_ATTRIB);
+  attributeManager.removeAttributeOnLine(lineNumber+1, SECOND_HALF_ATTRIB);
+}
 
-  // remove "\n" at the end of the line
-  editorInfo.ace_replaceRange(start, end, "");
+var mergeLines = function(lineNumber, lineText, attributeManager, editorInfo) {
+  var splitIdOfFirstHalf = attributeManager.getAttributeOnLine(lineNumber, FIRST_HALF_ATTRIB);
+  var splitIdOfSecondHalf = attributeManager.getAttributeOnLine(lineNumber+1, SECOND_HALF_ATTRIB);
+
+  // we only merge if both lines have the same split id
+  if (splitIdOfFirstHalf === splitIdOfSecondHalf) {
+    var lineLength = lineText.length;
+    var start = [lineNumber, lineLength];
+    var end = [lineNumber+1, 0];
+
+    // remove "\n" at the end of the line
+    editorInfo.ace_replaceRange(start, end, "");
+  }
 }
 
 exports.savePageBreaks = function(splitPositions, attributeManager, rep, editorInfo) {
@@ -294,6 +322,11 @@ var addPageBreakBetweenLines = function(splitPosition, attributeManager) {
   }
 
   attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
+
+  // mark both halves with same id
+  var splitId = randomString(16);
+  attributeManager.setAttributeOnLine(lineNumber, FIRST_HALF_ATTRIB, splitId);
+  attributeManager.setAttributeOnLine(lineNumber+1, SECOND_HALF_ATTRIB, splitId);
 }
 
 exports.lineHasPageBreak = function($node) {

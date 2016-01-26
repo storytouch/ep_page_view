@@ -1,11 +1,12 @@
 describe("ep_script_page_view - page break on split elements", function() {
   // shortcuts for helper functions
-  var utils;
+  var utils, splitElements;
   // context-dependent values/functions
   var linesBeforeTargetElement, buildTargetElement, lastLineText, sentences;
 
   before(function(){
     utils = ep_script_page_view_test_helper.utils;
+    splitElements = ep_script_page_view_test_helper.splitElements;
   });
 
   beforeEach(function(cb){
@@ -325,6 +326,110 @@ describe("ep_script_page_view - page break on split elements", function() {
       it("leaves whitespaces on previous page", function(done) {
         var lastSentence = sentences[1];
         utils.testSplitPageBreakIsOn(lastSentence, done);
+      });
+    });
+
+    context("and user keeps editing pad text after the split line", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
+        var line1 = utils.buildStringWithLength(60, "1") + ".";
+        var line2 = utils.buildStringWithLength(60, "2") + ".";
+        var line3 = utils.buildStringWithLength(60, "3") + ".";
+        var line4 = utils.buildStringWithLength(60, "4") + ".";
+        var line5 = utils.buildStringWithLength(60, "5") + ".";
+        var line6 = utils.buildStringWithLength(60, "6") + ".";
+        sentences = [line1, line2, line3, line4, line5, line6];
+        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+        buildTargetElement = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      it("merges lines and split them again on each edition", function(done) {
+        this.timeout(10000);
+
+        var inner$ = helper.padInner$;
+
+        // there should be a page break before we start testing
+        helper.waitFor(function() {
+          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+          return $splitElementsWithPageBreaks.length === 1;
+        }, 3000).done(function() {
+          // repeat some times: remove one line then check is pagination is correct
+          var textBeforePageBreak = sentences[0] + sentences[1];
+          splitElements.removeFirstLineAndExpectTextBeforePageBreakToBe(textBeforePageBreak, function() {
+            var textBeforePageBreak = sentences[0] + sentences[1] + sentences[2];
+            splitElements.removeFirstLineAndExpectTextBeforePageBreakToBe(textBeforePageBreak, function() {
+              var textBeforePageBreak = sentences[0] + sentences[1] + sentences[2] + sentences[3];
+              splitElements.removeFirstLineAndExpectTextBeforePageBreakToBe(textBeforePageBreak, function() {
+                var textBeforePageBreak = sentences[0] + sentences[1] + sentences[2] + sentences[3] + sentences[4];
+                splitElements.removeFirstLineAndExpectTextBeforePageBreakToBe(textBeforePageBreak, done);
+              });
+            });
+          });
+        });
+      });
+    });
+
+    context("and user removes part of lines split between pages", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
+        var line1 = "last general";
+        sentences = [line1];
+        lastLineText = line1;
+        buildTargetElement = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      it("does not merge lines on pagination if both halves removed are from the same split", function(done) {
+        this.timeout(6000);
+
+        var inner$ = helper.padInner$;
+
+        var veryLongLine = utils.buildStringWithLength(60, ".");
+
+        var line1 = utils.buildStringWithLength(60, "1") + ".";
+        var line2 = utils.buildStringWithLength(60, "2") + ".";
+        var line3 = utils.buildStringWithLength(60, "3") + ".";
+        var line4 = utils.buildStringWithLength(60, "4") + ".";
+        var multiLineText = line1 + line2 + line3 + line4;
+
+        // Add a part in bold to be able to select part of the text later
+        var $lineBeforeLast = inner$("div").last().prev();
+        $lineBeforeLast.html("not<b> bold</b>" + veryLongLine);
+
+        // Replace single-line general by a multi-line general;
+        // Select part of 1st and 2nd halves of same split to be able to remove them at the same time.
+        var $partOfLineBeforeLast = inner$("div b").last();
+        $partOfLineBeforeLast.sendkeys("{selectall}");
+        $partOfLineBeforeLast.sendkeys(multiLineText);
+        $partOfLineBeforeLast.sendkeys("{selectall}");
+
+        // wait for pagination to finish
+        helper.waitFor(function() {
+          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+          return $splitElementsWithPageBreaks.length === 1;
+        }, 2000).done(function() {
+          // remove all selected content (part of 1st half + entire 2nd half of same split)
+          utils.pressBackspace();
+
+          // wait for pagination to finish (content is removed, lines merged, etc.)
+          helper.waitFor(function() {
+            var $nonSplitElementsWithPageBreaks = inner$("div nonSplitPageBreak");
+            return $nonSplitElementsWithPageBreaks.length === 1;
+          }, 2000).done(function() {
+            var $lines = inner$("div");
+            var $lastLine = $lines.last();
+            var $lineBeforeLast = $lastLine.prev();
+
+            // last two lines should be "not.....(...)" and "last general"
+            expect($lastLine.text()).to.be("last general");
+            expect($lineBeforeLast.text()).to.be("not" + veryLongLine);
+
+            done();
+          });
+        });
       });
     });
   });
@@ -815,3 +920,21 @@ describe("ep_script_page_view - page break on split elements", function() {
     });
   });
 });
+
+var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
+ep_script_page_view_test_helper.splitElements = {
+  removeFirstLineAndExpectTextBeforePageBreakToBe: function(expectedTextBeforePageBreak, done) {
+    var inner$ = helper.padInner$;
+
+    // remove one line to force pagination again
+    var $firstLine = inner$("div").first();
+    $firstLine.remove();
+
+    // wait for pagination to finish
+    helper.waitFor(function() {
+      var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+      var textBeforePageBreak = $splitElementsWithPageBreaks.first().closest("div").text();
+      return textBeforePageBreak === expectedTextBeforePageBreak;
+    }, 3000).done(done);
+  },
+}

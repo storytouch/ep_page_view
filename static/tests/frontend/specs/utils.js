@@ -35,7 +35,7 @@ ep_script_page_view_test_helper.utils = {
     helper.waitFor(function(){
       var $lastLine = inner$("div").last();
       return $lastLine.text() === lastLineText;
-    }, 2000).done(cb);
+    }, 3000).done(cb);
   },
 
   /**** vars and functions to change element type of a line: ****/
@@ -128,6 +128,52 @@ ep_script_page_view_test_helper.utils = {
     var chrome$ = helper.padChrome$;
     var $undoButton = chrome$(".buttonicon-undo");
     $undoButton.click();
+  },
+
+  placeCaretInTheBeginningOfLine: function(lineNum, cb) {
+    var utils =  ep_script_page_view_test_helper.utils;
+    var $targetLine = utils.getLine(lineNum);
+    $targetLine.sendkeys("{selectall}{leftarrow}");
+    helper.waitFor(function() {
+      var $targetLine = utils.getLine(lineNum);
+      var $lineWhereCaretIs = utils.getLineWhereCaretIs();
+
+      return $targetLine.get(0) === $lineWhereCaretIs.get(0);
+    }).done(cb);
+  },
+
+  placeCaretAtTheEndOfLine: function(lineNum, cb) {
+    var utils =  ep_script_page_view_test_helper.utils;
+    var $targetLine = utils.getLine(lineNum);
+    $targetLine.sendkeys("{selectall}{rightarrow}");
+    helper.waitFor(function() {
+      var $targetLine = utils.getLine(lineNum);
+      var $lineWhereCaretIs = utils.getLineWhereCaretIs();
+
+      return $targetLine.get(0) === $lineWhereCaretIs.get(0);
+    }).done(cb);
+  },
+
+  BACKSPACE: 8,
+  DELETE: 46,
+  pressKey: function(CODE) {
+    var inner$ = helper.padInner$;
+    if(inner$(window)[0].bowser.firefox || inner$(window)[0].bowser.modernIE){ // if it's a mozilla or IE
+      var evtType = "keypress";
+    }else{
+      var evtType = "keydown";
+    }
+    var e = inner$.Event(evtType);
+    e.keyCode = CODE;
+    inner$("#innerdocbody").trigger(e);
+  },
+  pressBackspace: function() {
+    var utils = ep_script_page_view_test_helper.utils;
+    utils.pressKey(utils.BACKSPACE);
+  },
+  pressDelete: function() {
+    var utils = ep_script_page_view_test_helper.utils;
+    utils.pressKey(utils.DELETE);
   },
 
   linesAfterNonSplitPageBreaks: function() {

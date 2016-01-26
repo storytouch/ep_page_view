@@ -70,6 +70,8 @@ describe("ep_script_page_view - page break main tests", function() {
       });
 
       it("ignores empty lines on top of pages", function(done) {
+        this.timeout(6000);
+
         var inner$ = helper.padInner$;
 
         // wait for pagination to be complete
@@ -77,7 +79,7 @@ describe("ep_script_page_view - page break main tests", function() {
           // at this point script has 3 full pages + 5 (empty) lines on top of then (2 on page 2, 3 on page 3)
           var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
           return $linesWithPageBreaks.length === 2;
-        }).done(function() {
+        }, 3000).done(function() {
           // add new line (should be placed on next page)
           var $lastLine = inner$("div").last();
           $lastLine.append("<br/>1st of 4th page");
@@ -86,7 +88,7 @@ describe("ep_script_page_view - page break main tests", function() {
           helper.waitFor(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
             return $linesWithPageBreaks.length === 3;
-          }).done(function() {
+          }, 3000).done(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
             var $firstPageBreak = $linesWithPageBreaks.first();
             var $secondPageBreak = $linesWithPageBreaks.slice(1,1);
@@ -135,7 +137,7 @@ describe("ep_script_page_view - page break main tests", function() {
           helper.waitFor(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
             return $linesWithPageBreaks.length === 3;
-          }).done(function() {
+          }, 3000).done(function() {
             // verify 4th page has 3 lines
             var $firstLineOf3rdPage = utils.linesAfterNonSplitPageBreaks().last();
             // 1st line of page has nonSplitPageBreak, so it won't be returned by nextAll()

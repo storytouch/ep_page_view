@@ -11,7 +11,7 @@ var paginationNonSplit = require('./paginationNonSplit');
 var REGULAR_LINES_PER_PAGE = 58;
 
 exports.aceRegisterBlockElements = function(hook, context) {
-  return ["line_with_page_break"];
+  return ["line_with_page_break", "line_after_page_break"];
 }
 
 exports.aceAttribsToClasses = function(hook, context) {
@@ -24,16 +24,21 @@ exports.aceAttribsToClasses = function(hook, context) {
     var characterName = utils.buildCharacterNameToClass(context.value);
     return [context.key, characterName];
   }
+  // line attributes to be ignored (but they need to be sent as classes so we don't have "*"
+  // on the beginning of those lines. See notes on aceDomLineProcessLineAttributes below)
+  else if(paginationSplit.isAfterPageBreak(context.key)) {
+    return [context.key];
+  }
 }
 
-exports.aceDomLineProcessLineAttributes = function(name, context) {
+exports.aceDomLineProcessLineAttributes = function(hook, context) {
   var extraHTML = paginationNonSplit.buildHtmlWithPageBreaks(context.cls) ||
                   paginationSplit.buildHtmlWithPageBreaks(context.cls);
 
+  // Bug fix: lines with page break need to be wrapped by a registered block element
+  // (see aceRegisterBlockElements), otherwise caret will start moving alone when placed
+  // on those lines
   if (extraHTML) {
-    // Bug fix: lines with page break need to be wrapped by a registered block element
-    // (see aceRegisterBlockElements), otherwise caret will start moving alone when placed
-    // on those lines
     var modifier = {
       preHtml: '<line_with_page_break>',
       postHtml: extraHTML + '</line_with_page_break>',
@@ -41,9 +46,21 @@ exports.aceDomLineProcessLineAttributes = function(name, context) {
     };
     return [modifier];
   }
+  // Bug fix: lines after page break need to be wrapped by a registered block element
+  // (see aceRegisterBlockElements), otherwise caret will start moving alone when placed
+  // on those lines
+  else if (paginationSplit.isAfterPageBreak(context.cls)) {
+    var modifier = {
+      preHtml: '<line_after_page_break>',
+      postHtml: '</line_after_page_break>',
+      processedMarker: true
+    };
+    return [modifier];
+  }
   return [];
 }
 
+// we need this to adjust layout of parentheticals split between pages
 exports.acePostWriteDomLineHTML = function(hook, context) {
   var $node = $(context.node);
   if (paginationSplit.lineHasPageBreak($node)) {
@@ -55,20 +72,17 @@ exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
   if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;
 
-  var eventType = context.callstack.type;
+  var callstack = context.callstack;
+  var eventType = callstack.type;
 
   // pagination was previously scheduled
-  if (isAPaginationEvent(eventType)) {
-    // only proceed if pagination was scheduled by me.
-    // This avoids getting an error if two users have the same pad opened
-    if (isPaginationScheduledByMe(eventType)) {
-      if (readyFor2ndPhaseOfPagination(eventType)) {
-        continuePagination(context);
-      } else {
-        // we are ready to restart pagination
-        restartPagination(context);
-      }
-    }
+  if (readyFor2ndPhaseOfPagination(callstack)) {
+    continuePagination(context);
+  }
+  // only proceed if pagination was scheduled by me.
+  // This avoids getting an error if two users have the same pad opened
+  else if (isAPaginationScheduledByMe(eventType)) {
+    restartPagination(context);
   }
   // user changed the type of one of the lines
   else if (isAChangeOnElementType(eventType)) {
@@ -94,22 +108,15 @@ var isAChangeOnElementType = function(eventType) {
   return eventType === 'insertscriptelement';
 }
 
-var isPaginationScheduledByMe = function(eventType) {
-  return eventType.match('^pagination-.*' + clientVars.userId);
+var isAPaginationScheduledByMe = function(eventType) {
+  return eventType === "pagination-" + clientVars.userId;
 }
 
-var isAPaginationEvent = function(eventType) {
-  return eventType.match('^pagination-');
-}
+var needToPaginate = false;
+var readyFor2ndPhaseOfPagination = function(callstack) {
+  var domReadyForPagination = callstack.domClean;
 
-var readyFor2ndPhaseOfPagination = function(eventType) {
-  var myPaginationEvent = myPaginationEventType();
-
-  return myPaginationEvent === eventType;
-}
-
-var myPaginationRestartEventType = function() {
-  return "pagination-restart-" + clientVars.userId;
+  return needToPaginate && domReadyForPagination;
 }
 
 var myPaginationEventType = function() {
@@ -129,7 +136,7 @@ var resetTimerToRestartPagination = function(context) {
   paginationTimer = setTimeout(function() {
     editorInfo.ace_callWithAce(function(ace) {
       // do nothing here, we handle pagination on aceEditEvent
-    }, myPaginationRestartEventType());
+    }, myPaginationEventType());
   }, clientVars.plugins.plugins.ep_script_page_view.paginationDelay);
 }
 
@@ -140,6 +147,8 @@ var restartPagination = function(context) {
   var editorInfo       = context.editorInfo;
 
   cleanPageBreaks(callstack, attributeManager, rep, editorInfo);
+
+  needToPaginate = true;
 }
 
 var cleanPageBreaks = function(callstack, attributeManager, rep, editorInfo) {
@@ -147,16 +156,11 @@ var cleanPageBreaks = function(callstack, attributeManager, rep, editorInfo) {
     paginationNonSplit.cleanPageBreaks(attributeManager, rep);
     paginationSplit.cleanPageBreaks(attributeManager, rep, editorInfo);
   });
-
-  // schedule pagination
-  setTimeout(function() {
-    editorInfo.ace_callWithAce(function(ace) {
-      // do nothing here, we handle pagination on aceEditEvent
-    }, myPaginationEventType());
-  }, 0);
 }
 
 var continuePagination = function(context) {
+  needToPaginate = false;
+
   var callstack        = context.callstack;
   var attributeManager = context.documentAttributeManager;
   var rep              = context.rep;
