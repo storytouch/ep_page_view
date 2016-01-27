@@ -130,6 +130,35 @@ ep_script_page_view_test_helper.utils = {
     $undoButton.click();
   },
 
+  regularLineHeight: function() {
+    var $editor = helper.padInner$("#innerdocbody");
+    return parseFloat($editor.css("line-height"));
+  },
+  heightOf: function($element, pseudoElementName) {
+    var pageBreak      = $element.get(0);
+    var pageBreakStyle = helper.padInner$.window.getComputedStyle(pageBreak, ":before");
+
+    var marginTop      = parseFloat(pageBreakStyle.marginTop);
+    var paddingBottom  = parseFloat(pageBreakStyle.paddingBottom);
+    var paddingTop     = parseFloat(pageBreakStyle.paddingTop);
+    var marginBottom   = parseFloat(pageBreakStyle.marginBottom);
+    var borderTop      = parseFloat(pageBreakStyle.borderTop);
+    var borderBottom   = parseFloat(pageBreakStyle.borderBottom);
+    var height         = parseFloat(pageBreakStyle.height);
+
+    return marginTop + marginBottom + paddingTop + paddingBottom + borderTop + borderBottom + height;
+  },
+  heightOfSplitPageBreak: function() {
+    var inner$ = helper.padInner$;
+    var $splitPageBreak = inner$("div splitPageBreak").first();
+    return ep_script_page_view_test_helper.utils.heightOf($splitPageBreak, ":before");
+  },
+  heightOfMore: function() {
+    var inner$ = helper.padInner$;
+    var $more = inner$("div more").first();
+    return ep_script_page_view_test_helper.utils.heightOf($more, ":before");
+  },
+
   placeCaretInTheBeginningOfLine: function(lineNum, cb) {
     var utils =  ep_script_page_view_test_helper.utils;
     var $targetLine = utils.getLine(lineNum);

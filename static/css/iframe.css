@@ -116,7 +116,6 @@ body{
   }
 
   #innerdocbody.breakPages div more:before,
-  #innerdocbody.breakPages div contdLine.nonSplit,
   #innerdocbody.breakPages div contd:before,
   #innerdocbody.breakPages div contd:after {
     float: left; /* need this to not allow caret to be placed on element */
@@ -137,15 +136,10 @@ body{
   }
 
   #innerdocbody.breakPages div contdLine {
-    max-width: calc(100% - 16px + 222px);
-    min-width: calc(100% - 16px);
-    margin-right: -222px; /* CONT'D right margin */
-  }
-  #innerdocbody.breakPages div contdLine {
-    /* define max & min width because available width for non-split page breaks is the full page width */
     /* 152px === character margin left; 16px === character margin right; -222px === CONT'D right margin */
     max-width: calc(100% - 152px - 16px + 222px);
     min-width: calc(100% - 152px - 16px);
+    margin-right: -222px;
   }
 
   #innerdocbody.breakPages div more:before {

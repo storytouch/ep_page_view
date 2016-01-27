@@ -732,6 +732,36 @@ describe("ep_script_page_view - page break on split elements", function() {
           var characterName = "";
           utils.testPageBreakHasMoreAndContd(characterName, done);
         });
+
+        context("and 2nd split starts with a short sentence", function() {
+          before(function() {
+            var line1 = utils.buildStringWithLength(34, "1") + ".";
+            var line2 = "2 " + utils.buildStringWithLength(31, "2") + ". "; // "2 " is the short sentence
+            var line3 = utils.buildStringWithLength(33, "3") + ".";
+            sentences = [line1, line2, line3];
+            lastLineText = line1 + line2 + line3;
+          });
+
+          // this test is for the CSS of page break and MORE/CONT'D
+          it("still places the 2nd half of split on the line below CONT'D", function(done) {
+            var inner$ = helper.padInner$;
+
+            // wait for pagination to be finished
+            helper.waitFor(function() {
+              var $splitPageBreaks = inner$("div splitPageBreak");
+              return $splitPageBreaks.length > 0;
+            }).done(function() {
+              // verify 2nd half is two-lines high
+              // (we need to get height of the span because the div will have page break + line -- so it's harder to test)
+              var secondHalfHeight = helper.padInner$("div span").last().outerHeight();
+              var twoLinesHigh = 2 * utils.regularLineHeight();
+
+              expect(secondHalfHeight).to.be(twoLinesHigh);
+
+              done();
+            });
+          });
+        });
       });
 
       context("and there is a character before dialogue", function() {
@@ -753,6 +783,47 @@ describe("ep_script_page_view - page break on split elements", function() {
         it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
           var characterName = "JOE'S (V.O.)";
           utils.testPageBreakHasMoreAndContd(characterName, done);
+        });
+      });
+
+      context("and there is a very long character before dialogue", function() {
+        before(function() {
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+          var character = utils.character("VERY LOOOOOOOOOOOOOONG CHARACTER NAME");
+          var dialogue = utils.dialogue(lastLineText);
+          buildTargetElement = function() {
+            return character + dialogue;
+          };
+        });
+        // revert changed buildTargetElement
+        after(function() {
+          buildTargetElement = function() {
+            return utils.dialogue(lastLineText);
+          };
+        });
+
+        // this test is for the CSS of CONT'D (see comments about ellipsis on CSS file)
+        it("only uses one line to display character name and CONT'D", function(done) {
+          var inner$ = helper.padInner$;
+
+          // wait for pagination to be finished
+          helper.waitFor(function() {
+            var $splitPageBreaks = inner$("div splitPageBreak");
+            return $splitPageBreaks.length > 0;
+          }).done(function() {
+            // verify CONT'D is one line high
+            // (we need to get height of the div because it has page break + line)
+            var totalHeightOf2ndSplit = inner$("div").last().outerHeight();
+            var secondSplitHeight = inner$("div span").last().outerHeight();
+            var pageBreakHeight = utils.heightOfSplitPageBreak();
+            var moreHeight = utils.heightOfMore();
+            var contdHeight = totalHeightOf2ndSplit - secondSplitHeight - pageBreakHeight - moreHeight;
+            var oneLineHigh = utils.regularLineHeight();
+
+            expect(contdHeight).to.be(oneLineHigh);
+
+            done();
+          });
         });
       });
     });
