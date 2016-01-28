@@ -215,12 +215,13 @@ exports.atribsToClasses = function(context) {
   if(isRegularPageBreakAttrib(context.key)) {
     return [context.key];
   }
-  // page break with MORE/CONT'D, return context.key and characterName:<character name>
+  // page break with MORE/CONT'D, return also characterName:<character name>
   else if (isPageBreakWithMoreAndContdAttrib(context.key)) {
     var characterName = utils.buildCharacterNameToClass(context.value);
     return [context.key, characterName];
   }
-  else if(isAfterPageBreak(context.key)) {
+  // any of the halves of a split line, return also the splitId (context.value)
+  else if(isFirstHalfOfSplit(context.key) || isSecondHalfOfSplit(context.key)) {
     return [context.key, context.value];
   }
 }
@@ -233,7 +234,11 @@ var isPageBreakWithMoreAndContdAttrib = function(contextKey) {
   return contextKey === PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
 }
 
-var isAfterPageBreak = function(cls) {
+var isFirstHalfOfSplit = function(cls) {
+  return cls.match(FIRST_HALF_ATTRIB);
+}
+
+var isSecondHalfOfSplit = function(cls) {
   return cls.match(SECOND_HALF_ATTRIB);
 }
 
@@ -244,10 +249,21 @@ exports.collectContentPre = function(hook, context) {
   var state = context.state;
   var lineAttributes = state.lineAttributes;
 
+  // new line
+  if (tname === "div") {
+    delete lineAttributes[PAGE_BREAKS_ATTRIB];
+    delete lineAttributes[PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB];
+    delete lineAttributes[FIRST_HALF_ATTRIB];
+    delete lineAttributes[SECOND_HALF_ATTRIB];
+  }
   // first half of split line
-  if (tname === FIRST_HALF_TAG) {
+  else if (tname === FIRST_HALF_TAG) {
+    var splitId = getSplitIdFromClass(context.cls);
+    lineAttributes[FIRST_HALF_ATTRIB] = splitId;
     lineAttributes[PAGE_BREAKS_ATTRIB] = true;
   } else if (tname === FIRST_HALF_WITH_MORE_AND_CONTD_TAG) {
+    var splitId = getSplitIdFromClass(context.cls);
+    lineAttributes[FIRST_HALF_ATTRIB] = splitId;
     lineAttributes[PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB] = true;
   }
   // second half of split line
@@ -259,27 +275,27 @@ exports.collectContentPre = function(hook, context) {
 
 exports.buildHtmlWithPageBreaks = function(cls) {
   var extraHTML;
+  var splitId = getSplitIdFromClass(cls);
 
   if (cls.match(PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB)) {
     extraHTML = utils.buildPageBreakWithMoreAndContd(cls, PAGE_BREAK_TAG);
 
     return {
-      preHtml: '<'+FIRST_HALF_WITH_MORE_AND_CONTD_TAG+'>',
+      preHtml: '<'+FIRST_HALF_WITH_MORE_AND_CONTD_TAG+' class="'+splitId+'">',
       postHtml: extraHTML + '</'+FIRST_HALF_WITH_MORE_AND_CONTD_TAG+'>'
     };
   } else if (cls.match(PAGE_BREAKS_ATTRIB)) {
     extraHTML = '<'+PAGE_BREAK_TAG+'></'+PAGE_BREAK_TAG+'>';
 
     return {
-      preHtml: '<'+FIRST_HALF_TAG+'>',
+      preHtml: '<'+FIRST_HALF_TAG+' class="'+splitId+'">',
       postHtml: extraHTML + '</'+FIRST_HALF_TAG+'>'
     };
   }
   // Bug fix: lines after page break need to be wrapped by a registered block element
   // (see blockElements), otherwise caret will start moving alone when placed
   // on those lines
-  else if (isAfterPageBreak(cls)) {
-    var splitId = getSplitIdFromClass(cls);
+  else if (isSecondHalfOfSplit(cls)) {
     return {
       preHtml: '<'+SECOND_HALF_TAG+' class="'+splitId+'">',
       postHtml: '</'+SECOND_HALF_TAG+'>'

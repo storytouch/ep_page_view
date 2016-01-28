@@ -192,6 +192,40 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
     });
 
+    it("merges lines and split them again when user copies & pastes both halves of the split", function(done) {
+      this.timeout(6000);
+
+      var inner$ = helper.padInner$;
+
+      // there should be a page break before we start testing
+      helper.waitFor(function() {
+        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+        return $splitElementsWithPageBreaks.length === 1;
+      }).done(function() {
+        // "copy" content of split line
+        var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+        var $secondHalfOfSplitLine = $firstHalfOfSplitLine.next();
+        var copiedHtml = $firstHalfOfSplitLine[0].outerHTML + $secondHalfOfSplitLine[0].outerHTML;
+        var copiedText = $firstHalfOfSplitLine.text() + $secondHalfOfSplitLine.text();
+
+        // "paste" content of split line on the beginning of pad
+        var $firstLine = inner$("div").first();
+        $firstLine.prepend(copiedHtml);
+
+        // wait for lines to be processed and page break of 1st line to be removed
+        helper.waitFor(function() {
+          var $firstLine = inner$("div").first();
+          return $firstLine.find("splitPageBreak").length === 0;
+        }, 2000).done(function() {
+          var $firstLine = inner$("div").first();
+
+          expect($firstLine.text()).to.be(copiedText);
+
+          done();
+        });
+      });
+    });
+
     context("and there is room on previous page for minimum number of lines (1)", function() {
       it("splits general between the two pages, and first page has one line of the general", function(done) {
         var secondLine = sentences[1];
