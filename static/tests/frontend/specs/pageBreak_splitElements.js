@@ -44,7 +44,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       helper.waitFor(function() {
         var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
         return $splitElementsWithPageBreaks.length === 1;
-      }).done(function() {
+      }, 2000).done(function() {
         var $lines = inner$("div");
         var textOnLastDiv = sentences[1] + sentences[2] + sentences[3];
         var textOnDivBeforeLast = sentences[0];
@@ -64,7 +64,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       helper.waitFor(function() {
         var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
         return $splitElementsWithPageBreaks.length === 1;
-      }).done(function() {
+      }, 2000).done(function() {
         // create another very long general before the last one, so pagination needs to be re-done
         // (The extra ".prev()" is because we insert a "\n" when line is split between pages)
         var $threeLinesGeneral = inner$("div").last().prev().prev();
@@ -99,7 +99,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       helper.waitFor(function() {
         var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
         return $splitElementsWithPageBreaks.length === 1;
-      }).done(function() {
+      }, 2000).done(function() {
         // create another very long general before the last one, so pagination needs to be re-done
         // (The extra ".prev()" is because we insert a "\n" when line is split between pages)
         var $threeLinesGeneral = inner$("div").last().prev().prev();
@@ -135,7 +135,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       helper.waitFor(function() {
         var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
         return $splitElementsWithPageBreaks.length === 1;
-      }).done(function() {
+      }, 2000).done(function() {
         // write something on fist half of split line
         var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
         $firstHalfOfSplitLine.sendkeys("{selectall}{rightarrow}");
@@ -167,7 +167,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       helper.waitFor(function() {
         var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
         return $splitElementsWithPageBreaks.length === 1;
-      }, 3000).done(function() {
+      }, 2000).done(function() {
         // write something on second half of split line
         var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").first().next();
         // HACK: insert text after first character. If we insert on the beginning of the line
@@ -201,7 +201,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       helper.waitFor(function() {
         var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
         return $splitElementsWithPageBreaks.length === 1;
-      }).done(function() {
+      }, 2000).done(function() {
         // "copy" content of split line
         var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
         var $secondHalfOfSplitLine = $firstHalfOfSplitLine.next();
@@ -279,7 +279,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         helper.waitFor(function() {
           var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
           return $splitElementsWithPageBreaks.length === 1;
-        }).done(function() {
+        }, 2000).done(function() {
           // edit one element
           var $elementToBeEdited = inner$("div").last().prev();
           var originalText = $elementToBeEdited.text();
@@ -381,7 +381,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         helper.waitFor(function() {
           var $splitElementsWithPageBreaks = inner$("div nonSplitPageBreak");
           return $splitElementsWithPageBreaks.length === 1;
-        }).done(function() {
+        }, 2000).done(function() {
           // change 57th line to be 3-lines-long (2 sentences, each ~1.25 long, so when they are
           // split they need 2 lines each)
           // build sentences that are ~1.25 line long (when split they need 2 lines each)
@@ -454,7 +454,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         helper.waitFor(function() {
           var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
           return $splitElementsWithPageBreaks.length === 1;
-        }, 3000).done(function() {
+        }, 2000).done(function() {
           // repeat some times: remove one line then check is pagination is correct
           var textBeforePageBreak = sentences[0] + sentences[1];
           splitElements.removeFirstLineAndExpectTextBeforePageBreakToBe(textBeforePageBreak, function() {
@@ -580,7 +580,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         helper.waitFor(function() {
           var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
           return $splitElementsWithPageBreaks.length === 1;
-        }).done(function() {
+        }, 2000).done(function() {
           var $secondHalfOfAction = inner$("div").last();
           var $firstHalfOfAction = $secondHalfOfAction.prev();
 
@@ -607,7 +607,7 @@ describe("ep_script_page_view - page break on split elements", function() {
           helper.waitFor(function() {
             var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
             return $splitElementsWithPageBreaks.length === 1;
-          }).done(function() {
+          }, 2000).done(function() {
             // edit last line of previous page
             var $lastLineOfFirstPage = inner$("div").last().prev();
             $lastLineOfFirstPage.sendkeys("{selectall}{rightarrow}");
