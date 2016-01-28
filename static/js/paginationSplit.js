@@ -210,15 +210,30 @@ var calculateHeightToFitText = function(text, $originalLine) {
   return height;
 }
 
-exports.isRegularPageBreakAttrib = function(contextKey) {
+exports.atribsToClasses = function(context) {
+  // simple page break, return only the flag as class
+  if(isRegularPageBreakAttrib(context.key)) {
+    return [context.key];
+  }
+  // page break with MORE/CONT'D, return context.key and characterName:<character name>
+  else if (isPageBreakWithMoreAndContdAttrib(context.key)) {
+    var characterName = utils.buildCharacterNameToClass(context.value);
+    return [context.key, characterName];
+  }
+  else if(isAfterPageBreak(context.key)) {
+    return [context.key, context.value];
+  }
+}
+
+var isRegularPageBreakAttrib = function(contextKey) {
   return contextKey === PAGE_BREAKS_ATTRIB;
 }
 
-exports.isPageBreakWithMoreAndContdAttrib = function(contextKey) {
+var isPageBreakWithMoreAndContdAttrib = function(contextKey) {
   return contextKey === PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
 }
 
-exports.isAfterPageBreak = function(cls) {
+var isAfterPageBreak = function(cls) {
   return cls.match(SECOND_HALF_ATTRIB);
 }
 
@@ -227,12 +242,18 @@ exports.isAfterPageBreak = function(cls) {
 exports.collectContentPre = function(hook, context) {
   var tname = context.tname;
   var state = context.state;
-  var lineAttributes = state.lineAttributes
+  var lineAttributes = state.lineAttributes;
 
+  // first half of split line
   if (tname === FIRST_HALF_TAG) {
     lineAttributes[PAGE_BREAKS_ATTRIB] = true;
   } else if (tname === FIRST_HALF_WITH_MORE_AND_CONTD_TAG) {
     lineAttributes[PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB] = true;
+  }
+  // second half of split line
+  else if (tname === SECOND_HALF_TAG) {
+    var splitId = getSplitIdFromClass(context.cls);
+    lineAttributes[SECOND_HALF_ATTRIB] = splitId;
   }
 }
 
@@ -257,12 +278,24 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   // Bug fix: lines after page break need to be wrapped by a registered block element
   // (see blockElements), otherwise caret will start moving alone when placed
   // on those lines
-  else if (exports.isAfterPageBreak(cls)) {
+  else if (isAfterPageBreak(cls)) {
+    var splitId = getSplitIdFromClass(cls);
     return {
-      preHtml: '<'+SECOND_HALF_TAG+'>',
+      preHtml: '<'+SECOND_HALF_TAG+' class="'+splitId+'">',
       postHtml: '</'+SECOND_HALF_TAG+'>'
     };
   }
+}
+
+var getSplitIdFromClass = function(cls) {
+  var splitId = /(?:^| )(split-[A-Za-z0-9]*)/.exec(cls);
+  if(splitId && splitId[1]){
+    return splitId[1];
+  }
+}
+
+var newSplitId = function() {
+  return "split-" + randomString(16);
 }
 
 exports.blockElements = function() {
@@ -360,7 +393,7 @@ var addPageBreakBetweenLines = function(splitPosition, attributeManager) {
   attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
 
   // mark both halves with same id
-  var splitId = randomString(16);
+  var splitId = newSplitId();
   attributeManager.setAttributeOnLine(lineNumber, FIRST_HALF_ATTRIB, splitId);
   attributeManager.setAttributeOnLine(lineNumber+1, SECOND_HALF_ATTRIB, splitId);
 }

@@ -3,11 +3,23 @@ var utils = require('./utils');
 var PAGE_BREAKS_ATTRIB                     = "nonSplitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "nonSplitPageBreakWithMoreAndContd";
 
-exports.isRegularPageBreakAttrib = function(contextKey) {
+exports.atribsToClasses = function(context) {
+  // simple page break, return only the flag as class
+  if(isRegularPageBreakAttrib(context.key)) {
+    return [context.key];
+  }
+  // page break with MORE/CONT'D, return context.key and characterName:<character name>
+  else if (isPageBreakWithMoreAndContdAttrib(context.key)) {
+    var characterName = utils.buildCharacterNameToClass(context.value);
+    return [context.key, characterName];
+  }
+}
+
+var isRegularPageBreakAttrib = function(contextKey) {
   return contextKey === PAGE_BREAKS_ATTRIB;
 }
 
-exports.isPageBreakWithMoreAndContdAttrib = function(contextKey) {
+var isPageBreakWithMoreAndContdAttrib = function(contextKey) {
   return contextKey === PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
 }
 

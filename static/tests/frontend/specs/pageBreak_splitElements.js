@@ -26,7 +26,7 @@ describe("ep_script_page_view - page break on split elements", function() {
     before(function() {
       // give enough space for first line of general to fit on first page
       linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
-      var line1 = utils.buildStringWithLength(60, "1") + ".";
+      var line1 = utils.buildStringWithLength(58, "1") + "."; // need to leave some room on 1st line for one of the tests
       var line2 = utils.buildStringWithLength(60, "2") + ".";
       var line3 = utils.buildStringWithLength(60, "3") + ".";
       var line4 = utils.buildStringWithLength(60, "4") + ".";
@@ -143,6 +143,40 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         var textBeforePageBreak = sentences[0];
         var textAfterPageBreak = "something" + sentences[1] + sentences[2] + sentences[3];
+
+        // wait for pagination to finish
+        helper.waitFor(function() {
+          var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+          return $firstHalfOfSplitLine.text() === textBeforePageBreak;
+        }, 3000).done(function() {
+          var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").first().next();
+
+          expect($secondHalfOfSplitLine.text()).to.be(textAfterPageBreak);
+
+          done();
+        });
+      });
+    });
+
+    it("merges lines and split them again when user adds text to the second half of the split", function(done) {
+      this.timeout(6000);
+
+      var inner$ = helper.padInner$;
+
+      // there should be a page break before we start testing
+      helper.waitFor(function() {
+        var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+        return $splitElementsWithPageBreaks.length === 1;
+      }, 3000).done(function() {
+        // write something on second half of split line
+        var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").first().next();
+        // HACK: insert text after first character. If we insert on the beginning of the line
+        // (sendkeys("2.")), test fails. Doing that manually works fine, so it's better to have
+        // an automated test that can avoid part of the problem than have no test at all.
+        $secondHalfOfSplitLine.sendkeys("{rightarrow}.2");
+
+        var textBeforePageBreak = sentences[0] + "2.";
+        var textAfterPageBreak = sentences[1] + sentences[2] + sentences[3];
 
         // wait for pagination to finish
         helper.waitFor(function() {

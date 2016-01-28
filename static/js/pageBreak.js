@@ -16,20 +16,7 @@ exports.aceRegisterBlockElements = function(hook, context) {
 }
 
 exports.aceAttribsToClasses = function(hook, context) {
-  // simple page break, return only the flag as class
-  if(paginationSplit.isRegularPageBreakAttrib(context.key) || paginationNonSplit.isRegularPageBreakAttrib(context.key)) {
-    return [context.key];
-  }
-  // page break with MORE/CONT'D, return context.key and characterName:<character name>
-  else if (paginationSplit.isPageBreakWithMoreAndContdAttrib(context.key) || paginationNonSplit.isPageBreakWithMoreAndContdAttrib(context.key)) {
-    var characterName = utils.buildCharacterNameToClass(context.value);
-    return [context.key, characterName];
-  }
-  // line attributes to be ignored (but they need to be sent as classes so we don't have "*"
-  // on the beginning of those lines. See notes on aceDomLineProcessLineAttributes below)
-  else if(paginationSplit.isAfterPageBreak(context.key)) {
-    return [context.key];
-  }
+  return _.union(paginationSplit.atribsToClasses(context), paginationNonSplit.atribsToClasses(context));
 }
 
 exports.aceDomLineProcessLineAttributes = function(hook, context) {
