@@ -322,9 +322,8 @@ exports.cleanPageBreaks = function(attributeManager, rep, editorInfo) {
   var totalLines = rep.lines.length();
   for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
     // remove marker(s) of a split line
-    if (lineIsFirstHalfOfSplit(lineNumber, attributeManager)) {
-      var lineText = rep.lines.atIndex(lineNumber).text;
-      mergeLines(lineNumber, lineText, attributeManager, editorInfo);
+    if (exports.lineIsFirstHalfOfSplit(lineNumber, attributeManager)) {
+      mergeLines(lineNumber, rep, attributeManager, editorInfo);
       removeMarkersOfLineSplit(lineNumber, attributeManager);
     }
     // remove marker of a page break
@@ -334,8 +333,12 @@ exports.cleanPageBreaks = function(attributeManager, rep, editorInfo) {
   }
 }
 
-var lineIsFirstHalfOfSplit = function(lineNumber, attributeManager) {
+exports.lineIsFirstHalfOfSplit = function(lineNumber, attributeManager) {
   return attributeManager.getAttributeOnLine(lineNumber, FIRST_HALF_ATTRIB);
+}
+
+exports.lineIsSecondHalfOfSplit = function(lineNumber, attributeManager) {
+  return attributeManager.getAttributeOnLine(lineNumber, SECOND_HALF_ATTRIB);
 }
 
 var lineHasPageBreak = function(lineNumber, attributeManager) {
@@ -353,15 +356,21 @@ var removeMarkersOfLineSplit = function(lineNumber, attributeManager) {
   attributeManager.removeAttributeOnLine(lineNumber+1, SECOND_HALF_ATTRIB);
 }
 
-var mergeLines = function(lineNumber, lineText, attributeManager, editorInfo) {
+var mergeLines = function(lineNumber, rep, attributeManager, editorInfo) {
+  exports.mergeLinesWithExtraChars(lineNumber, rep, attributeManager, editorInfo, 0, 0);
+}
+
+exports.mergeLinesWithExtraChars = function(lineNumber, rep, attributeManager, editorInfo, charsToRemoveOnFirstHalf, charsToRemoveOnSecondHalf) {
   var splitIdOfFirstHalf = attributeManager.getAttributeOnLine(lineNumber, FIRST_HALF_ATTRIB);
   var splitIdOfSecondHalf = attributeManager.getAttributeOnLine(lineNumber+1, SECOND_HALF_ATTRIB);
 
   // we only merge if both lines have the same split id
   if (splitIdOfFirstHalf === splitIdOfSecondHalf) {
+    var lineText = rep.lines.atIndex(lineNumber).text;
     var lineLength = lineText.length;
-    var start = [lineNumber, lineLength];
-    var end = [lineNumber+1, 0];
+
+    var start = [lineNumber, lineLength - charsToRemoveOnFirstHalf];
+    var end = [lineNumber+1, charsToRemoveOnSecondHalf];
 
     // remove "\n" at the end of the line
     editorInfo.ace_replaceRange(start, end, "");

@@ -532,6 +532,110 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
       });
     });
+
+    context("and caret is at the end of 1st half of split line, and user presses DELETE", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
+        // lines start and end with letters to make it easier to see errors if any test fails
+        var line1 = "AA" + utils.buildStringWithLength(56, "1") + "ZZ.";
+        var line2 = "AA" + utils.buildStringWithLength(56, "2") + "ZZ.";
+        var line3 = "AA" + utils.buildStringWithLength(56, "3") + "ZZ.";
+        var line4 = "AA" + utils.buildStringWithLength(56, "4") + "ZZ.";
+        sentences = [line1, line2, line3, line4];
+        lastLineText = line1 + line2 + line3 + line4;
+        buildTargetElement = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      beforeEach(function(done) {
+        var inner$ = helper.padInner$;
+
+        // there should be a page break before we start testing
+        helper.waitFor(function() {
+          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+          return $splitElementsWithPageBreaks.length === 1;
+        }, 2000).done(function() {
+          utils.placeCaretAtTheEndOfLine(GENERALS_PER_PAGE-1, done);
+        });
+      });
+
+      it("merges lines and removes first char of 2nd half", function(done) {
+        this.timeout(6000);
+
+        var inner$ = helper.padInner$;
+
+        utils.pressDelete();
+
+        var textBeforePageBreak = sentences[0];
+        // first char of sentences[1] was removed by DELETE
+        var textAfterPageBreak = sentences[1].substring(1) + sentences[2] + sentences[3];
+
+        // wait for pagination to finish
+        helper.waitFor(function() {
+          var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").first().next();
+          return $secondHalfOfSplitLine.text() === textAfterPageBreak;
+        }, 3000).done(function() {
+          var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+
+          expect($firstHalfOfSplitLine.text()).to.be(textBeforePageBreak);
+
+          done();
+        });
+      });
+    });
+
+    context("and caret is at the beginning of 2nd half of split line, and user presses BACKSPACE", function() {
+      before(function() {
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
+        // lines start and end with letters to make it easier to see errors if any test fails
+        var line1 = "AA" + utils.buildStringWithLength(56, "1") + "ZZ.";
+        var line2 = "AA" + utils.buildStringWithLength(56, "2") + "ZZ.";
+        var line3 = "AA" + utils.buildStringWithLength(56, "3") + "ZZ.";
+        var line4 = "AA" + utils.buildStringWithLength(56, "4") + "ZZ.";
+        sentences = [line1, line2, line3, line4];
+        lastLineText = line1 + line2 + line3 + line4;
+        buildTargetElement = function() {
+          return utils.general(lastLineText);
+        };
+      });
+
+      beforeEach(function(done) {
+        var inner$ = helper.padInner$;
+
+        // there should be a page break before we start testing
+        helper.waitFor(function() {
+          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+          return $splitElementsWithPageBreaks.length === 1;
+        }, 2000).done(function() {
+          utils.placeCaretInTheBeginningOfLine(GENERALS_PER_PAGE, done);
+        });
+      });
+
+      it("merges lines and removes last char of 1st half", function(done) {
+        this.timeout(6000);
+
+        var inner$ = helper.padInner$;
+
+        utils.pressBackspace();
+
+        // last char of sentences[0] was removed by BACKSPACE
+        var firstSencenceWithoutPeriod = sentences[0].substring(0, sentences[0].length-1);
+        var textAfterPageBreak = firstSencenceWithoutPeriod + sentences[1] + sentences[2] + sentences[3];
+
+        // wait for pagination to finish
+        helper.waitFor(function() {
+          var $nonSplitPageBreaks = inner$("div nonSplitPageBreak");
+          return $nonSplitPageBreaks.length > 0;
+        }, 3000).done(function() {
+          var $lineAfterPageBreak = utils.linesAfterNonSplitPageBreaks().first();
+
+          expect($lineAfterPageBreak.text()).to.be(textAfterPageBreak);
+
+          done();
+        });
+      });
+    });
   });
 
   context("when first line of page is a very long action", function() {

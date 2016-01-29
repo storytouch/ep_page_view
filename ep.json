@@ -2,12 +2,10 @@
   "parts": [
     {
       "name": "page_view",
-      "pre": ["ep_script_elements/main"],
       "client_hooks": {
         "postAceInit": "ep_script_page_view/static/js/page_view",
         "aceEditorCSS": "ep_script_page_view/static/js/page_view",
         "aceAttribsToClasses": "ep_script_page_view/static/js/pageBreak",
-        "aceDomLineProcessLineAttributes": "ep_script_page_view/static/js/pageBreak",
         "acePostWriteDomLineHTML": "ep_script_page_view/static/js/pageBreak",
         "aceRegisterBlockElements": "ep_script_page_view/static/js/pageBreak",
         "collectContentPre": "ep_script_page_view/static/js/paginationSplit",
@@ -18,6 +16,20 @@
         "eejsBlock_styles": "ep_script_page_view/page_view",
         "eejsBlock_dd_insert" : "ep_script_page_view/page_view",
         "eejsBlock_dd_view" : "ep_script_page_view/page_view"
+      }
+    },
+    {
+      "name": "aceKeyEvent",
+      "post": ["ep_script_elements/aceKeyEvent"],
+      "client_hooks": {
+        "aceKeyEvent": "ep_script_page_view/static/js/lineMergingOnKeyEvent"
+      }
+    },
+    {
+      "name": "aceDomLineProcessLineAttributes",
+      "pre": ["ep_script_elements/aceDomLineProcessLineAttributes"],
+      "client_hooks": {
+        "aceDomLineProcessLineAttributes": "ep_script_page_view/static/js/pageBreak"
       }
     }
   ]
