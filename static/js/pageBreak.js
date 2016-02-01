@@ -120,9 +120,16 @@ var restartPagination = function(context) {
   var rep              = context.rep;
   var editorInfo       = context.editorInfo;
 
+  // HACK: make sure we have the latest changes made by the user, as pagination is a delayed process
+  synchronizeEditorWithUserChanges(editorInfo);
+
   cleanPageBreaks(callstack, attributeManager, rep, editorInfo);
 
   needToPaginate = true;
+}
+
+var synchronizeEditorWithUserChanges = function(editorInfo) {
+  editorInfo.ace_fastIncorp();
 }
 
 var cleanPageBreaks = function(callstack, attributeManager, rep, editorInfo) {

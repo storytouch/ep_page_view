@@ -108,6 +108,12 @@ ep_script_page_view_test_helper.utils = {
 
     return $lineWhereCaretIs;
   },
+  getColumnWhereCaretIs: function() {
+    var inner$ = helper.padInner$;
+    var columnWhereCaretIsOnElement = inner$.document.getSelection().anchorOffset;
+
+    return columnWhereCaretIsOnElement;
+  },
 
   buildStringWithLength: function(length, text) {
     return text.repeat(length);

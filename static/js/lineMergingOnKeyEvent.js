@@ -59,7 +59,6 @@ var textSelected = function(editorInfo) {
   return !editorInfo.ace_isCaret();
 }
 
-// TODO do we need this?
 var synchronizeEditorWithUserSelection = function(editorInfo) {
   editorInfo.ace_fastIncorp();
 }
@@ -89,18 +88,4 @@ var getLength = function(line, rep) {
   var lineLength = endLineOffset - startLineOffset - 1;
 
   return lineLength;
-}
-
-// TODO implement (check both 1st and 2nd halves)
-var currentLineIsSecondHalfOfSplit = function(rep, attributeManager) {
-  var currentLine = rep.selStart[0];
-  return currentLine === 0;
-}
-
-// TODO implement (check both 1st and 2nd halves)
-var currentLineIsFirstHalfOfSplit = function(rep, attributeManager) {
-  var totalLinesOfPad = rep.lines.length();
-  var currentLine = rep.selStart[0] + 1; // 1st line is 0, so we need to increase 1 to the value
-
-  return currentLine === totalLinesOfPad;
 }

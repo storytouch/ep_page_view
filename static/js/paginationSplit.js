@@ -1,4 +1,5 @@
 var utils = require('./utils');
+var caretPositioning = require('./caretPositioning');
 var randomString = require('ep_etherpad-lite/static/js/pad_utils').randomString;
 
 var PAGE_BREAKS_ATTRIB                     = "splitPageBreak";
@@ -319,6 +320,10 @@ exports.blockElements = function() {
 }
 
 exports.cleanPageBreaks = function(attributeManager, rep, editorInfo) {
+  var positionAdjustment;
+  // store original caret position so it can be moved there after we finish cleaning page breaks
+  var originalPosition = caretPositioning.getCurrentCaretPosition(rep);
+
   var totalLines = rep.lines.length();
   for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
     // remove marker(s) of a split line
@@ -329,8 +334,18 @@ exports.cleanPageBreaks = function(attributeManager, rep, editorInfo) {
     // remove marker of a page break
     if (lineHasPageBreak(lineNumber, attributeManager)) {
       removePageBreakBetweenLines(lineNumber, attributeManager);
+
+      // line merge removes some chars from the text, so we need to adjust where caret will be
+      // after cleaning page breaks. This needs to be done after we remove markers of line split and
+      // page break (we make adjustments according to the absence of line attributes, and both
+      // removeMarkersOfLineSplit and removePageBreakBetweenLines remove some of them, so we need
+      // to finish removing those attributes before calculating the adjustment)
+      positionAdjustment = caretPositioning.includeMergeForLine(lineNumber, originalPosition, positionAdjustment, attributeManager);
     }
   }
+
+  // move caret to original position
+  caretPositioning.moveCaretToPosition(originalPosition, positionAdjustment, rep, editorInfo);
 }
 
 exports.lineIsFirstHalfOfSplit = function(lineNumber, attributeManager) {
@@ -378,12 +393,25 @@ exports.mergeLinesWithExtraChars = function(lineNumber, rep, attributeManager, e
 }
 
 exports.savePageBreaks = function(splitPositions, attributeManager, rep, editorInfo) {
+  var positionAdjustment;
+  // store original caret position so it can be moved there after we finish cleaning page breaks
+  var originalPosition = caretPositioning.getCurrentCaretPosition(rep);
+
   for (var i = splitPositions.length - 1; i >= 0; i--) {
     var splitPosition = splitPositions[i];
+
+    // line split adds some chars to the text, so we need to adjust where caret will be
+    // after saving page breaks. This needs to be done before we add page breaks between lines
+    // (we make adjustments according to the absence of line attributes, and addPageBreakBetweenLines
+    // adds line attributes, so it breaks the logic of includeSplitForLine)
+    positionAdjustment = caretPositioning.includeSplitForLine(splitPosition.start, originalPosition, positionAdjustment, attributeManager);
 
     splitLine(splitPosition, attributeManager, editorInfo);
     addPageBreakBetweenLines(splitPosition, attributeManager);
   };
+
+  // move caret to original position
+  caretPositioning.moveCaretToPosition(originalPosition, positionAdjustment, rep, editorInfo);
 }
 
 var splitLine = function(splitPosition, attributeManager, editorInfo) {
