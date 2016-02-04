@@ -95,9 +95,12 @@ exports.postAceInit = function(hook, context){
     }
   });
   $('#options-linenoscheck').on('click', function() {
-    if($('#options-linenoscheck').is(':checked')) {
+    if($('#options-linenoscheck').is(':checked') && $('#options-pageview').is(':checked')) {
       $outerIframeContents.find('#sidediv').addClass("lineNumbersAndPageView");
       $innerdocbody.addClass('innerPVlineNumbers');
+    } else {
+      $outerIframeContents.find('#sidediv').removeClass("lineNumbersAndPageView");
+      $innerdocbody.removeClass('innerPVlineNumbers');
     }
   });
 

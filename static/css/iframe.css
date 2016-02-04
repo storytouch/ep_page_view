@@ -198,10 +198,6 @@ body{
   */
   }
 
-  #innerdocbody.breakPages div nonSplitPageBreak:before {
-    background-color:red;
-  }
-
   /* hide ")" from 1st half of split parenthetical: */
   #innerdocbody.breakPages div.firstHalf parenthetical:after {
     display: none;
