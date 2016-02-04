@@ -636,17 +636,17 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
     });
 
-    context("and user adds text before the end of 1st half of split line", function() {
+    context("and pad has multiple split lines", function() {
       before(function() {
-        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
+        linesBeforeTargetElement = 3*GENERALS_PER_PAGE - 3;
         var line1 = utils.buildStringWithLength(58, "1") + ".";
         var line2 = utils.buildStringWithLength(58, "2") + ".";
         var line3 = utils.buildStringWithLength(58, "3") + ".";
         var line4 = utils.buildStringWithLength(58, "4") + ".";
         sentences = [line1, line2, line3, line4];
-        lastLineText = line1 + line2 + line3 + line4;
+        lastLineText = "the end of the pad";
         buildTargetElement = function() {
-          return utils.general(lastLineText);
+          return utils.general(line1 + line2 + line3 + line4) + utils.general(lastLineText);
         };
       });
 
@@ -655,69 +655,117 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         var inner$ = helper.padInner$;
 
-        // there should be a page break before we start testing
+        var line1 = utils.buildStringWithLength(60, "X") + ".";
+        var line2 = utils.buildStringWithLength(60, "Y") + ".";
+        var veryLongLine = line1 + line2;
+
+        // there should be a page break before we start creating other split page breaks
         helper.waitFor(function() {
           var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
           return $splitElementsWithPageBreaks.length === 1;
         }, 2000).done(function() {
-          // write something on fist half of split line
-          // ("1" will be added to 1st half; "AAA" to the 2nd)
-          var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+          // create some other split page breaks before the existing one
+          var $lastLineOfSecondPage = utils.getLine(2*GENERALS_PER_PAGE-2);
+          $lastLineOfSecondPage.sendkeys("{selectall}");
+          $lastLineOfSecondPage.sendkeys(veryLongLine);
+
+          var $lastLineOfFirstPage = utils.getLine(GENERALS_PER_PAGE-1);
+          $lastLineOfFirstPage.sendkeys("{selectall}");
+          $lastLineOfFirstPage.sendkeys(veryLongLine);
+
+          // there should be 3 page breaks now
+          helper.waitFor(function() {
+            var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+            return $splitElementsWithPageBreaks.length === 3;
+          }, 2000).done(done);
+        });
+      });
+
+      context("and user adds text before any split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
+
+          var inner$ = helper.padInner$;
+
+          // write something on fist line
+          var $firstLine = inner$("div").first();
+          $firstLine.sendkeys("{selectall}");
+          $firstLine.sendkeys("AAAAAAAAA");
+
+          done();
+        });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var firstLine = function() { return helper.padInner$("div").first() };
+          var textAfterInsertedText = "AAAAAAAAA".length;
+
+          splitElements.testCaretIsOn(firstLine, textAfterInsertedText, false, done);
+        });
+      });
+
+      context("and user adds text after all split lines", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
+
+          var inner$ = helper.padInner$;
+
+          // write something on last line
+          var $lastLine = inner$("div").last();
+          $lastLine.sendkeys("{selectall}{leftarrow}");
+          $lastLine.sendkeys("AAAAAAAAA{enter}BBBBBBBBBBBB");
+
+          // wait for changes to be processed and pagination to finish
+          helper.waitFor(function() {
+            var $lastLine = inner$("div").last();
+            return $lastLine.text() === "BBBBBBBBBBBB" + lastLineText;
+          }, 3000).done(done);
+        });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var lastLine = function() { return helper.padInner$("div").last() };
+          var textAfterInsertedText = "BBBBBBBBBBBB".length;
+
+          splitElements.testCaretIsOn(lastLine, textAfterInsertedText, true, done);
+        });
+      });
+
+      context("and user adds text before the end of 1st half of split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
+
+          var inner$ = helper.padInner$;
+
+          // write something on fist half of last split line
+          // ("1" will be added to 1st half; "AAAAAAAAA" to the 2nd)
+          var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
           $firstHalfOfSplitLine.sendkeys("{selectall}{rightarrow}{leftarrow}");
-          $firstHalfOfSplitLine.sendkeys("1.AAA");
+          $firstHalfOfSplitLine.sendkeys("1.AAAAAAAAA");
 
           var textBeforePageBreak = "1" + sentences[0];
 
           // wait for pagination to finish
           helper.waitFor(function() {
-            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
             return $firstHalfOfSplitLine.text() === textBeforePageBreak;
           }, 3000).done(done);
         });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var secondHalfOfSplitLine = function() { return helper.padInner$("div:has(splitPageBreak)").last().next() };
+          var textAfterInsertedText = "AAAAAAAAA".length;
+
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+        });
       });
 
-      it("keeps caret at the end of inserted text", function(done) {
-        var inner$ = helper.padInner$;
+      context("and user adds text to the end of 1st half of split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
 
-        var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").first().next();
-        var textAfterInsertedText = "AAA".length;
+          var inner$ = helper.padInner$;
 
-        var $lineWhereCaretIs = utils.getLineWhereCaretIs();
-        var columnWhereCaretIs = utils.getColumnWhereCaretIs();
-
-        expect(columnWhereCaretIs).to.be(textAfterInsertedText);
-        expect($lineWhereCaretIs.get(0)).to.be($secondHalfOfSplitLine.get(0));
-
-        done();
-      });
-    });
-
-    context("and user adds text to the end of 1st half of split line", function() {
-      before(function() {
-        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
-        var line1 = utils.buildStringWithLength(58, "1") + ".";
-        var line2 = utils.buildStringWithLength(58, "2") + ".";
-        var line3 = utils.buildStringWithLength(58, "3") + ".";
-        var line4 = utils.buildStringWithLength(58, "4") + ".";
-        sentences = [line1, line2, line3, line4];
-        lastLineText = line1 + line2 + line3 + line4;
-        buildTargetElement = function() {
-          return utils.general(lastLineText);
-        };
-      });
-
-      beforeEach(function(done) {
-        this.timeout(6000);
-
-        var inner$ = helper.padInner$;
-
-        // there should be a page break before we start testing
-        helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-          return $splitElementsWithPageBreaks.length === 1;
-        }, 2000).done(function() {
-          // write something on fist half of split line
-          var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+          // write something on fist half of last split line
+          var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
           $firstHalfOfSplitLine.sendkeys("{selectall}{rightarrow}");
           $firstHalfOfSplitLine.sendkeys("something");
 
@@ -725,82 +773,73 @@ describe("ep_script_page_view - page break on split elements", function() {
 
           // wait for pagination to finish
           helper.waitFor(function() {
-            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
             return $firstHalfOfSplitLine.text() === textBeforePageBreak;
           }, 3000).done(done);
         });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var secondHalfOfSplitLine = function() { return helper.padInner$("div:has(splitPageBreak)").last().next() };
+          var textAfterInsertedText = "something".length;
+
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+        });
       });
 
-      it("keeps caret at the end of inserted text", function(done) {
-        var inner$ = helper.padInner$;
+      context("and user adds text to the end of 2nd half of split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
 
-        var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").first().next();
-        var textAfterInsertedText = "something".length;
+          var inner$ = helper.padInner$;
 
-        var $lineWhereCaretIs = utils.getLineWhereCaretIs();
-        var columnWhereCaretIs = utils.getColumnWhereCaretIs();
+          // write something on fist half of last split line
+          var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").last().next();
+          $secondHalfOfSplitLine.sendkeys("{selectall}{rightarrow}");
+          $secondHalfOfSplitLine.sendkeys("something{enter}else");
 
-        expect(columnWhereCaretIs).to.be(textAfterInsertedText);
-        expect($lineWhereCaretIs.get(0)).to.be($secondHalfOfSplitLine.get(0));
+          // wait for changes to be processed and pagination to finish
+          helper.waitFor(function() {
+            var $lineAfterPageBreak = inner$("div:has(splitPageBreak)").last().next().next();
+            return $lineAfterPageBreak.text() === "else";
+          }, 3000).done(done);
+        });
 
-        done();
-      });
-    });
+        it("keeps caret at the end of inserted text", function(done) {
+          var lineAfterPageBreak = function() { return helper.padInner$("div:has(splitPageBreak)").last().next().next() };
+          var textAfterInsertedText = lineAfterPageBreak().text().length;
 
-    context("and user adds text to the beginning of 2nd half of split line", function() {
-      before(function() {
-        linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
-        var line1 = utils.buildStringWithLength(58, "1") + ".";
-        var line2 = utils.buildStringWithLength(58, "2") + ".";
-        var line3 = utils.buildStringWithLength(58, "3") + ".";
-        var line4 = utils.buildStringWithLength(58, "4") + ".";
-        sentences = [line1, line2, line3, line4];
-        lastLineText = line1 + line2 + line3 + line4;
-        buildTargetElement = function() {
-          return utils.general(lastLineText);
-        };
+          splitElements.testCaretIsOn(lineAfterPageBreak, textAfterInsertedText, true, done);
+        });
       });
 
-      beforeEach(function(done) {
-        this.timeout(6000);
+      context("and user adds text to the beginning of 2nd half of split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
 
-        var inner$ = helper.padInner$;
+          var inner$ = helper.padInner$;
 
-        // there should be a page break before we start testing
-        helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
-          return $splitElementsWithPageBreaks.length === 1;
-        }, 2000).done(function() {
-          // write something on second half of split line
-          // ("1." will be moved to 1st half; "AAA" to the 2nd)
-          var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").first().next();
+          // write something on second half of last split line
+          // ("1." will be moved to 1st half; "AAAAAAAAA" to the 2nd)
+          var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").last().next();
           // sendkeys fails if we apply it to <div>. Need to apply to the inner span
           $secondHalfOfSplitLine = $secondHalfOfSplitLine.find("span");
           $secondHalfOfSplitLine.sendkeys("{selectall}{leftarrow}");
-          $secondHalfOfSplitLine.sendkeys("1.AAA");
+          $secondHalfOfSplitLine.sendkeys("1.AAAAAAAAA");
 
           var textBeforePageBreak = sentences[0] + "1.";
           // wait for pagination to finish
           helper.waitFor(function() {
-            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").first();
+            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
             return $firstHalfOfSplitLine.text() === textBeforePageBreak;
           }, 3000).done(done);
         });
-      });
 
-      it("keeps caret at the end of inserted text", function(done) {
-        var inner$ = helper.padInner$;
+        it("keeps caret at the end of inserted text", function(done) {
+          var secondHalfOfSplitLine = function() { return helper.padInner$("div:has(splitPageBreak)").last().next() };
+          var textAfterInsertedText = "AAAAAAAAA".length;
 
-        var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").first().next();
-        var textAfterInsertedText = "AAA".length;
-
-        var $lineWhereCaretIs = utils.getLineWhereCaretIs();
-        var columnWhereCaretIs = utils.getColumnWhereCaretIs();
-
-        expect(columnWhereCaretIs).to.be(textAfterInsertedText);
-        expect($lineWhereCaretIs.get(0)).to.be($secondHalfOfSplitLine.get(0));
-
-        done();
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+        });
       });
     });
   });
@@ -939,6 +978,221 @@ describe("ep_script_page_view - page break on split elements", function() {
         it("splits action between the two pages, and second page keep the minimum lines it needs", function(done) {
           var beforeLastLine = sentences[4];
           utils.testSplitPageBreakIsOn(beforeLastLine, done);
+        });
+      });
+    });
+
+    context("1and pad has multiple split lines", function() {
+      var LAST_LINE_OF_PAGE_1 = GENERALS_PER_PAGE - 4;
+      // FIXME this should be 2*GENERALS_PER_PAGE - 7
+      var LAST_LINE_OF_PAGE_2 = 2*GENERALS_PER_PAGE - 8;
+
+      before(function() {
+        // FIXME this should be 3*GENERALS_PER_PAGE - 9
+        linesBeforeTargetElement = 3*GENERALS_PER_PAGE - 12;
+        var line1 = utils.buildStringWithLength(58, "1") + ".";
+        var line2 = utils.buildStringWithLength(58, "2") + ".";
+        var line3 = utils.buildStringWithLength(58, "3") + ".";
+        var line4 = utils.buildStringWithLength(58, "4") + ".";
+        sentences = [line1, line2, line3, line4];
+        lastLineText = "the end of the pad";
+        buildTargetElement = function() {
+          return utils.action(line1 + line2 + line3 + line4) + utils.general(lastLineText);
+        };
+      });
+
+      beforeEach(function(done) {
+        this.timeout(6000);
+
+        var inner$ = helper.padInner$;
+
+        var line1 = utils.buildStringWithLength(60, "W") + ".";
+        var line2 = utils.buildStringWithLength(60, "X") + ".";
+        var line3 = utils.buildStringWithLength(60, "Y") + ".";
+        var line4 = utils.buildStringWithLength(60, "Z") + ".";
+        var veryLongLine = line1 + line2 + line3 + line4;
+
+        // create some other actions with split page breaks before the existing one
+        var $lastLineOfFirstPage = utils.getLine(LAST_LINE_OF_PAGE_1);
+        $lastLineOfFirstPage.sendkeys("{selectall}");
+        $lastLineOfFirstPage.sendkeys(veryLongLine);
+
+        var $lastLineOfSecondPage = utils.getLine(LAST_LINE_OF_PAGE_2);
+        $lastLineOfSecondPage.sendkeys("{selectall}");
+        $lastLineOfSecondPage.sendkeys(veryLongLine);
+
+        // change both lines to action
+        utils.changeToElement(utils.ACTION, function() {
+          var $lastLineOfSecondPage = utils.getLine(LAST_LINE_OF_PAGE_1);
+          $lastLineOfSecondPage.sendkeys("{selectall}");
+          utils.changeToElement(utils.ACTION, function() {
+            // there should be 3 page breaks now
+            helper.waitFor(function() {
+              var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
+              return $splitElementsWithPageBreaks.length === 3;
+            }, 2000).done(done);
+          }, LAST_LINE_OF_PAGE_1);
+        }, LAST_LINE_OF_PAGE_2);
+      });
+
+      context("and user adds text before any split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
+
+          var inner$ = helper.padInner$;
+
+          // write something on fist line
+          var $firstLine = inner$("div").first();
+          $firstLine.sendkeys("{selectall}");
+          $firstLine.sendkeys("AAAAAAAAA");
+
+          done();
+        });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var firstLine = function() { return helper.padInner$("div").first() };
+          var textAfterInsertedText = "AAAAAAAAA".length;
+
+          splitElements.testCaretIsOn(firstLine, textAfterInsertedText, false, done);
+        });
+      });
+
+      context("and user adds text after all split lines", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
+
+          var inner$ = helper.padInner$;
+
+          // write something on last line
+          var $lastLine = inner$("div").last();
+          $lastLine.sendkeys("{selectall}{leftarrow}");
+          $lastLine.sendkeys("AAAAAAAAA{enter}BBBBBBBBBBBB");
+
+          // wait for changes to be processed and pagination to finish
+          helper.waitFor(function() {
+            var $lastLine = inner$("div").last();
+            return $lastLine.text() === "BBBBBBBBBBBB" + lastLineText;
+          }, 3000).done(done);
+        });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var lastLine = function() { return helper.padInner$("div").last() };
+          var textAfterInsertedText = "BBBBBBBBBBBB".length;
+
+          splitElements.testCaretIsOn(lastLine, textAfterInsertedText, true, done);
+        });
+      });
+
+      context("and user adds text before the end of 1st half of split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
+
+          var inner$ = helper.padInner$;
+
+          // write something on fist half of last split line
+          // ("2" will be added to 1st half; "AAAAAAAAA" to the 2nd)
+          var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
+          $firstHalfOfSplitLine.sendkeys("{selectall}{rightarrow}{leftarrow}");
+          $firstHalfOfSplitLine.sendkeys("2.AAAAAAAAA");
+
+          var textBeforePageBreak = sentences[0] + "2" + sentences[1];
+
+          // wait for pagination to finish
+          helper.waitFor(function() {
+            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
+            return $firstHalfOfSplitLine.text() === textBeforePageBreak;
+          }, 3000).done(done);
+        });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var secondHalfOfSplitLine = function() { return helper.padInner$("div:has(splitPageBreak)").last().next() };
+          var textAfterInsertedText = "AAAAAAAAA".length;
+
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+        });
+      });
+
+      context("and user adds text to the end of 1st half of split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
+
+          var inner$ = helper.padInner$;
+
+          // write something on fist half of last split line
+          var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
+          $firstHalfOfSplitLine.sendkeys("{selectall}{rightarrow}");
+          $firstHalfOfSplitLine.sendkeys("something");
+
+          var textBeforePageBreak = sentences[0] + sentences[1];
+
+          // wait for pagination to finish
+          helper.waitFor(function() {
+            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
+            return $firstHalfOfSplitLine.text() === textBeforePageBreak;
+          }, 3000).done(done);
+        });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var secondHalfOfSplitLine = function() { return helper.padInner$("div:has(splitPageBreak)").last().next() };
+          var textAfterInsertedText = "something".length;
+
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+        });
+      });
+
+      context("and user adds text to the end of 2nd half of split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
+
+          var inner$ = helper.padInner$;
+
+          // write something on fist half of last split line
+          var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").last().next();
+          $secondHalfOfSplitLine.sendkeys("{selectall}{rightarrow}");
+          $secondHalfOfSplitLine.sendkeys("something{enter}else");
+
+          // wait for changes to be processed and pagination to finish
+          helper.waitFor(function() {
+            var $lineAfterPageBreak = inner$("div:has(splitPageBreak)").last().next().next();
+            return $lineAfterPageBreak.text() === "else";
+          }, 3000).done(done);
+        });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var lineAfterPageBreak = function() { return helper.padInner$("div:has(splitPageBreak)").last().next().next() };
+          var textAfterInsertedText = lineAfterPageBreak().text().length;
+
+          splitElements.testCaretIsOn(lineAfterPageBreak, textAfterInsertedText, true, done);
+        });
+      });
+
+      context("and user adds text to the beginning of 2nd half of split line", function() {
+        beforeEach(function(done) {
+          this.timeout(6000);
+
+          var inner$ = helper.padInner$;
+
+          // write something on second half of last split line
+          // ("2." will be moved to 1st half; "AAAAAAAAA" to the 2nd)
+          var $secondHalfOfSplitLine = inner$("div:has(splitPageBreak)").last().next();
+          // sendkeys fails if we apply it to <div>. Need to apply to the inner span
+          $secondHalfOfSplitLine = $secondHalfOfSplitLine.find("span");
+          $secondHalfOfSplitLine.sendkeys("{selectall}{leftarrow}");
+          $secondHalfOfSplitLine.sendkeys("2.AAAAAAAAA");
+
+          var textBeforePageBreak = sentences[0] + sentences[1] + "2.";
+          // wait for pagination to finish
+          helper.waitFor(function() {
+            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
+            return $firstHalfOfSplitLine.text() === textBeforePageBreak;
+          }, 3000).done(done);
+        });
+
+        it("keeps caret at the end of inserted text", function(done) {
+          var secondHalfOfSplitLine = function() { return helper.padInner$("div:has(splitPageBreak)").last().next() };
+          var textAfterInsertedText = "AAAAAAAAA".length;
+
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, true, done);
         });
       });
     });
@@ -1378,5 +1632,26 @@ ep_script_page_view_test_helper.splitElements = {
       var textBeforePageBreak = $splitElementsWithPageBreaks.first().closest("div").text();
       return textBeforePageBreak === expectedTextBeforePageBreak;
     }, 3000).done(done);
+  },
+
+  testCaretIsOn: function(expectedLine, expectedColumn, withTimeout, done) {
+    var utils = ep_script_page_view_test_helper.utils;
+
+    var theTest = function() {
+      var $lineWhereCaretIs = utils.getLineWhereCaretIs();
+      var columnWhereCaretIs = utils.getColumnWhereCaretIs();
+
+      expect(columnWhereCaretIs).to.be(expectedColumn);
+      expect($lineWhereCaretIs.get(0)).to.be(expectedLine().get(0));
+
+      done();
+    };
+
+    // some tests need to to wait some time so caret finishes moving
+    if (withTimeout) {
+      setTimeout(theTest, 1000);
+    } else {
+      theTest();
+    }
   },
 }

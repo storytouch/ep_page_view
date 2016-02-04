@@ -1,5 +1,6 @@
+var _ = require('ep_etherpad-lite/static/js/underscore');
+
 var utils = require('./utils');
-var caretPositioning = require('./caretPositioning');
 var randomString = require('ep_etherpad-lite/static/js/pad_utils').randomString;
 
 var PAGE_BREAKS_ATTRIB                     = "splitPageBreak";
@@ -7,6 +8,13 @@ var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "splitPageBreakWithMoreAndContd";
 
 var FIRST_HALF_ATTRIB = "splitFirstHalf";
 var SECOND_HALF_ATTRIB = "splitSecondHalf";
+
+var ETHERPAD_AND_SPLIT_ATTRIBS = [
+  // Etherpad basic line attributes
+  'author', 'lmkr', 'insertorder', 'start',
+  // attributes used to mark a line as split
+  PAGE_BREAKS_ATTRIB, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB, FIRST_HALF_ATTRIB, SECOND_HALF_ATTRIB
+];
 
 var PAGE_BREAK_TAG = "splitPageBreak";
 
@@ -320,32 +328,14 @@ exports.blockElements = function() {
 }
 
 exports.cleanPageBreaks = function(attributeManager, rep, editorInfo) {
-  var positionAdjustment;
-  // store original caret position so it can be moved there after we finish cleaning page breaks
-  var originalPosition = caretPositioning.getCurrentCaretPosition(rep);
-
   var totalLines = rep.lines.length();
   for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
     // remove marker(s) of a split line
     if (exports.lineIsFirstHalfOfSplit(lineNumber, attributeManager)) {
       mergeLines(lineNumber, rep, attributeManager, editorInfo);
-      removeMarkersOfLineSplit(lineNumber, attributeManager);
-    }
-    // remove marker of a page break
-    if (lineHasPageBreak(lineNumber, attributeManager)) {
       removePageBreakBetweenLines(lineNumber, attributeManager);
-
-      // line merge removes some chars from the text, so we need to adjust where caret will be
-      // after cleaning page breaks. This needs to be done after we remove markers of line split and
-      // page break (we make adjustments according to the absence of line attributes, and both
-      // removeMarkersOfLineSplit and removePageBreakBetweenLines remove some of them, so we need
-      // to finish removing those attributes before calculating the adjustment)
-      positionAdjustment = caretPositioning.includeMergeForLine(lineNumber, originalPosition, positionAdjustment, attributeManager);
     }
   }
-
-  // move caret to original position
-  caretPositioning.moveCaretToPosition(originalPosition, positionAdjustment, rep, editorInfo);
 }
 
 exports.lineIsFirstHalfOfSplit = function(lineNumber, attributeManager) {
@@ -356,14 +346,11 @@ exports.lineIsSecondHalfOfSplit = function(lineNumber, attributeManager) {
   return attributeManager.getAttributeOnLine(lineNumber, SECOND_HALF_ATTRIB);
 }
 
-var lineHasPageBreak = function(lineNumber, attributeManager) {
-  return attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB) ||
-         attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
-}
-
 var removePageBreakBetweenLines = function(lineNumber, attributeManager) {
   attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB);
   attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
+
+  removeMarkersOfLineSplit(lineNumber, attributeManager);
 }
 
 var removeMarkersOfLineSplit = function(lineNumber, attributeManager) {
@@ -372,7 +359,13 @@ var removeMarkersOfLineSplit = function(lineNumber, attributeManager) {
 }
 
 var mergeLines = function(lineNumber, rep, attributeManager, editorInfo) {
-  exports.mergeLinesWithExtraChars(lineNumber, rep, attributeManager, editorInfo, 0, 0);
+  var removeUntil = 0;
+  // if second half has other line attributes, it will have a "*", so we need to remove it too
+  if (lineHasMarkerExcludingSplitLineMarkers(lineNumber, attributeManager)) {
+    removeUntil = 1;
+  }
+
+  exports.mergeLinesWithExtraChars(lineNumber, rep, attributeManager, editorInfo, 0, removeUntil);
 }
 
 exports.mergeLinesWithExtraChars = function(lineNumber, rep, attributeManager, editorInfo, charsToRemoveOnFirstHalf, charsToRemoveOnSecondHalf) {
@@ -392,26 +385,25 @@ exports.mergeLinesWithExtraChars = function(lineNumber, rep, attributeManager, e
   }
 }
 
-exports.savePageBreaks = function(splitPositions, attributeManager, rep, editorInfo) {
-  var positionAdjustment;
-  // store original caret position so it can be moved there after we finish cleaning page breaks
-  var originalPosition = caretPositioning.getCurrentCaretPosition(rep);
+// based on code from AttributeManager.js (function removeAttributeOnLine)
+var lineHasMarkerExcludingSplitLineMarkers = function(lineNumber, attributeManager) {
+  var lineAttributes = attributeManager.getAttributesOnLine(lineNumber);
+  var countAttribsWithMarker = _.chain(lineAttributes).
+    filter(function(a){return !!a[1];}). // remove absent attributes
+    map(function(a){return a[0];}). // get only attribute names
+    difference(ETHERPAD_AND_SPLIT_ATTRIBS). // exclude Etherpad basic attributes + split markers
+    size().value(); // get number of attributes
 
+  return countAttribsWithMarker > 0;
+}
+
+exports.savePageBreaks = function(splitPositions, attributeManager, editorInfo) {
   for (var i = splitPositions.length - 1; i >= 0; i--) {
     var splitPosition = splitPositions[i];
-
-    // line split adds some chars to the text, so we need to adjust where caret will be
-    // after saving page breaks. This needs to be done before we add page breaks between lines
-    // (we make adjustments according to the absence of line attributes, and addPageBreakBetweenLines
-    // adds line attributes, so it breaks the logic of includeSplitForLine)
-    positionAdjustment = caretPositioning.includeSplitForLine(splitPosition.start, originalPosition, positionAdjustment, attributeManager);
 
     splitLine(splitPosition, attributeManager, editorInfo);
     addPageBreakBetweenLines(splitPosition, attributeManager);
   };
-
-  // move caret to original position
-  caretPositioning.moveCaretToPosition(originalPosition, positionAdjustment, rep, editorInfo);
 }
 
 var splitLine = function(splitPosition, attributeManager, editorInfo) {

@@ -158,7 +158,7 @@ var savePageBreaks = function(pageBreaksInfo, callstack, attributeManager, rep, 
 
   utils.performNonUnduableEvent(callstack, function() {
     paginationNonSplit.savePageBreaks($linesWithPageBreaks, attributeManager, rep);
-    paginationSplit.savePageBreaks(splitPositions, attributeManager, rep, editorInfo);
+    paginationSplit.savePageBreaks(splitPositions, attributeManager, editorInfo);
   });
 }
 
