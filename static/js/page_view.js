@@ -94,6 +94,12 @@ exports.postAceInit = function(hook, context){
       padcookie.setPref("page_view", false);
     }
   });
+  $('#options-linenoscheck').on('click', function() {
+    if($('#options-linenoscheck').is(':checked')) {
+      $outerIframeContents.find('#sidediv').addClass("lineNumbersAndPageView");
+      $innerdocbody.addClass('innerPVlineNumbers');
+    }
+  });
 
   if(!clientVars.plugins.plugins) clientVars.plugins.plugins = {};
 };
