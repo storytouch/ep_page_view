@@ -200,11 +200,21 @@ body{
 
   /* hide ")" from 1st half of split parenthetical: */
   #innerdocbody.breakPages div.firstHalf parenthetical:after {
-    display: none;
+    content: ' ';
+    margin-right: 0;
   }
   /* hide "(" from 2nd half of split parenthetical: */
   #innerdocbody.breakPages div.firstHalf + div parenthetical:before {
-    display: none;
+    content: ' ';
+    margin-left: 0;
+  }
+
+  /* special style used on the calculation of split lines: hide both "()" of cloned parenthetical */
+  #innerdocbody.breakPages div.clone parenthetical:after,
+  #innerdocbody.breakPages div.clone parenthetical:before {
+    content: ' ';
+    margin-left: 0;
+    margin-right: 0;
   }
 
   /* page number: */

@@ -236,7 +236,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
     });
 
-    context("and there is room on previous page for more than the minimum line (+1)", function() {
+    context("and there is room on previous page for more than the minimum line (more than 1)", function() {
       before(function() {
         // give enough space for first 3 lines of general to fit on first page
         linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
@@ -1241,7 +1241,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
     });
 
-    context("and there is room on previous page for more than the minimum line (+1)", function() {
+    context("and there is room on previous page for more than the minimum line (more than 1)", function() {
       before(function() {
         // give enough space for first 3 lines of transition to fit on first page
         linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
@@ -1299,8 +1299,32 @@ describe("ep_script_page_view - page break on split elements", function() {
         utils.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
+      context("but there is a character before dialogue", function() {
+        var characterName = "joe's (V.O.)";
+
+        before(function() {
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+          var character = utils.character(characterName);
+          var dialogue = utils.dialogue(lastLineText);
+          buildTargetElement = function() {
+            return character + dialogue;
+          };
+        });
+        // revert changed buildTargetElement
+        after(function() {
+          buildTargetElement = function() {
+            return utils.dialogue(lastLineText);
+          };
+        });
+
+        it("moves the entire dialogue and character for next page", function(done) {
+          utils.testNonSplitPageBreakIsOn(characterName, done);
+        });
+      });
+
       context("but next page will have less then the minimum lines (2) of an dialogue", function() {
         before(function() {
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
           var line1 = utils.buildStringWithLength(34, "1") + ".";
           var line2 = utils.buildStringWithLength(34, "2") + ".";
           sentences = [line1, line2];
@@ -1312,16 +1336,52 @@ describe("ep_script_page_view - page break on split elements", function() {
           utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
+    });
+
+    context("and there is room on previous page for more than the minimum line (more than 1)", function() {
+      before(function() {
+        // give enough space for first 3 lines of dialogue to fit on first page
+        linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+        var line1 = utils.buildStringWithLength(34, "1") + ".";
+        var line2 = utils.buildStringWithLength(34, "2") + ".";
+        var line3 = utils.buildStringWithLength(34, "3") + ".";
+        var line4 = utils.buildStringWithLength(34, "4") + ".";
+        var line5 = utils.buildStringWithLength(34, "5") + ".";
+        var line6 = utils.buildStringWithLength(34, "6") + ".";
+        sentences = [line1, line2, line3, line4, line5, line6];
+        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+      });
+
+      it("splits dialogue between the two pages, and first page has as much lines as it can fit", function(done) {
+        var beforeLastLine = sentences[3];
+        utils.testSplitPageBreakIsOn(beforeLastLine, done);
+      });
+
+      context("but next page will have less then the minimum lines (2) of a dialogue", function() {
+        before(function() {
+          // give enough space for first 5 lines of dialogue to fit on first page (which would leave
+          // only one line on next page)
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 5;
+        });
+
+        it("splits dialogue between the two pages, and second page keep the minimum lines it needs", function(done) {
+          var beforeLastLine = sentences[4];
+          utils.testSplitPageBreakIsOn(beforeLastLine, done);
+        });
+      });
 
       context("and there is no character before dialogue", function() {
         before(function() {
-          var line1 = utils.buildStringWithLength(34, "1") + ".";
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 2;
+          var line1 = utils.buildStringWithLength(45, "1") + ".";
           var line2 = utils.buildStringWithLength(45, "2") + ".";
           sentences = [line1, line2];
           lastLineText = line1 + line2;
         });
 
         it("adds the MORE/CONT'D tags with an empty character name", function(done) {
+          this.timeout(4000);
+
           var characterName = "";
           utils.testPageBreakHasMoreAndContd(characterName, done);
         });
@@ -1329,21 +1389,24 @@ describe("ep_script_page_view - page break on split elements", function() {
         context("and 2nd split starts with a short sentence", function() {
           before(function() {
             var line1 = utils.buildStringWithLength(34, "1") + ".";
-            var line2 = "2 " + utils.buildStringWithLength(31, "2") + ". "; // "2 " is the short sentence
-            var line3 = utils.buildStringWithLength(33, "3") + ".";
-            sentences = [line1, line2, line3];
-            lastLineText = line1 + line2 + line3;
+            var line2 = utils.buildStringWithLength(34, "2") + ".";
+            var line3 = "3 " + utils.buildStringWithLength(31, "3") + ". "; // "3 " is the short sentence
+            var line4 = utils.buildStringWithLength(33, "4") + ".";
+            sentences = [line1, line2, line3, line4];
+            lastLineText = line1 + line2 + line3 + line4;
           });
 
           // this test is for the CSS of page break and MORE/CONT'D
           it("still places the 2nd half of split on the line below CONT'D", function(done) {
+            this.timeout(4000);
+
             var inner$ = helper.padInner$;
 
             // wait for pagination to be finished
             helper.waitFor(function() {
               var $splitPageBreaks = inner$("div splitPageBreak");
               return $splitPageBreaks.length > 0;
-            }).done(function() {
+            }, 2000).done(function() {
               // verify 2nd half is two-lines high
               // (we need to get height of the span because the div will have page break + line -- so it's harder to test)
               var secondHalfHeight = helper.padInner$("div span").last().outerHeight();
@@ -1357,31 +1420,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
       });
 
-      context("and there is a character before dialogue", function() {
-        before(function() {
-          linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
-          var character = utils.character("joe's (V.O.)");
-          var dialogue = utils.dialogue(lastLineText);
-          buildTargetElement = function() {
-            return character + dialogue;
-          };
-        });
-        // revert changed buildTargetElement
-        after(function() {
-          buildTargetElement = function() {
-            return utils.dialogue(lastLineText);
-          };
-        });
-
-        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
-          var characterName = "JOE'S (V.O.)";
-          utils.testPageBreakHasMoreAndContd(characterName, done);
-        });
-      });
-
       context("and there is a very long character before dialogue", function() {
         before(function() {
-          linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
           var character = utils.character("VERY LOOOOOOOOOOOOOONG CHARACTER NAME");
           var dialogue = utils.dialogue(lastLineText);
           buildTargetElement = function() {
@@ -1419,37 +1460,53 @@ describe("ep_script_page_view - page break on split elements", function() {
           });
         });
       });
-    });
 
-    context("and there is room on previous page for more than the minimum line (+1)", function() {
-      before(function() {
-        // give enough space for first 3 lines of dialogue to fit on first page
-        linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
-        var line1 = utils.buildStringWithLength(34, "1") + ".";
-        var line2 = utils.buildStringWithLength(34, "2") + ".";
-        var line3 = utils.buildStringWithLength(34, "3") + ".";
-        var line4 = utils.buildStringWithLength(34, "4") + ".";
-        var line5 = utils.buildStringWithLength(34, "5") + ".";
-        var line6 = utils.buildStringWithLength(34, "6") + ".";
-        sentences = [line1, line2, line3, line4, line5, line6];
-        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
-      });
+      context("and there is a character before dialogue", function() {
+        var characterName = "joe's (V.O.)";
 
-      it("splits dialogue between the two pages, and first page has as much lines as it can fit", function(done) {
-        var beforeLastLine = sentences[3];
-        utils.testSplitPageBreakIsOn(beforeLastLine, done);
-      });
-
-      context("but next page will have less then the minimum lines (2) of an dialogue", function() {
         before(function() {
-          // give enough space for first 5 lines of dialogue to fit on first page (which would leave
-          // only one line on next page)
-          linesBeforeTargetElement = GENERALS_PER_PAGE - 5;
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
+          var character = utils.character(characterName);
+          var dialogue = utils.dialogue(lastLineText);
+          buildTargetElement = function() {
+            return character + dialogue;
+          };
+        });
+        // revert changed buildTargetElement
+        after(function() {
+          buildTargetElement = function() {
+            return utils.dialogue(lastLineText);
+          };
         });
 
-        it("splits dialogue between the two pages, and second page keep the minimum lines it needs", function(done) {
-          var beforeLastLine = sentences[4];
-          utils.testSplitPageBreakIsOn(beforeLastLine, done);
+        it("splits dialogue between the two pages", function(done) {
+          var thirdLine = sentences[2];
+          utils.testSplitPageBreakIsOn(thirdLine, done);
+        });
+
+        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
+          utils.testPageBreakHasMoreAndContd(characterName.toUpperCase(), done);
+        });
+
+        context("but previous page will have less then the minimum lines (2) of an dialogue preceded by a character", function() {
+          before(function() {
+            // give enough space for character + two lines of dialogue to fit on first page
+            linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
+            var line1 = utils.buildStringWithLength(34, "1") + ".";
+            var line2 = utils.buildStringWithLength(34, "2") + ".";
+            var line3 = utils.buildStringWithLength(34, "3") + ".";
+            sentences = [line1, line2, line3];
+            lastLineText = line1 + line2 + line3;
+            var character = utils.character(characterName);
+            var dialogue = utils.dialogue(lastLineText);
+            buildTargetElement = function() {
+              return character + dialogue;
+            };
+          });
+
+          it("moves the entire dialogue and character for next page", function(done) {
+            utils.testNonSplitPageBreakIsOn(characterName, done);
+          });
         });
       });
     });
@@ -1479,8 +1536,32 @@ describe("ep_script_page_view - page break on split elements", function() {
         utils.testSplitPageBreakIsOn(newThirdLine, done);
       });
 
-      context("but next page will have less then the minimum lines (2) of an parenthetical", function() {
+      context("but there is a character before parenthetical", function() {
+        var characterName = "joe's (V.O.)";
+
         before(function() {
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+          var character = utils.character(characterName);
+          var parenthetical = utils.parenthetical(lastLineText);
+          buildTargetElement = function() {
+            return character + parenthetical;
+          };
+        });
+        // revert changed buildTargetElement
+        after(function() {
+          buildTargetElement = function() {
+            return utils.parenthetical(lastLineText);
+          };
+        });
+
+        it("moves the entire parenthetical and character for next page", function(done) {
+          utils.testNonSplitPageBreakIsOn(characterName, done);
+        });
+      });
+
+      context("but next page will have less then the minimum lines (2) of a parenthetical", function() {
+        before(function() {
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
           var line1 = utils.buildStringWithLength(24, "1") + ".";
           var line2 = utils.buildStringWithLength(24, "2") + ".";
           sentences = [line1, line2];
@@ -1492,46 +1573,9 @@ describe("ep_script_page_view - page break on split elements", function() {
           utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
-
-      context("and there is no character before parenthetical", function() {
-        before(function() {
-          var line1 = utils.buildStringWithLength(24, "1") + ".";
-          var line2 = utils.buildStringWithLength(30, "2") + ".";
-          sentences = [line1, line2];
-          lastLineText = line1 + line2;
-        });
-
-        it("adds the MORE/CONT'D tags with an empty character name", function(done) {
-          var characterName = "";
-          utils.testPageBreakHasMoreAndContd(characterName, done);
-        });
-      });
-
-      context("and there is a character before parenthetical", function() {
-        before(function() {
-          linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
-          var character = utils.character("joe's (V.O.)");
-          var parenthetical = utils.parenthetical(lastLineText);
-          buildTargetElement = function() {
-            return character + parenthetical;
-          };
-        });
-
-        // revert changed buildTargetElement
-        after(function() {
-          buildTargetElement = function() {
-            return utils.parenthetical(lastLineText);
-          };
-        });
-
-        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
-          var characterName = "JOE'S (V.O.)";
-          utils.testPageBreakHasMoreAndContd(characterName, done);
-        });
-      });
     });
 
-    context("and there is room on previous page for more than the minimum line (+1)", function() {
+    context("and there is room on previous page for more than the minimum line (more than 1)", function() {
       before(function() {
         // give enough space for first 3 lines of parenthetical to fit on first page
         linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
@@ -1560,6 +1604,79 @@ describe("ep_script_page_view - page break on split elements", function() {
         it("splits parenthetical between the two pages, and second page keep the minimum lines it needs", function(done) {
           var beforeLastLine = sentences[4];
           utils.testSplitPageBreakIsOn(beforeLastLine, done);
+        });
+      });
+
+      context("and there is no character before parenthetical", function() {
+        before(function() {
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+          var line1 = utils.buildStringWithLength(30, "1") + ". ";
+          var line2 = utils.buildStringWithLength(30, "2") + ".";
+          sentences = [line1, line2];
+          lastLineText = line1 + line2;
+        });
+
+        it("adds the MORE/CONT'D tags with an empty character name", function(done) {
+          var characterName = "";
+          utils.testPageBreakHasMoreAndContd(characterName, done);
+        });
+      });
+
+      context("and there is a character before parenthetical", function() {
+        var characterName = "joe's (V.O.)";
+
+        before(function() {
+          linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
+          var line1 = utils.buildStringWithLength(24, "1") + ".";
+          var line2 = utils.buildStringWithLength(24, "2") + ".";
+          var line3 = utils.buildStringWithLength(24, "3") + ".";
+          var line4 = utils.buildStringWithLength(24, "4") + ".";
+          var line5 = utils.buildStringWithLength(24, "5") + ".";
+          var line6 = utils.buildStringWithLength(24, "6") + ".";
+          sentences = [line1, line2, line3, line4, line5, line6];
+          lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+          var character = utils.character(characterName);
+          var parenthetical = utils.parenthetical(lastLineText);
+          buildTargetElement = function() {
+            return character + parenthetical;
+          };
+        });
+
+        // revert changed buildTargetElement
+        after(function() {
+          buildTargetElement = function() {
+            return utils.parenthetical(lastLineText);
+          };
+        });
+
+        it("splits parenthetical between the two pages", function(done) {
+          var thirdLine = sentences[2];
+          utils.testSplitPageBreakIsOn(thirdLine, done);
+        });
+
+        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
+          utils.testPageBreakHasMoreAndContd(characterName.toUpperCase(), done);
+        });
+
+        context("but previous page will have less then the minimum lines (2) of an parenthetical preceded by a character", function() {
+          before(function() {
+            // give enough space for character + two lines of parenthetical to fit on first page
+            linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
+            var line1 = utils.buildStringWithLength(24, "1") + ".";
+            var line2 = utils.buildStringWithLength(24, "2") + ".";
+            var line3 = utils.buildStringWithLength(24, "3") + ".";
+            sentences = [line1, line2, line3];
+            lastLineText = line1 + line2 + line3;
+            var character = utils.character(characterName);
+            var parenthetical = utils.parenthetical(lastLineText);
+            buildTargetElement = function() {
+              return character + parenthetical;
+            };
+          });
+
+          it("moves the entire parenthetical and character for next page", function(done) {
+            utils.testNonSplitPageBreakIsOn(characterName, done);
+          });
         });
       });
     });

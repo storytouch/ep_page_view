@@ -24,6 +24,9 @@ var SECOND_HALF_TAG                    = "split_second_half";
 
 // number of minimum lines each element needs before a page break so it can be split in two parts
 // (default is 1)
+// exception: if line is a dialogue or parenthetical, and previous line is a character,
+// it needs 2 lines before page break, and not only 1. But this is handled on
+// getMinimumLinesBeforePageBreakFor, not here
 var MINIMUM_LINES_BEFORE_PAGE_BREAK = {
   action: 2,
 };
@@ -100,6 +103,16 @@ var getNumberOfInnerLinesThatFitOnPage = function($line, totalOutterHeight, avai
 var getMinimumLinesBeforePageBreakFor = function($line) {
   var typeOfLine = utils.typeOf($line);
   var minimumLines = MINIMUM_LINES_BEFORE_PAGE_BREAK[typeOfLine] || 1;
+
+  // exception: if current line is a dialogue or parenthetical, and previous line is a character,
+  // it needs 2 lines before page break, and not only 1
+  if (typeOfLine === "dialogue" || typeOfLine === "parenthetical") {
+    var typeOfPreviousLine = utils.typeOf($line.prev());
+    if (typeOfPreviousLine === "character") {
+      minimumLines = 2;
+    }
+  }
+
   return minimumLines;
 }
 
@@ -204,10 +217,13 @@ var calculateHeightToFitText = function(text, $originalLine) {
   var $theClone = $originalLine.clone();
   var $innerClone = $theClone.find(utils.SCRIPT_ELEMENTS_SELECTOR);
 
+  // parentheticals need this to calculate line height without any "()"
+  $theClone.addClass("clone");
+
   // set the text, so we can measure the height it needs
   var isGeneral = $innerClone.length === 0;
   if (isGeneral) {
-    // general have no inner tag, so use the whole div
+    // general has no inner tag, so use the whole div
     $theClone.text(text);
   } else {
     $innerClone.text(text);

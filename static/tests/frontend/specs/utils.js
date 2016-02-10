@@ -273,7 +273,7 @@ ep_script_page_view_test_helper.utils = {
       var $splitPageBreaks = inner$("div splitPageBreak");
       var $nonSplitPageBreaks = utils.linesAfterNonSplitPageBreaks();
       return ($splitPageBreaks.length + $nonSplitPageBreaks.length) > 0;
-    }).done(function() {
+    }, 2000).done(function() {
       // verify there is no MORE tag
       var $moreTags = inner$("div more");
       expect($moreTags.length).to.be(0);
@@ -295,7 +295,7 @@ ep_script_page_view_test_helper.utils = {
       var $splitPageBreaks = inner$("div splitPageBreak");
       var $nonSplitPageBreaks = utils.linesAfterNonSplitPageBreaks();
       return ($splitPageBreaks.length + $nonSplitPageBreaks.length) > 0;
-    }).done(function() {
+    }, 2000).done(function() {
       // verify there is a MORE tag
       var $moreTags = inner$("div more");
       expect($moreTags.length).to.be(1);
