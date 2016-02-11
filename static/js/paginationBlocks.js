@@ -53,18 +53,30 @@ exports.getBlockInfo = function($currentLine) {
       blockInfo.blockHeight = blockHeight;
       blockInfo.$topOfBlock = $previousLine;
     }
-    // block type:
-    // character => (parenthetical || dialogue) (only one line of text) => (parenthetical || dialogue)
-    //                                                                     +------ $currentLine -----+
-    else if ((typeOfPreviousLine === "parenthetical" || typeOfPreviousLine === "dialogue")
-      &&
-      getNumberOfInnerLinesOf($previousLine) === 1) {
-      var $lineBeforePrevious = $previousLine.prev();
-      var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
-      if (typeOfLineBeforePrevious === "character") {
-        var blockHeight = currentLineHeight + utils.getLineHeight($previousLine) + utils.getLineHeight($lineBeforePrevious);
-        blockInfo.blockHeight = blockHeight;
-        blockInfo.$topOfBlock = $lineBeforePrevious;
+    else if (typeOfPreviousLine === "parenthetical" || typeOfPreviousLine === "dialogue") {
+      // block type:
+      // !character => (parenthetical || dialogue) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
+      //                                              +------------------ $currentLine -----------------+
+      if (getNumberOfInnerLinesOf($currentLine) === 1) {
+        var $lineBeforePrevious = $previousLine.prev();
+        var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
+        if (typeOfLineBeforePrevious !== "character" && typeOfNextLine !== "dialogue" && typeOfNextLine !== "parenthetical") {
+          var blockHeight = currentLineHeight + utils.getLineHeight($previousLine);
+          blockInfo.blockHeight = blockHeight;
+          blockInfo.$topOfBlock = $previousLine;
+        }
+      }
+      // block type:
+      // character => (parenthetical || dialogue) (only one line of text) => (parenthetical || dialogue)
+      //                                                                     +------ $currentLine -----+
+      else if (getNumberOfInnerLinesOf($previousLine) === 1) {
+        var $lineBeforePrevious = $previousLine.prev();
+        var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
+        if (typeOfLineBeforePrevious === "character") {
+          var blockHeight = currentLineHeight + utils.getLineHeight($previousLine) + utils.getLineHeight($lineBeforePrevious);
+          blockInfo.blockHeight = blockHeight;
+          blockInfo.$topOfBlock = $lineBeforePrevious;
+        }
       }
     }
     // block type:
