@@ -222,7 +222,7 @@ var calculatePageBreaks = function(attributeManager, rep) {
         }
         // is it a block of lines? (A block can have only a single line too)
         else {
-          var blockInfo = paginationBlocks.getBlockInfo($currentLine);
+          var blockInfo = paginationBlocks.getBlockInfo($currentLine, lineHeight);
 
           currentPageHeight = blockInfo.blockHeight;
 

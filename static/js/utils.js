@@ -41,6 +41,9 @@ exports.getLineHeight = function($targetLine) {
   }
   return lineHeight;
 }
+exports.getLineHeightWithoutMargins = function($targetLine) {
+  return $targetLine.height();
+}
 
 // cache regularLineHeight
 var regularLineHeight;

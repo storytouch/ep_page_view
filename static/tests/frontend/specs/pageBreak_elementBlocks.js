@@ -26,6 +26,43 @@ describe("ep_script_page_view - page break on element blocks", function() {
     this.timeout(60000);
   });
 
+  context("when script has multiple pages and one of them has a block", function() {
+    var sentences;
+
+    before(function() {
+      linesBeforeBlock = GENERALS_PER_PAGE - 4;
+      var line1 = utils.buildStringWithLength(60, "1") + ".";
+      var line2 = utils.buildStringWithLength(60, "2") + ".";
+      var line3 = utils.buildStringWithLength(60, "3") + ".";
+      var line4 = utils.buildStringWithLength(60, "4") + ".";
+      sentences = [line1, line2, line3, line4];
+      lastLineText = line1 + line2 + line3 + line4;
+
+      buildBlock = function() {
+        // block of 1st page to be moved to 2nd page (5 lines high, including 2 lines are top margin)
+        var lastLineOfPreviousPage = utils.heading("heading");
+        var firstLineOfNextPage = utils.transition("transition");
+
+        var pageAlmostFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE - 5);
+
+        // element of 2nd page to be split between pages
+        var lastLine = utils.general(lastLineText);
+
+        return lastLineOfPreviousPage + firstLineOfNextPage + pageAlmostFullOfGenerals + lastLine;
+      };
+    });
+
+    it("considers the height of the resulting block without top margin", function(done) {
+      // test page break 1st => 2nd page
+      var firstLineOfSecondPage = "heading";
+      utils.testNonSplitPageBreakIsOn(firstLineOfSecondPage, function() {
+        // test page break 2nd => 3rd page
+        var firstLineOfThirdPage = sentences[2];
+        utils.testSplitPageBreakIsOn(firstLineOfThirdPage, done);
+      });
+    })
+  });
+
   // contexts for block type:
   // (heading || shot) => (action || character || general)
   context("when first line of page is an action", function() {
