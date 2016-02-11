@@ -202,8 +202,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
   context("when first line of page is a parenthetical", function() {
     // contexts for block type:
-    // character => (parenthetical || dialogue)
-    context("and previous line is a character", function() {
+    // !heading => character => (parenthetical || dialogue)
+    context("and previous line is a character and line before is not a heading", function() {
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 2;
         lastLineText = "last element";
@@ -218,6 +218,32 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "character";
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    // contexts for block type:
+    // heading => character => (parenthetical || dialogue)
+    context("and previous line is a character and line before is a heading", function() {
+      before(function() {
+        linesBeforeBlock = GENERALS_PER_PAGE - 5;
+        lastLineText = "last element";
+        buildBlock = function() {
+          // 4-line parenthetical, so it is long enough to be split if necessary
+          var fullLine = utils.buildStringWithLength(24, "1") + ".";
+          var parentheticalText = fullLine + fullLine + fullLine + fullLine;
+
+          var lineBeforeLastOfPreviousPage = utils.heading("heading");
+          var lastLineOfPreviousPage = utils.character("character");
+          var firstLineOfNextPage = utils.parenthetical(parentheticalText);
+          var secondLineOfNextPage = utils.dialogue(lastLineText);
+
+          return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
+        };
+      });
+
+      it("pulls character and heading of previous page to next page", function(done) {
+        var firstLineOfNextPage = "heading";
         utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });
@@ -428,8 +454,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
   context("when first line of page is a dialogue", function() {
     // contexts for block type:
-    // character => (parenthetical || dialogue)
-    context("and previous line is a character", function() {
+    // !heading => character => (parenthetical || dialogue)
+    context("and previous line is a character and line before is not a heading", function() {
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 2;
         lastLineText = "last element";
@@ -444,6 +470,32 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       it("pulls last line of previous page to next page", function(done) {
         var firstLineOfNextPage = "character";
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    // contexts for block type:
+    // heading => character => (parenthetical || dialogue)
+    context("and previous line is a character and line before is a heading", function() {
+      before(function() {
+        linesBeforeBlock = GENERALS_PER_PAGE - 6;
+        lastLineText = "last element";
+        buildBlock = function() {
+          // 4-line dialogue, so it is long enough to be split if necessary
+          var fullLine = utils.buildStringWithLength(34, "1") + ".";
+          var dialogueText = fullLine + fullLine + fullLine + fullLine;
+
+          var lineBeforeLastOfPreviousPage = utils.heading("heading");
+          var lastLineOfPreviousPage = utils.character("character");
+          var firstLineOfNextPage = utils.dialogue(dialogueText);
+          var secondLineOfNextPage = utils.dialogue(lastLineText);
+
+          return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
+        };
+      });
+
+      it("pulls character and heading of previous page to next page", function(done) {
+        var firstLineOfNextPage = "heading";
         utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
       });
     });

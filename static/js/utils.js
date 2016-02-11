@@ -19,10 +19,10 @@ exports.getPadInner = function() {
 }
 
 exports.typeOf = function($line) {
- var $innerElement = $line.find(exports.SCRIPT_ELEMENTS_SELECTOR);
- var tagName = $innerElement.prop("tagName") || "general"; // general does not have inner tag
+  var $innerElement = $line.find(exports.SCRIPT_ELEMENTS_SELECTOR);
+  var tagName = $innerElement.prop("tagName") || "general"; // general does not have inner tag
 
- return tagName.toLowerCase();
+  return tagName.toLowerCase();
 }
 
 exports.getLineHeight = function($targetLine) {

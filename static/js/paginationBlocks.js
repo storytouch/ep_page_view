@@ -44,14 +44,26 @@ exports.getBlockInfo = function($currentLine) {
       blockInfo.$topOfBlock = $previousLine;
     }
   }
-  // block type:
-  // character => (parenthetical || dialogue)
-  //              +------ $currentLine -----+
   else if (typeOfCurrentLine === "parenthetical" || typeOfCurrentLine === "dialogue") {
     if (typeOfPreviousLine === "character") {
-      var blockHeight = currentLineHeight + utils.getLineHeight($previousLine);
-      blockInfo.blockHeight = blockHeight;
-      blockInfo.$topOfBlock = $previousLine;
+      var $lineBeforePrevious = $previousLine.prev();
+      var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
+      // block type:
+      // heading => character => (parenthetical || dialogue)
+      //                         +------ $currentLine -----+
+      if (typeOfLineBeforePrevious === "heading") {
+        var blockHeight = currentLineHeight + utils.getLineHeight($previousLine) + utils.getLineHeight($lineBeforePrevious);
+        blockInfo.blockHeight = blockHeight;
+        blockInfo.$topOfBlock = $lineBeforePrevious;
+      }
+      // block type:
+      // !heading => character => (parenthetical || dialogue)
+      //                          +------ $currentLine -----+
+      else {
+        var blockHeight = currentLineHeight + utils.getLineHeight($previousLine);
+        blockInfo.blockHeight = blockHeight;
+        blockInfo.$topOfBlock = $previousLine;
+      }
     }
     else if (typeOfPreviousLine === "parenthetical" || typeOfPreviousLine === "dialogue") {
       // block type:
