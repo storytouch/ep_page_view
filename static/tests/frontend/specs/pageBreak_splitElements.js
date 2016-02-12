@@ -982,14 +982,24 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
     });
 
-    context("1and pad has multiple split lines", function() {
-      var LAST_LINE_OF_PAGE_1 = GENERALS_PER_PAGE - 4;
-      // FIXME this should be 2*GENERALS_PER_PAGE - 7
-      var LAST_LINE_OF_PAGE_2 = 2*GENERALS_PER_PAGE - 8;
+    context("and pad has multiple split lines", function() {
+      // (generals to fill the page) +
+      // (1st half of split action (2 lines of text + 1 of top margin))
+      var LINES_ON_PAGE_1 = (GENERALS_PER_PAGE - 4) + (1);
+      // (2nd half of split action of page 1 (2 lines of text + no top margin)) +
+      // (generals to fill the page) +
+      // (1st half of split action (2 lines of text + 1 of top margin))
+      var LINES_ON_PAGE_2 = (1) + (GENERALS_PER_PAGE - 6) + (1);
+      // (2nd half of split action of page 2 (2 lines of text + no top margin)) +
+      // (generals to fill the page) +
+      // (1st half of split action (2 lines of text + 1 of top margin))
+      var LINES_ON_PAGE_3 = (1) + (GENERALS_PER_PAGE - 6) + (1);
+
+      var LAST_LINE_OF_PAGE_1 = LINES_ON_PAGE_1 - 1; // line numbers start at 0
+      var LAST_LINE_OF_PAGE_2 = LAST_LINE_OF_PAGE_1 + LINES_ON_PAGE_2;
 
       before(function() {
-        // FIXME this should be 3*GENERALS_PER_PAGE - 9
-        linesBeforeTargetElement = 3*GENERALS_PER_PAGE - 12;
+        linesBeforeTargetElement = LAST_LINE_OF_PAGE_2 + LINES_ON_PAGE_3;
         var line1 = utils.buildStringWithLength(58, "1") + ".";
         var line2 = utils.buildStringWithLength(58, "2") + ".";
         var line3 = utils.buildStringWithLength(58, "3") + ".";
@@ -1023,8 +1033,8 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         // change both lines to action
         utils.changeToElement(utils.ACTION, function() {
-          var $lastLineOfSecondPage = utils.getLine(LAST_LINE_OF_PAGE_1);
-          $lastLineOfSecondPage.sendkeys("{selectall}");
+          var $lastLineOfFirstPage = utils.getLine(LAST_LINE_OF_PAGE_1);
+          $lastLineOfFirstPage.sendkeys("{selectall}");
           utils.changeToElement(utils.ACTION, function() {
             // there should be 3 page breaks now
             helper.waitFor(function() {
