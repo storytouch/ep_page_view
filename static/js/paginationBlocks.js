@@ -1,10 +1,9 @@
 var utils = require('./utils');
 
-exports.getBlockInfo = function($currentLine, currentLineHeight) {
-  // height of first line of the block should not consider margins, as margins are not displayed
-  // on first element of the page
-  var currentLineInnerHeight = $currentLine.height();
+exports.getBlockInfo = function($currentLine, currentLineHeight, currentLineInnerHeight) {
   var blockInfo = {
+    // height of first line of the block should not consider margins, as margins are not displayed
+    // on first element of the page
     blockHeight: currentLineInnerHeight,
     $topOfBlock: $currentLine,
     $bottomOfBlock: $currentLine,

@@ -193,6 +193,9 @@ var calculatePageBreaks = function(attributeManager, rep) {
 
     // get height including margins and paddings
     var lineHeight = utils.getLineHeight($currentLine);
+    // get height excluding margins and paddings
+    var lineInnerHeight = $currentLine.height();
+
     // Q: if this line is placed on current page, will the page height be over the
     // allowed max height?
     if (currentPageHeight + lineHeight > maxPageHeight) {
@@ -211,7 +214,7 @@ var calculatePageBreaks = function(attributeManager, rep) {
         skippingEmptyLines = false;
 
         var availableHeightOnPage = maxPageHeight - currentPageHeight;
-        var splitElementInfo = paginationSplit.getSplitInfo($currentLine, lineHeight, availableHeightOnPage, attributeManager, rep);
+        var splitElementInfo = paginationSplit.getRegularSplitInfo($currentLine, lineHeight, lineInnerHeight, availableHeightOnPage, attributeManager, rep);
         // can we split current line?
         if (splitElementInfo) {
           // restart counting page height again
@@ -220,9 +223,26 @@ var calculatePageBreaks = function(attributeManager, rep) {
           // mark element to be split when pagination is done
           elementsToBeSplit.push(splitElementInfo);
         }
+        // is current line longer than a page? (so we need to force its split)
+        else if (lineInnerHeight > maxPageHeight) {
+          // mark current line to be on top of page when pagination is done
+          $linesWithPageBreaks = $linesWithPageBreaks.add($currentLine);
+
+          // starting a new page, we have the full page height to fill by forced split
+          var availableHeightOnPage = maxPageHeight;
+
+          // calculate where line needs to be split
+          var forcedSplitElementInfo = paginationSplit.getForcedSplitInfo($currentLine, lineHeight, lineInnerHeight, availableHeightOnPage, attributeManager, rep);
+
+          // restart counting page height again
+          currentPageHeight = forcedSplitElementInfo.heightAfterPageBreak;
+
+          // mark element to be split when pagination is done
+          elementsToBeSplit.push(forcedSplitElementInfo);
+        }
         // is it a block of lines? (A block can have only a single line too)
         else {
-          var blockInfo = paginationBlocks.getBlockInfo($currentLine, lineHeight);
+          var blockInfo = paginationBlocks.getBlockInfo($currentLine, lineHeight, lineInnerHeight);
 
           currentPageHeight = blockInfo.blockHeight;
 

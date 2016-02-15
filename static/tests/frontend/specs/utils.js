@@ -34,7 +34,7 @@ ep_script_page_view_test_helper.utils = {
     // wait for Etherpad to finish processing the lines
     helper.waitFor(function(){
       var $lastLine = inner$("div").last();
-      return $lastLine.text() === lastLineText;
+      return $lastLine.text().trim() === lastLineText.trim();
     }, 3000).done(cb);
   },
 
@@ -189,6 +189,12 @@ ep_script_page_view_test_helper.utils = {
     }).done(cb);
   },
 
+  FORMATTER: new Intl.NumberFormat('en-US', { minimumIntegerDigits: 4 , useGrouping: false}),
+  formatNumber: function(number) {
+    var utils = ep_script_page_view_test_helper.utils;
+    return utils.FORMATTER.format(number);
+  },
+
   BACKSPACE: 8,
   DELETE: 46,
   pressKey: function(CODE) {
@@ -258,7 +264,7 @@ ep_script_page_view_test_helper.utils = {
       // verify page break is above targetElement
       var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
       var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
-      expect($firstPageBreak.text()).to.be(textAfterPageBreak);
+      expect($firstPageBreak.text().trim()).to.be(textAfterPageBreak.trim());
 
       done();
     });

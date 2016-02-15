@@ -1283,6 +1283,114 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
       });
     });
+
+    context("and there is no punctuation on the transition", function() {
+      var sentences, transitionText;
+
+      before(function() {
+        linesBeforeTargetElement = 0;
+        buildTargetElement = function() {
+          return utils.transition(transitionText);
+        };
+
+        // build a string GENERALS_PER_PAGE+2 lines long, so page split will be:
+        // page 1: GENERALS_PER_PAGE lines;
+        // page 2: 2 lines;
+        var numberOfInnerLines = GENERALS_PER_PAGE+2;
+        var charsPerLine = 15;
+        sentences = splitElements.buildLongLine(numberOfInnerLines, charsPerLine);
+        lastLineText = sentences.join("");
+        transitionText = lastLineText;
+      });
+
+      it("splits transition between the two pages, and second page has the last two lines of the transition", function(done) {
+        var firstLineOnPage2 = sentences[GENERALS_PER_PAGE];
+        utils.testSplitPageBreakIsOn(firstLineOnPage2, done);
+      });
+
+      context("and transition has " + (GENERALS_PER_PAGE+1) + " inner lines", function() {
+        before(function() {
+          // build a string GENERALS_PER_PAGE+1 lines long, so page split will be:
+          // page 1: GENERALS_PER_PAGE-1 lines;
+          // page 2: 2 lines;
+          var numberOfInnerLines = GENERALS_PER_PAGE+1;
+          var charsPerLine = 15;
+          sentences = splitElements.buildLongLine(numberOfInnerLines, charsPerLine);
+          lastLineText = sentences.join("");
+          transitionText = lastLineText;
+        });
+
+        it("splits transition between the two pages, and second page has the last two lines of the transition", function(done) {
+          var firstLineOnPage2 = sentences[GENERALS_PER_PAGE-1];
+          utils.testSplitPageBreakIsOn(firstLineOnPage2, done);
+        });
+      });
+
+      context("and there is a general before the transition", function() {
+        before(function() {
+          linesBeforeTargetElement = 1;
+
+          // pagination will split last line, so we need to get only the part that will be on 2nd half
+          var sentencesOnLastPage = sentences.slice(GENERALS_PER_PAGE-1);
+          lastLineText = sentencesOnLastPage.join("");
+        });
+
+        it("moves the transition to second page and splits the transition between the two pages", function(done) {
+          var singleLineOnPage2 = sentences.slice(0, GENERALS_PER_PAGE-1).join("");
+          utils.testNonSplitPageBreakIsOn(singleLineOnPage2, function() {
+            var firstLineOnPage3 = sentences[GENERALS_PER_PAGE-1];
+            utils.testSplitPageBreakIsOn(firstLineOnPage3, done);
+          });
+        });
+      });
+
+      context("and there are generals after the transition", function() {
+        before(function() {
+          linesBeforeTargetElement = 0;
+
+          // build a page with GENERALS_PER_PAGE-2 generals, so page split will be:
+          // page 1: 1st half of transition, with GENERALS_PER_PAGE-1 lines;
+          // page 2: 2nd half of transition, with 2 lines + GENERALS_PER_PAGE-2 generals
+          // page 3: 1 general
+          var pageFilledWithGenerals = utils.general("general on 2nd page").repeat(GENERALS_PER_PAGE-2);
+          lastLineText = "general on 3rd page";
+
+          buildTargetElement = function() {
+            return utils.transition(transitionText) + pageFilledWithGenerals + utils.general(lastLineText);
+          };
+        });
+
+        // revert changed buildTargetElement
+        after(function() {
+          buildTargetElement = function() {
+            return utils.transition(transitionText);
+          };
+        });
+
+        it("considers the height of the resulting second half of the transition split", function(done) {
+          var firstLineOnPage3 = lastLineText;
+          utils.testNonSplitPageBreakIsOn(firstLineOnPage3, done);
+        });
+      });
+
+      // FIXME this is an extreme corner case, so we won't work on it for now
+      context("and inner lines do not have full length", function() {
+        before(function() {
+          linesBeforeTargetElement = 0;
+
+          var numberOfInnerLines = GENERALS_PER_PAGE+1;
+          // fill 9 out of 15 columns of each inner line
+          var charsPerLine = 9;
+          sentences = splitElements.buildLongLine(numberOfInnerLines, charsPerLine);
+          lastLineText = sentences.join("");
+        });
+
+        xit("splits transition between the two pages, and second page has the last two lines of the transition", function(done) {
+          var firstLineOnPage2 = sentences[GENERALS_PER_PAGE-1];
+          utils.testSplitPageBreakIsOn(firstLineOnPage2, done);
+        });
+      });
+    });
   });
 
   context("when first line of page is a very long dialogue", function() {
@@ -1780,5 +1888,18 @@ ep_script_page_view_test_helper.splitElements = {
     } else {
       theTest();
     }
+  },
+
+  buildLongLine: function(numberOfInnerLines, charsPerLine) {
+    var utils = ep_script_page_view_test_helper.utils;
+
+    var innerLines = new Array(numberOfInnerLines);
+    for (var i = 0; i < numberOfInnerLines; i++) {
+      // formatted number is 4 chars long, and there is a whitespace at the end of line
+      var extraChars = charsPerLine - 5;
+      // inner line is "0001XX(...)XX "
+      innerLines[i] = utils.formatNumber(i+1) + utils.buildStringWithLength(extraChars, "X") + " ";
+    };
+    return innerLines;
   },
 }

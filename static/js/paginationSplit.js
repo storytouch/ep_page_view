@@ -68,14 +68,24 @@ var HAVE_MORE_AND_CONTD = {
   parenthetical: true,
 }
 
-exports.getSplitInfo = function($line, totalOutterHeight, availableHeightOnPage, attributeManager, rep) {
+exports.getForcedSplitInfo = function($line, totalOutterHeight, totalInnerHeight, availableHeightOnPage, attributeManager, rep) {
+  var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($line, totalOutterHeight, totalInnerHeight, availableHeightOnPage);
+
+  var splitPosition = calculateForcedSplitPosition(linesAvailableBeforePageBreak, $line, attributeManager, rep);
+  if (splitPosition) {
+    // ok, can split element
+    return splitPosition;
+  }
+}
+
+exports.getRegularSplitInfo = function($line, totalOutterHeight, totalInnerHeight, availableHeightOnPage, attributeManager, rep) {
   if (canSplit($line)) {
-    var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($line, totalOutterHeight, availableHeightOnPage);
+    var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($line, totalOutterHeight, totalInnerHeight, availableHeightOnPage);
     var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor($line);
 
     // only calculate the position where element should be split if there is enough space to do that
     if (linesAvailableBeforePageBreak >= minimumLinesBeforePageBreak) {
-      var splitPosition = calculateElementSplitPosition(linesAvailableBeforePageBreak, $line, attributeManager, rep);
+      var splitPosition = calculateRegularSplitPosition(linesAvailableBeforePageBreak, $line, attributeManager, rep);
       if (splitPosition) {
         // ok, can split element
         return splitPosition;
@@ -90,9 +100,8 @@ var canSplit = function($line) {
   return canBeSplit;
 }
 
-var getNumberOfInnerLinesThatFitOnPage = function($line, totalOutterHeight, availableHeight) {
+var getNumberOfInnerLinesThatFitOnPage = function($line, totalOutterHeight, totalInnerHeight, availableHeight) {
   var singleInnerLineHeight        = utils.getRegularLineHeight();
-  var totalInnerHeight             = $line.height();
   var margin                       = totalOutterHeight - totalInnerHeight;
   var availableHeightForInnerLines = availableHeight - margin;
   var numberOfLinesThatFit         = parseInt(availableHeightForInnerLines/singleInnerLineHeight);
@@ -122,12 +131,22 @@ var getMinimumLinesAfterPageBreakFor = function($line) {
   return minimumLines;
 }
 
-var calculateElementSplitPosition = function(innerLineNumber, $line, attributeManager, rep) {
+// split lines on end-of-inner-line
+var calculateForcedSplitPosition = function(innerLineNumber, $line, attributeManager, rep) {
+  var method = getFirstCharAfterEndOfInnerLine;
+  return calculateSplitPosition(innerLineNumber, $line, attributeManager, rep, method);
+}
+// split lines on end-of-sentence
+var calculateRegularSplitPosition = function(innerLineNumber, $line, attributeManager, rep) {
+  var method = getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine;
+  return calculateSplitPosition(innerLineNumber, $line, attributeManager, rep, method);
+}
+var calculateSplitPosition = function(innerLineNumber, $line, attributeManager, rep, method) {
   var lineId     = $line.attr("id");
   var lineNumber = rep.lines.indexOfKey(lineId);
   var lineText   = rep.lines.atKey(lineId).text;
 
-  var position = findPositionWhereLineCanBeSplit(innerLineNumber, $line, attributeManager, lineText, lineNumber);
+  var position = findPositionWhereLineCanBeSplit(innerLineNumber, $line, attributeManager, lineText, lineNumber, method);
   // if found position to split, return its split attributes
   if (position) {
     var afterLastSentenceThatFits = [lineNumber, position.column];
@@ -144,32 +163,32 @@ var calculateElementSplitPosition = function(innerLineNumber, $line, attributeMa
 // Find position on line that satisfies all conditions:
 // - leave minimum lines before page break
 // - leave minimum lines after page break
-// - can be split on an end-of-sentence mark and fit the available space
+// - can be split on mark defined by findColumnAfterPageBreak() and fit the available space
 //
 // Return column where line should be split (char that should be 1st on next page)
-var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, attributeManager, lineText, lineNumber) {
+var findPositionWhereLineCanBeSplit = function(innerLineNumber, $line, attributeManager, lineText, lineNumber, findColumnAfterPageBreak) {
   var targetInnerLine             = innerLineNumber;
   var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor($line);
   var minimumLinesAfterPageBreak  = getMinimumLinesAfterPageBreakFor($line);
 
-  var columnAfterLastSentenceMarker = getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine(targetInnerLine, lineText, lineNumber, attributeManager, $line);
+  var columnAfterPageBreak = findColumnAfterPageBreak(targetInnerLine, lineText, lineNumber, attributeManager, $line);
   // only can split element if it has a sentence that fits the available height. If no sentence
-  // marker is found, columnAfterLastSentenceMarker is 0
-  while (columnAfterLastSentenceMarker && targetInnerLine >= minimumLinesBeforePageBreak) {
-    var textAfterPageBreak   = lineText.substring(columnAfterLastSentenceMarker);
+  // marker is found, columnAfterPageBreak is 0
+  while (columnAfterPageBreak && targetInnerLine >= minimumLinesBeforePageBreak) {
+    var textAfterPageBreak   = lineText.substring(columnAfterPageBreak);
     var heightAfterPageBreak = calculateHeightToFitText(textAfterPageBreak, $line);
     var linesAfterPageBreak  = parseInt(heightAfterPageBreak / utils.getRegularLineHeight());
 
     if (linesAfterPageBreak >= minimumLinesAfterPageBreak) {
       // found an inner line that satisfies all conditions
       return {
-        column: columnAfterLastSentenceMarker,
+        column: columnAfterPageBreak,
         heightAfterPageBreak: heightAfterPageBreak
       };
     } else {
       // this line did not satisfy conditions; try previous one
       targetInnerLine--;
-      columnAfterLastSentenceMarker = getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine(targetInnerLine, lineText, lineNumber, attributeManager, $line);
+      columnAfterPageBreak = findColumnAfterPageBreak(targetInnerLine, lineText, lineNumber, attributeManager, $line);
     }
   }
 }
@@ -182,6 +201,18 @@ var getMoreAndContdInfo = function($line) {
     };
   }
   return false;
+}
+
+var getFirstCharAfterEndOfInnerLine = function(innerLineNumber, fullText, lineNumber, attributeManager, $line) {
+  var lineHasMarker = checkLineHasMarker(lineNumber, attributeManager);
+
+  // get text until the end of target inner line
+  var innerLineLength = getInnerLineLengthOf($line);
+  var endOfTargetLine = lineHasMarker ? 1 : 0; // include the "*" on the beginning, if line has marker
+  endOfTargetLine    += innerLineNumber * innerLineLength;
+  var innerLineText   = fullText.substring(0, endOfTargetLine);
+
+  return innerLineText.length;
 }
 
 var getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine = function(innerLineNumber, fullText, lineNumber, attributeManager, $line) {
