@@ -399,7 +399,8 @@ describe("ep_script_page_view - page break on split elements", function() {
             // 1: verify first page break was added between the two sentences of 57th line
             utils.testSplitPageBreakIsOn(sentence2, function() {
               // 2: verify second page break was added on top of last line
-              utils.testNonSplitPageBreakIsOn(lastLineText, done);
+              var pageNumber = 3;
+              utils.testNonSplitPageBreakIsOn(lastLineText, done, pageNumber);
             });
           });
         });
@@ -1339,7 +1340,8 @@ describe("ep_script_page_view - page break on split elements", function() {
           var singleLineOnPage2 = sentences.slice(0, GENERALS_PER_PAGE-1).join("");
           utils.testNonSplitPageBreakIsOn(singleLineOnPage2, function() {
             var firstLineOnPage3 = sentences[GENERALS_PER_PAGE-1];
-            utils.testSplitPageBreakIsOn(firstLineOnPage3, done);
+            var pageNumber = 3;
+            utils.testSplitPageBreakIsOn(firstLineOnPage3, done, pageNumber);
           });
         });
       });
@@ -1369,7 +1371,8 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         it("considers the height of the resulting second half of the transition split", function(done) {
           var firstLineOnPage3 = lastLineText;
-          utils.testNonSplitPageBreakIsOn(firstLineOnPage3, done);
+          var pageNumber = 3;
+          utils.testNonSplitPageBreakIsOn(firstLineOnPage3, done, 3);
         });
       });
 

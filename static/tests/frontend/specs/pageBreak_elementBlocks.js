@@ -58,7 +58,8 @@ describe("ep_script_page_view - page break on element blocks", function() {
       utils.testNonSplitPageBreakIsOn(firstLineOfSecondPage, function() {
         // test page break 2nd => 3rd page
         var firstLineOfThirdPage = sentences[2];
-        utils.testSplitPageBreakIsOn(firstLineOfThirdPage, done);
+        var pageNumber = 3;
+        utils.testSplitPageBreakIsOn(firstLineOfThirdPage, done, pageNumber);
       });
     })
   });

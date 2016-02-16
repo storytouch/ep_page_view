@@ -1,10 +1,11 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 
-var utils              = require('./utils');
-var paginationBlocks   = require('./paginationBlocks');
-var paginationSplit    = require('./paginationSplit');
-var paginationNonSplit = require('./paginationNonSplit');
+var utils                = require('./utils');
+var paginationBlocks     = require('./paginationBlocks');
+var paginationSplit      = require('./paginationSplit');
+var paginationNonSplit   = require('./paginationNonSplit');
+var paginationPageNumber = require('./paginationPageNumber');
 
 // Letter
 // var REGULAR_LINES_PER_PAGE = 54;
@@ -16,7 +17,11 @@ exports.aceRegisterBlockElements = function(hook, context) {
 }
 
 exports.aceAttribsToClasses = function(hook, context) {
-  return _.union(paginationSplit.atribsToClasses(context), paginationNonSplit.atribsToClasses(context));
+  return _.union(
+    paginationSplit.atribsToClasses(context),
+    paginationNonSplit.atribsToClasses(context),
+    paginationPageNumber.atribsToClasses(context)
+  );
 }
 
 exports.aceDomLineProcessLineAttributes = function(hook, context) {
@@ -136,6 +141,7 @@ var cleanPageBreaks = function(callstack, attributeManager, rep, editorInfo) {
   utils.performNonUnduableEvent(callstack, function() {
     paginationNonSplit.cleanPageBreaks(attributeManager, rep);
     paginationSplit.cleanPageBreaks(attributeManager, rep, editorInfo);
+    paginationPageNumber.cleanPageBreaks(attributeManager, rep);
   });
 }
 
@@ -153,20 +159,21 @@ var continuePagination = function(context) {
 }
 
 var savePageBreaks = function(pageBreaksInfo, callstack, attributeManager, rep, editorInfo) {
-  var $linesWithPageBreaks = pageBreaksInfo.linesWithPageBreaks;
-  var splitPositions = pageBreaksInfo.splitPositions;
-
   utils.performNonUnduableEvent(callstack, function() {
-    paginationNonSplit.savePageBreaks($linesWithPageBreaks, attributeManager, rep);
-    paginationSplit.savePageBreaks(splitPositions, attributeManager, editorInfo);
+    for (var pageNumber = pageBreaksInfo.length - 1; pageNumber >= 0; pageNumber--) {
+      // page numbers start at 2, so we need to increase all page numbers by 2
+      var actualPageNumber = pageNumber+2;
+
+      var pageBreakInfo = pageBreaksInfo[pageNumber];
+      pageBreakInfo.save(pageBreakInfo.data, actualPageNumber, attributeManager, rep, editorInfo);
+    }
   });
 }
 
 var calculatePageBreaks = function(attributeManager, rep) {
   var maxPageHeight = getMaxPageHeight();
   var $lines = utils.getPadInner().find("div");
-  var $linesWithPageBreaks = $();
-  var elementsToBeSplit = [];
+  var pageBreaks = [];
 
   // select lines to have page breaks
   var $currentLine = $lines.first();
@@ -209,7 +216,7 @@ var calculatePageBreaks = function(attributeManager, rep) {
         currentPageHeight = 0;
 
         // mark line to be on top of page
-        $linesWithPageBreaks = $linesWithPageBreaks.add($currentLine);
+        pageBreaks.push(nonSplitPageBreak($currentLine, rep));
       } else {
         skippingEmptyLines = false;
 
@@ -221,12 +228,15 @@ var calculatePageBreaks = function(attributeManager, rep) {
           currentPageHeight = splitElementInfo.heightAfterPageBreak;
 
           // mark element to be split when pagination is done
-          elementsToBeSplit.push(splitElementInfo);
+          pageBreaks.push(splitPageBreak(splitElementInfo));
         }
         // is current line longer than a page? (so we need to force its split)
         else if (lineInnerHeight > maxPageHeight) {
           // mark current line to be on top of page when pagination is done
-          $linesWithPageBreaks = $linesWithPageBreaks.add($currentLine);
+          // (but only if current line is not the first line of script)
+          if ($currentLine.prev().length > 0) {
+            pageBreaks.push(nonSplitPageBreak($currentLine, rep));
+          }
 
           // starting a new page, we have the full page height to fill by forced split
           var availableHeightOnPage = maxPageHeight;
@@ -238,7 +248,7 @@ var calculatePageBreaks = function(attributeManager, rep) {
           currentPageHeight = forcedSplitElementInfo.heightAfterPageBreak;
 
           // mark element to be split when pagination is done
-          elementsToBeSplit.push(forcedSplitElementInfo);
+          pageBreaks.push(splitPageBreak(forcedSplitElementInfo));
         }
         // is it a block of lines? (A block can have only a single line too)
         else {
@@ -247,7 +257,7 @@ var calculatePageBreaks = function(attributeManager, rep) {
           currentPageHeight = blockInfo.blockHeight;
 
           // mark element to be on top of page when pagination is done
-          $linesWithPageBreaks = $linesWithPageBreaks.add(blockInfo.$topOfBlock);
+          pageBreaks.push(nonSplitPageBreak(blockInfo.$topOfBlock, rep));
 
           // move $currentLine to end of the block
           $currentLine = blockInfo.$bottomOfBlock;
@@ -262,9 +272,24 @@ var calculatePageBreaks = function(attributeManager, rep) {
     $currentLine = $currentLine.next();
   }
 
+  return pageBreaks;
+}
+
+var nonSplitPageBreak = function($line, rep) {
+  var nonSplitInfo = paginationNonSplit.getNonSplitInfo($line, rep);
   return {
-    linesWithPageBreaks: $linesWithPageBreaks,
-    splitPositions: elementsToBeSplit
+    data: nonSplitInfo,
+    save: function(data, pageNumber, attributeManager, rep, editorInfo) {
+      paginationNonSplit.savePageBreak(data, pageNumber, attributeManager);
+    }
+  };
+}
+var splitPageBreak = function(splitInfo) {
+  return {
+    data: splitInfo,
+    save: function(data, pageNumber, attributeManager, rep, editorInfo) {
+      paginationSplit.savePageBreak(data, pageNumber, attributeManager, editorInfo);
+    }
   };
 }
 

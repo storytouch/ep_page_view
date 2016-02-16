@@ -25,6 +25,10 @@ exports.typeOf = function($line) {
   return tagName.toLowerCase();
 }
 
+exports.getLineTypeOf = function(lineNumber, attributeManager) {
+  return attributeManager.getAttributeOnLine(lineNumber, "script_element");
+}
+
 exports.getLineHeight = function($targetLine) {
   var lineHeight;
 
@@ -98,11 +102,16 @@ exports.buildPageBreakWithMoreAndContd = function(cls, tagName) {
   var characterName = extractCharacterNameFromClass(cls);
 
   extraHTML = '<more></more>';
-  extraHTML += '<'+tagName+'></'+tagName+'>';
+  extraHTML += exports.buildSimplePageBreak(cls, tagName);
   // Bug fix: contenteditable=false avoids caret being placed on CONT'D line
   extraHTML += '<contdLine contenteditable="false"><contd data-character="' + characterName + '"></contd></contdLine>';
 
   return extraHTML;
+}
+
+exports.buildSimplePageBreak = function(cls, tagName) {
+  var pageNumber = extractPageNumberFromClass(cls);
+  return '<'+tagName+' data-page-number="'+pageNumber+'"></'+tagName+'>';
 }
 
 var extractCharacterNameFromClass = function(cls) {
@@ -111,4 +120,23 @@ var extractCharacterNameFromClass = function(cls) {
   var characterName = characterNameFound ? characterNameFound[1] : "";
 
   return characterName;
+}
+
+exports.buildPageNumberToClass = function(value) {
+  return 'pageNumber:' + value;
+}
+
+var extractPageNumberFromClass = function(cls) {
+  var regex = "(?:^| )pageNumber:([0-9]*)";
+  var pageNumberFound = cls.match(new RegExp(regex));
+  var pageNumber = pageNumberFound ? pageNumberFound[1] : "";
+
+  return pageNumber;
+}
+
+exports.getLineNumberFromDOMLine = function($line, rep) {
+  var lineId     = $line.attr("id");
+  var lineNumber = rep.lines.indexOfKey(lineId);
+
+  return lineNumber;
 }

@@ -1,4 +1,5 @@
 var utils = require('./utils');
+var paginationPageNumber = require('./paginationPageNumber');
 
 var PAGE_BREAKS_ATTRIB                     = "nonSplitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "nonSplitPageBreakWithMoreAndContd";
@@ -29,7 +30,7 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   if (cls.match(PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB)) {
     extraHTML = utils.buildPageBreakWithMoreAndContd(cls, 'nonSplitPageBreak');
   } else if (cls.match(PAGE_BREAKS_ATTRIB)) {
-    extraHTML = '<nonSplitPageBreak></nonSplitPageBreak>';
+    extraHTML = utils.buildSimplePageBreak(cls, 'nonSplitPageBreak');
   }
 
   // Bug fix: lines with page break need to be wrapped by a registered block element
@@ -66,31 +67,43 @@ var removePageBreak = function(lineNumber, attributeManager) {
   attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
 }
 
-exports.savePageBreaks = function($linesAfterPageBreaks, attributeManager, rep) {
+exports.getNonSplitInfo = function($line, rep) {
   // Bug fix: if we place page breaks before the element, caret will start moving alone
   // when placed on an element immediately after page break; to avoid that, we place page
   // break after the last element of previous page, instead of first element of next page
-  var $linesBeforePageBreaks = $linesAfterPageBreaks.prev();
+  var lineNumber = utils.getLineNumberFromDOMLine($line.prev(), rep);
+  var moreAndContdInfo = getMoreAndContdInfo($line);
 
-  $linesBeforePageBreaks.each(function() {
-    var attributeName = PAGE_BREAKS_ATTRIB;
-    var attributeValue = true;
-
-    if (hasMoreAndContd($(this))) {
-      attributeName = PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
-      attributeValue = utils.findCharacterNameOf($(this));
-    }
-
-    var lineId     = $(this).attr("id");
-    var lineNumber = rep.lines.indexOfKey(lineId);
-    attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
-  });
+  return {
+    lineNumber: lineNumber,
+    addMoreAndContd: moreAndContdInfo,
+  };
 }
 
-var hasMoreAndContd = function($line) {
+var getMoreAndContdInfo = function($line) {
   var lineIsParentheticalOrDialogue = $line.has("parenthetical, dialogue").length > 0;
   var nextLineIsParentheticalOrDialogue = $line.next().has("parenthetical, dialogue").length > 0;
-  var hasMoreAndContd = lineIsParentheticalOrDialogue && nextLineIsParentheticalOrDialogue;
+  if (lineIsParentheticalOrDialogue && nextLineIsParentheticalOrDialogue) {
+    return {
+      characterName: utils.findCharacterNameOf($line),
+    };
+  }
+  return false;
+}
 
-  return hasMoreAndContd;
+exports.savePageBreak = function(nonSplitInfo, pageNumber, attributeManager) {
+  var lineWithPageBreak = nonSplitInfo.lineNumber;
+
+  var attributeName = PAGE_BREAKS_ATTRIB;
+  var attributeValue = true;
+
+  if (nonSplitInfo.addMoreAndContd) {
+    attributeName = PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
+    attributeValue = nonSplitInfo.addMoreAndContd.characterName;
+  }
+
+  attributeManager.setAttributeOnLine(lineWithPageBreak, attributeName, attributeValue);
+
+  // save page number
+  paginationPageNumber.savePageBreak(lineWithPageBreak, pageNumber, attributeManager);
 }

@@ -2,6 +2,7 @@ var _ = require('ep_etherpad-lite/static/js/underscore');
 
 var utils = require('./utils');
 var randomString = require('ep_etherpad-lite/static/js/pad_utils').randomString;
+var paginationPageNumber = require('./paginationPageNumber');
 
 var PAGE_BREAKS_ATTRIB                     = "splitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "splitPageBreakWithMoreAndContd";
@@ -12,6 +13,8 @@ var SECOND_HALF_ATTRIB = "splitSecondHalf";
 var ETHERPAD_AND_SPLIT_ATTRIBS = [
   // Etherpad basic line attributes
   'author', 'lmkr', 'insertorder', 'start',
+  // page number attrib
+  paginationPageNumber.PAGE_NUMBER_ATTRIB,
   // attributes used to mark a line as split
   PAGE_BREAKS_ATTRIB, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB, FIRST_HALF_ATTRIB, SECOND_HALF_ATTRIB
 ];
@@ -341,7 +344,7 @@ exports.buildHtmlWithPageBreaks = function(cls) {
       postHtml: extraHTML + '</'+FIRST_HALF_WITH_MORE_AND_CONTD_TAG+'>'
     };
   } else if (cls.match(PAGE_BREAKS_ATTRIB)) {
-    extraHTML = '<'+PAGE_BREAK_TAG+'></'+PAGE_BREAK_TAG+'>';
+    extraHTML = utils.buildSimplePageBreak(cls, PAGE_BREAK_TAG);
 
     return {
       preHtml: '<'+FIRST_HALF_TAG+' class="'+splitId+'">',
@@ -444,27 +447,19 @@ var lineHasMarkerExcludingSplitLineMarkers = function(lineNumber, attributeManag
   return countAttribsWithMarker > 0;
 }
 
-exports.savePageBreaks = function(splitPositions, attributeManager, editorInfo) {
-  for (var i = splitPositions.length - 1; i >= 0; i--) {
-    var splitPosition = splitPositions[i];
-
-    splitLine(splitPosition, attributeManager, editorInfo);
-    addPageBreakBetweenLines(splitPosition, attributeManager);
-  };
+exports.savePageBreak = function(splitPosition, pageNumber, attributeManager, editorInfo) {
+  splitLine(splitPosition, attributeManager, editorInfo);
+  addPageBreakBetweenLines(splitPosition, pageNumber, attributeManager);
 }
 
 var splitLine = function(splitPosition, attributeManager, editorInfo) {
   var lineNumber = splitPosition.start[0];
-  var typeOfLineToBeSplit = getLineTypeOf(lineNumber, attributeManager);
+  var typeOfLineToBeSplit = utils.getLineTypeOf(lineNumber, attributeManager);
 
   editorInfo.ace_replaceRange(splitPosition.start, splitPosition.start, "\n");
 
   // we need to make sure both halves of the split line have the same type
   setTypeOfSecondHalfOfLine(lineNumber, typeOfLineToBeSplit, attributeManager);
-}
-
-var getLineTypeOf = function(lineNumber, attributeManager) {
-  return attributeManager.getAttributeOnLine(lineNumber, "script_element");
 }
 
 var setTypeOfSecondHalfOfLine = function(lineNumber, lineType, attributeManager) {
@@ -473,7 +468,7 @@ var setTypeOfSecondHalfOfLine = function(lineNumber, lineType, attributeManager)
   }
 }
 
-var addPageBreakBetweenLines = function(splitPosition, attributeManager) {
+var addPageBreakBetweenLines = function(splitPosition, pageNumber, attributeManager) {
   var lineNumber = splitPosition.start[0];
   var attributeName = PAGE_BREAKS_ATTRIB;
   var attributeValue = true;
@@ -483,6 +478,9 @@ var addPageBreakBetweenLines = function(splitPosition, attributeManager) {
   }
 
   attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
+
+  // save page number
+  paginationPageNumber.savePageBreak(lineNumber, pageNumber, attributeManager);
 
   // mark both halves with same id
   var splitId = newSplitId();

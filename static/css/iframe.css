@@ -1,11 +1,3 @@
-/* BUGFIX: we cannot have multiple counter-resets on the code. So this command was moved to
-           src/static/custom/pad.css with the other counter-resets, so we ensure all counters
-           are correctly created and reset.
-body{
-  counter-reset: page 1;
-}
-*/
-
 .innerPV{
   background-color:#fff;
 }
@@ -223,10 +215,7 @@ body{
     margin-top: -38px;
     margin-right: 4px;
     float: right;
-
-    /* page numbering: */
-    counter-increment: page;
-    content: counter(page) ".";
+    content: attr(data-page-number) ".";
   }
 
   .outerBackground{

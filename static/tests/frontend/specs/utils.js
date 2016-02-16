@@ -235,7 +235,14 @@ ep_script_page_view_test_helper.utils = {
     return $linesAfterPageBreaks;
   },
 
-  testSplitPageBreakIsOn: function(textAfterPageBreak, done) {
+  pageBreakOfLine: function($line) {
+    var $lineWithPageBreak = $line.prev();
+    return $lineWithPageBreak.find("nonSplitPageBreak, splitPageBreak").first();
+  },
+
+  testSplitPageBreakIsOn: function(textAfterPageBreak, done, expectedPageNumber) {
+    expectedPageNumber = expectedPageNumber || 2;
+
     var utils = ep_script_page_view_test_helper.utils;
 
     // wait for pagination to be finished
@@ -249,11 +256,17 @@ ep_script_page_view_test_helper.utils = {
       var startWithTextAfterPageBreak = new RegExp("^" + textAfterPageBreak);
       expect($firstPageBreak.text()).to.match(startWithTextAfterPageBreak);
 
+      // verify page number is correct
+      var actualPageNumber = utils.pageBreakOfLine($firstPageBreak).attr("data-page-number");
+      expect(actualPageNumber.toString()).to.be(expectedPageNumber.toString());
+
       done();
     });
   },
 
-  testNonSplitPageBreakIsOn: function(textAfterPageBreak, done) {
+  testNonSplitPageBreakIsOn: function(textAfterPageBreak, done, expectedPageNumber) {
+    expectedPageNumber = expectedPageNumber || 2;
+
     var utils = ep_script_page_view_test_helper.utils;
 
     // wait for pagination to be finished
@@ -265,6 +278,10 @@ ep_script_page_view_test_helper.utils = {
       var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
       var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
       expect($firstPageBreak.text().trim()).to.be(textAfterPageBreak.trim());
+
+      // verify page number is correct
+      var actualPageNumber = utils.pageBreakOfLine($firstPageBreak).attr("data-page-number");
+      expect(actualPageNumber.toString()).to.be(expectedPageNumber.toString());
 
       done();
     });
