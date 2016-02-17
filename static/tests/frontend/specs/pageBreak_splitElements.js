@@ -1559,6 +1559,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         // this test is for the CSS of CONT'D (see comments about ellipsis on CSS file)
         it("only uses one line to display character name and CONT'D", function(done) {
+          this.timeout(4000);
           var inner$ = helper.padInner$;
 
           // wait for pagination to be finished
@@ -1567,17 +1568,9 @@ describe("ep_script_page_view - page break on split elements", function() {
             return $splitPageBreaks.length > 0;
           }).done(function() {
             // verify CONT'D is one line high
-            // (we need to get height of the div because it has page break + line)
-            var totalHeightOf2ndSplit = inner$("div").last().outerHeight();
-            var secondSplitHeight = inner$("div span").last().outerHeight();
-            var pageBreakHeight = utils.heightOfSplitPageBreak();
-            var moreHeight = utils.heightOfMore();
-            var contdHeight = totalHeightOf2ndSplit - secondSplitHeight - pageBreakHeight - moreHeight;
-            var oneLineHigh = utils.regularLineHeight();
-
-            expect(contdHeight).to.be(oneLineHigh);
-
-            done();
+            // (if it is not, line number and line position on editor will be different)
+            var firstLineOfSecondPage = GENERALS_PER_PAGE-1;
+            utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, done);
           });
         });
       });

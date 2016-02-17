@@ -140,3 +140,7 @@ exports.getLineNumberFromDOMLine = function($line, rep) {
 
   return lineNumber;
 }
+
+exports.nodeHasMoreAndContd = function($node) {
+  return $node.find("more").length > 0;
+}

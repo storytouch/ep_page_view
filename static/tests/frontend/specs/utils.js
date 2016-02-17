@@ -74,6 +74,31 @@ ep_script_page_view_test_helper.utils = {
     , 2000).done(callback);
   },
 
+  enableLineNumbers: function(callback) {
+    var utils = ep_script_page_view_test_helper.utils;
+    utils.setLineNumberPreferenceTo(true, callback);
+  },
+  disableLineNumbers: function(callback) {
+    var utils = ep_script_page_view_test_helper.utils;
+    utils.setLineNumberPreferenceTo(false, callback);
+  },
+  setLineNumberPreferenceTo: function(shouldShowLineNumbers, callback) {
+    var chrome$ = helper.padChrome$;
+
+    // click on the settings button to make settings visible
+    var $settingsButton = chrome$(".buttonicon-settings");
+    $settingsButton.click();
+
+    // check "Line Numbers"
+    var $showLineNumbers = chrome$('#options-linenoscheck');
+    if ($showLineNumbers.is(':checked') !== shouldShowLineNumbers) $showLineNumbers.click();
+
+    // hide settings again
+    $settingsButton.click();
+
+    callback();
+  },
+
   cleanPad: function(callback) {
     // make tests run faster, as the delay is only defined to improve usability
     helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.paginationDelay = 0;
@@ -94,11 +119,20 @@ ep_script_page_view_test_helper.utils = {
   // ...
   getLine: function(lineNum) {
     var inner$ = helper.padInner$;
-    var line = inner$("div").first();
+    var $line = inner$("div").first();
     for (var i = lineNum - 1; i >= 0; i--) {
-      line = line.next();
+      $line = $line.next();
     }
-    return line;
+    return $line;
+  },
+  getLineNumber: function(lineNum) {
+    var outer$ = helper.padOuter$;
+    var $lineNumbersContainer = outer$("#sidedivinner");
+    var $line = $lineNumbersContainer.find("div").first();
+    for (var i = lineNum - 1; i >= 0; i--) {
+      $line = $line.next();
+    }
+    return $line;
   },
 
   getLineWhereCaretIs: function() {
@@ -332,6 +366,38 @@ ep_script_page_view_test_helper.utils = {
       expect(actualCharacterName).to.be(expectedCharacterName);
 
       done();
+    });
+  },
+
+  testLineNumberIsOnTheSamePositionOfItsLineText: function(targetLine, done) {
+    var utils = ep_script_page_view_test_helper.utils;
+
+    // make sure line numbers are enabled
+    utils.enableLineNumbers(function() {
+      // we need to get origins because line numbers are on a different container (padOuter)
+      // than the pad text (padInner), so they have different offsets
+      var $firstLineNumber    = utils.getLineNumber(0);
+      var $firstLineOnPad     = utils.getLine(0);
+      var originOfLineNumbers = $firstLineNumber.offset().top;
+      var originOfLineOnPad   = $firstLineOnPad.offset().top;
+
+      // it takes a while for line numbers to be adjusted on screen
+      var noLineNumberOffset = { top:0 }; // line number might not exist yet (in case of line split, for example)
+      helper.waitFor(function() {
+        var $targetLineNumber = utils.getLineNumber(targetLine-1);
+        var $targetLineOnPad  = utils.getLine(targetLine-1);
+
+        var targetLineNumberPosition = ($targetLineNumber.offset() || noLineNumberOffset).top;
+        // get inner span position instead of whole div, otherwise test will pass even if
+        // behavior is not correct
+        var targetLineOnPadPosition  = $targetLineOnPad.find("span").offset().top;
+
+        // get actual heights (relative to origin)
+        var actualLineNumberHeight = targetLineNumberPosition - originOfLineNumbers;
+        var actualLineOnPadHeight  = targetLineOnPadPosition - originOfLineOnPad;
+
+        return actualLineNumberHeight === actualLineOnPadHeight;
+      }, 3000).done(done);
     });
   },
 }

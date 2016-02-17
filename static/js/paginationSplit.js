@@ -488,6 +488,6 @@ var addPageBreakBetweenLines = function(splitPosition, pageNumber, attributeMana
   attributeManager.setAttributeOnLine(lineNumber+1, SECOND_HALF_ATTRIB, splitId);
 }
 
-exports.lineHasSplitPageBreak = function($node) {
+exports.nodeHasPageBreak = function($node) {
   return $node.find(PAGE_BREAK_TAG).length > 0;
 }

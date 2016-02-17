@@ -4,6 +4,8 @@ var paginationPageNumber = require('./paginationPageNumber');
 var PAGE_BREAKS_ATTRIB                     = "nonSplitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "nonSplitPageBreakWithMoreAndContd";
 
+var PAGE_BREAK_TAG = "nonSplitPageBreak";
+
 exports.atribsToClasses = function(context) {
   // simple page break, return only the flag as class
   if(isRegularPageBreakAttrib(context.key)) {
@@ -28,9 +30,9 @@ exports.buildHtmlWithPageBreaks = function(cls) {
   var extraHTML;
 
   if (cls.match(PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB)) {
-    extraHTML = utils.buildPageBreakWithMoreAndContd(cls, 'nonSplitPageBreak');
+    extraHTML = utils.buildPageBreakWithMoreAndContd(cls, PAGE_BREAK_TAG);
   } else if (cls.match(PAGE_BREAKS_ATTRIB)) {
-    extraHTML = utils.buildSimplePageBreak(cls, 'nonSplitPageBreak');
+    extraHTML = utils.buildSimplePageBreak(cls, PAGE_BREAK_TAG);
   }
 
   // Bug fix: lines with page break need to be wrapped by a registered block element
@@ -106,4 +108,8 @@ exports.savePageBreak = function(nonSplitInfo, pageNumber, attributeManager) {
 
   // save page number
   paginationPageNumber.savePageBreak(lineWithPageBreak, pageNumber, attributeManager);
+}
+
+exports.nodeHasPageBreak = function($node) {
+  return $node.find(PAGE_BREAK_TAG).length > 0;
 }

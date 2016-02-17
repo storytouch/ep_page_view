@@ -190,6 +190,17 @@
   */
   }
 
+  /* leave room for page break on line at the end of the page */
+  #innerdocbody.breakPages div.beforePageBreak {
+    /* All values of calc are from page break */
+    /* 40px: height; 77px: margin-top and margin-bottom; 1px: border-top and border-bottom */
+    padding-bottom: calc(40px + 77px + 77px + 1px + 1px);
+  }
+  #innerdocbody.breakPages div.beforePageBreak.withMoreAndContd {
+    /* 16px: #innerdocbody line-height */
+    padding-bottom: calc(40px + 77px + 77px + 1px + 1px + 16px + 16px);
+  }
+
   /* hide ")" from 1st half of split parenthetical: */
   #innerdocbody.breakPages div.firstHalf parenthetical:after {
     content: ' ';

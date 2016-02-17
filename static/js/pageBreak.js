@@ -39,11 +39,24 @@ exports.aceDomLineProcessLineAttributes = function(hook, context) {
   return [];
 }
 
-// we need this to adjust layout of parentheticals split between pages
 exports.acePostWriteDomLineHTML = function(hook, context) {
   var $node = $(context.node);
-  if (paginationSplit.lineHasSplitPageBreak($node)) {
+
+  var nodeHasSplitPageBreak    = paginationSplit.nodeHasPageBreak($node);
+  var nodeHasNonSplitPageBreak = paginationNonSplit.nodeHasPageBreak($node);
+  var nodeHasMoreAndContd      = utils.nodeHasMoreAndContd($node);
+
+  // adjust layout of parentheticals split between pages
+  if (nodeHasSplitPageBreak) {
     $node.addClass("firstHalf");
+  }
+
+  // leave room for page break on line at the end of the page
+  if (nodeHasSplitPageBreak || nodeHasNonSplitPageBreak) {
+    $node.addClass("beforePageBreak");
+  }
+  if (nodeHasMoreAndContd) {
+    $node.addClass("withMoreAndContd");
   }
 }
 
