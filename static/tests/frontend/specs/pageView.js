@@ -7,8 +7,8 @@ describe("ep_script_page_view - page view", function(){
 
   // Create Pad
    // Disable Page View & Ensure Page View is disabled
-     // Enable Page View & Ensure Page View is enabled
-       // Ensure Page View is persistant on refresh after enabled
+     // Ensure Page View is enabled on refresh after disabled
+       // Enable Page View & Ensure Page View is enabled
 
   it("Disable Page View", function(done) {
     this.timeout(60000);
@@ -24,10 +24,9 @@ describe("ep_script_page_view - page view", function(){
     });
   });
 
-  it("Enable Page View", function(done) {
+  it("Ensure Page View is enabled on refresh after being disabled", function(done) {
     this.timeout(60000);
     var chrome$ = helper.padChrome$;
-    if(!chrome$('#options-pageview').prop("checked")) chrome$('#options-pageview').click();
     var $editorContainer = chrome$("#editorcontainer");
 
     helper.waitFor(function(){
@@ -38,9 +37,10 @@ describe("ep_script_page_view - page view", function(){
     });
   });
 
-  it("Ensure Page View is persistant on refresh after enabled", function(done) {
+  it("Enable Page View", function(done) {
     this.timeout(60000);
     var chrome$ = helper.padChrome$;
+    if(!chrome$('#options-pageview').prop("checked")) chrome$('#options-pageview').click();
     var $editorContainer = chrome$("#editorcontainer");
 
     helper.waitFor(function(){

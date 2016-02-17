@@ -63,16 +63,15 @@ exports.postAceInit = function(hook, context){
     $('#options-pageview').prop('checked',false);
   }
 
-  /* from cookie */
-  // page view
-  if (padcookie.getPref("page_view")) {
-    $('#options-pageview').prop('checked', 'checked');
-    // set a value we will refer to later and other plugins will refer to
-    clientVars.plugins.plugins.ep_script_page_view.enabled = true;
-  }else if (padcookie.getPref("page_view") == false){
-    // only disable PV if cookie is set to disabled it. If cookie is not set, we do nothing
-    $('#options-pageview').prop("checked", false);
-  }
+  /* from cookie (DISABLED) */
+  // if (padcookie.getPref("page_view")) {
+  //   $('#options-pageview').prop('checked', 'checked');
+  //   // set a value we will refer to later and other plugins will refer to
+  //   clientVars.plugins.plugins.ep_script_page_view.enabled = true;
+  // } else if (padcookie.getPref("page_view") == false) {
+  //   // only disable PV if cookie is set to disabled it. If cookie is not set, we do nothing
+  //   $('#options-pageview').prop("checked", false);
+  // }
 
   if($('#options-pageview').is(':checked')) {
     pv.enable();
