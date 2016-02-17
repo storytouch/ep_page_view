@@ -47,110 +47,6 @@ describe("ep_script_page_view - page break main tests", function() {
       pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
     });
 
-    // this scenario is a workaround to the limitation of CSS :after/:before, which is not
-    // displayed correctly on some elements (including <br>)
-    context("and pages > 1 have empty lines on the top of the page", function() {
-      var FIRST_LINE_OF_PAGE_2 = GENERALS_PER_PAGE;
-      var FIRST_LINE_OF_PAGE_3 = 2*GENERALS_PER_PAGE + 2; // there are 2 empty lines on top of page 2
-
-      beforeEach(function(cb) {
-        var inner$ = helper.padInner$;
-
-        // create 2 other full pages + some empty lines on top of each of them
-        var secondPage = pageBreak.scriptWithPageFullOfGenerals("2nd page", 2);
-        var thirdPage = pageBreak.scriptWithPageFullOfGenerals("3rd page", 3);
-        var $lastLine = inner$("div").last();
-        $lastLine.append("<br/>" + secondPage + thirdPage);
-
-        // wait for Etherpad to process lines
-        helper.waitFor(function() {
-          var lineNumber = inner$("div").length;
-          return lineNumber === 3*GENERALS_PER_PAGE + 5; // 3 full pages + 5 (empty) lines
-        }).done(cb);
-      });
-
-      it("ignores empty lines on top of pages", function(done) {
-        this.timeout(6000);
-
-        var inner$ = helper.padInner$;
-
-        // wait for pagination to be complete
-        helper.waitFor(function() {
-          // at this point script has 3 full pages + 5 (empty) lines on top of then (2 on page 2, 3 on page 3)
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length === 2;
-        }, 3000).done(function() {
-          // add new line (should be placed on next page)
-          var $lastLine = inner$("div").last();
-          $lastLine.append("<br/>1st of 4th page");
-
-          // wait for new page to be created
-          helper.waitFor(function() {
-            var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            return $linesWithPageBreaks.length === 3;
-          }, 3000).done(function() {
-            var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            var $firstPageBreak = $linesWithPageBreaks.first();
-            var $secondPageBreak = $linesWithPageBreaks.slice(1,1);
-            var $thirdPageBreak = $linesWithPageBreaks.last();
-
-            expect($firstPageBreak.text()).to.be(""); // empty line on top of page 2
-            expect($secondPageBreak.text()).to.be(""); // empty line on top of page 3
-            expect($thirdPageBreak.text()).to.be("1st of 4th page");
-
-            done();
-          });
-        });
-      });
-
-      context("and first line of page 2 is not empty anymore", function() {
-        beforeEach(function() {
-          utils.getLine(FIRST_LINE_OF_PAGE_3).sendkeys("Not empty anymore");
-        });
-
-        /*
-          At this point the script is:
-          +-------------------------
-          | 1st page
-          | (...)
-          | 1st page
-          +-------------------------
-          | 2nd page
-          | (...)
-          | 2nd page
-          +-------------------------
-          | Not empty anymore
-          |                        (empty line)
-          | 3rd page
-          | (...)
-          | 3rd page
-          +-------------------------
-          | 3rd page
-          | 3rd page
-          | 3rd page
-          +-------------------------
-        */
-        it("does not ignore empty line in the middle of the page", function(done) {
-          var inner$ = helper.padInner$;
-
-          // wait for all page breaks to be created (there should be 3)
-          helper.waitFor(function() {
-            var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            return $linesWithPageBreaks.length === 3;
-          }, 3000).done(function() {
-            // verify 4th page has 3 lines
-            var $firstLineOf3rdPage = utils.linesAfterNonSplitPageBreaks().last();
-            // 1st line of page has nonSplitPageBreak, so it won't be returned by nextAll()
-            var linesAfterFirstLineOf3rdPage = $firstLineOf3rdPage.nextAll("div").length;
-            var linesOn3rdPage = linesAfterFirstLineOf3rdPage + 1;
-            expect(linesOn3rdPage).to.be(3);
-
-            done();
-          });
-        });
-      });
-    });
-
     context("and one of the lines has its type changed", function() {
       it("updates pagination", function(done) {
         var inner$ = helper.padInner$;
@@ -302,18 +198,10 @@ describe("ep_script_page_view - page break main tests", function() {
 
 var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
 ep_script_page_view_test_helper.pageBreak = {
-  scriptWithPageFullOfGenerals: function(text, emptyLinesOnTop) {
+  scriptWithPageFullOfGenerals: function(text) {
     var utils = ep_script_page_view_test_helper.utils;
 
     var script = "";
-
-    // create empty lines
-    emptyLinesOnTop = emptyLinesOnTop || 0;
-    for (var i = 0; i < emptyLinesOnTop; i++) {
-      script += utils.general("");
-    }
-
-    // create non-empty lines
     for (var i = 0; i < GENERALS_PER_PAGE; i++) {
       script += utils.general(text);
     }
