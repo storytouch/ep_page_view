@@ -1,11 +1,15 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 
-var utils                = require('./utils');
-var paginationBlocks     = require('./paginationBlocks');
-var paginationSplit      = require('./paginationSplit');
-var paginationNonSplit   = require('./paginationNonSplit');
-var paginationPageNumber = require('./paginationPageNumber');
+var utils                  = require('./utils');
+var paginationBlocks       = require('./paginationBlocks');
+var paginationSplit        = require('./paginationSplit');
+var paginationNonSplit     = require('./paginationNonSplit');
+var paginationPageNumber   = require('./paginationPageNumber');
+var paginationLinesChanged = require('./paginationLinesChanged');
+
+var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
+var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
 
 // Letter
 // var REGULAR_LINES_PER_PAGE = 54;
@@ -42,6 +46,8 @@ exports.aceDomLineProcessLineAttributes = function(hook, context) {
 exports.acePostWriteDomLineHTML = function(hook, context) {
   var $node = $(context.node);
 
+  paginationLinesChanged.markNodeAsChanged($node);
+
   var nodeHasSplitPageBreak    = paginationSplit.nodeHasPageBreak($node);
   var nodeHasNonSplitPageBreak = paginationNonSplit.nodeHasPageBreak($node);
   var nodeHasMoreAndContd      = utils.nodeHasMoreAndContd($node);
@@ -67,9 +73,14 @@ exports.aceEditEvent = function(hook, context) {
   var callstack = context.callstack;
   var eventType = callstack.type;
 
+  if (finishedLoadingPad(eventType)) {
+    paginationLinesChanged.reset(context.rep);
+  }
   // pagination was previously scheduled
-  if (readyFor2ndPhaseOfPagination(callstack)) {
+  else if (readyFor2ndPhaseOfPagination(callstack)) {
     continuePagination(context);
+
+    paginationLinesChanged.reset(context.rep);
   }
   // only proceed if pagination was scheduled by me.
   // This avoids getting an error if two users have the same pad opened
@@ -85,8 +96,15 @@ exports.aceEditEvent = function(hook, context) {
     // don't do anything if text did not change or if user was not the one who made the text change
     if (!context.callstack.docTextChanged || !isEditedByMe(eventType)) return;
 
+    markCurrentLineAsChanged(context);
+
     resetTimerToRestartPagination(context);
   }
+}
+
+var finishedLoadingPad = function(eventType) {
+  // this is the last event when loading a pad before user can start typing
+  return eventType === "setWraps";
 }
 
 // based on similar method from ep_autocomp
@@ -113,6 +131,11 @@ var readyFor2ndPhaseOfPagination = function(callstack) {
 
 var myPaginationEventType = function() {
   return "pagination-" + clientVars.userId;
+}
+
+var markCurrentLineAsChanged = function(context) {
+  var currentLine = context.rep.selStart[0];
+  paginationLinesChanged.markLineAsChanged(currentLine);
 }
 
 var paginationTimer;
@@ -152,9 +175,15 @@ var synchronizeEditorWithUserChanges = function(editorInfo) {
 
 var cleanPageBreaks = function(callstack, attributeManager, rep, editorInfo) {
   utils.performNonUnduableEvent(callstack, function() {
-    paginationNonSplit.cleanPageBreaks(attributeManager, rep);
-    paginationSplit.cleanPageBreaks(attributeManager, rep, editorInfo);
-    paginationPageNumber.cleanPageBreaks(attributeManager, rep);
+    // we need to check 3 lines before first line changed since last pagination because
+    // last changes might had affected a block of elements
+    var firstLineThatMightBeAffected = paginationLinesChanged.minLineChanged() - 3;
+    // if changed one of the first 3 lines of pad, start at first line (0)
+    var startAtLine = Math.max(0, firstLineThatMightBeAffected);
+
+    paginationNonSplit.cleanPageBreaks(startAtLine, attributeManager, rep);
+    paginationSplit.cleanPageBreaks(startAtLine, attributeManager, rep, editorInfo);
+    paginationPageNumber.cleanPageBreaks(startAtLine, attributeManager, rep);
   });
 }
 
@@ -173,29 +202,30 @@ var continuePagination = function(context) {
 
 var savePageBreaks = function(pageBreaksInfo, callstack, attributeManager, rep, editorInfo) {
   utils.performNonUnduableEvent(callstack, function() {
-    for (var pageNumber = pageBreaksInfo.length - 1; pageNumber >= 0; pageNumber--) {
-      // page numbers start at 2, so we need to increase all page numbers by 2
-      var actualPageNumber = pageNumber+2;
+    var initialPageNumber = nextPageNumber();
+    for (var i = pageBreaksInfo.length - 1; i >= 0; i--) {
+      var pageNumber = initialPageNumber + i;
 
-      var pageBreakInfo = pageBreaksInfo[pageNumber];
-      pageBreakInfo.save(pageBreakInfo.data, actualPageNumber, attributeManager, rep, editorInfo);
+      var pageBreakInfo = pageBreaksInfo[i];
+      pageBreakInfo.save(pageBreakInfo.data, pageNumber, attributeManager, rep, editorInfo);
     }
   });
 }
 
 var calculatePageBreaks = function(attributeManager, rep) {
   var maxPageHeight = getMaxPageHeight();
-  var $lines = utils.getPadInner().find("div");
   var pageBreaks = [];
 
-  // select lines to have page breaks
-  var $currentLine = $lines.first();
+  // start paginating only from first line after last page break
+  var $firstLineAfterLastPageBreak = firstLineAfterPageBreak();
+  var $currentLine = $firstLineAfterLastPageBreak;
+
   var currentPageHeight = 0;
   while(!reachedEndOfPad($currentLine)) {
     // get height including margins and paddings
     var lineHeight = utils.getLineHeight($currentLine);
     // get height excluding margins and paddings
-    var lineInnerHeight = $currentLine.height();
+    var lineInnerHeight = utils.getLineHeightWithoutMargins($currentLine);
 
     // Q: if this line is placed on current page, will the page height be over the
     // allowed max height?
@@ -246,7 +276,11 @@ var calculatePageBreaks = function(attributeManager, rep) {
       }
     } else {
       // A: no, so simply increase current page height
-      currentPageHeight += lineHeight;
+
+      // disregard margins if on top of page
+      var adjustedHeight = (currentPageHeight === 0 ? lineInnerHeight : lineHeight);
+
+      currentPageHeight += adjustedHeight;
     }
 
     // move to next line before next iteration of while-loop
@@ -283,4 +317,32 @@ var getMaxPageHeight = function() {
 
 var reachedEndOfPad = function($currentLine) {
   return $currentLine.length === 0;
+}
+
+var firstLineAfterPageBreak = function() {
+  var $lines;
+
+  var $linesWithPageBreak = utils.getPadInner().find(DIV_WITH_PAGE_BREAK);
+  if ($linesWithPageBreak.length === 0) {
+    // pad does not have any page break yet, get all lines
+    $lines = utils.getPadInner().find("div").first();
+  } else {
+    $lines = $linesWithPageBreak.last().next();
+  }
+
+  return $lines;
+}
+
+var nextPageNumber = function() {
+  var maxPageNumber;
+
+  var $linesWithPageBreak = utils.getPadInner().find(PAGE_BREAK);
+  if ($linesWithPageBreak.length === 0) {
+    // pad does not have any page break yet, so it has only one page
+    maxPageNumber = 1;
+  } else {
+    maxPageNumber = parseInt($linesWithPageBreak.last().attr("data-page-number") || 1);
+  }
+
+  return maxPageNumber + 1;
 }

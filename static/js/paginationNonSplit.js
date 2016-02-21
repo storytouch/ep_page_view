@@ -5,6 +5,7 @@ var PAGE_BREAKS_ATTRIB                     = "nonSplitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "nonSplitPageBreakWithMoreAndContd";
 
 var PAGE_BREAK_TAG = "nonSplitPageBreak";
+exports.PAGE_BREAK_TAG = PAGE_BREAK_TAG;
 
 exports.atribsToClasses = function(context) {
   // simple page break, return only the flag as class
@@ -50,9 +51,9 @@ exports.blockElements = function() {
   return ['line_with_page_break'];
 }
 
-exports.cleanPageBreaks = function(attributeManager, rep) {
+exports.cleanPageBreaks = function(startAtLine, attributeManager, rep) {
   var totalLines = rep.lines.length();
-  for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
+  for (var lineNumber = totalLines - 1; lineNumber >= startAtLine; lineNumber--) {
     if (lineHasPageBreak(lineNumber, attributeManager)) {
       removePageBreak(lineNumber, attributeManager);
     }

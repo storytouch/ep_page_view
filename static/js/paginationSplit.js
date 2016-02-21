@@ -20,6 +20,7 @@ var ETHERPAD_AND_SPLIT_ATTRIBS = [
 ];
 
 var PAGE_BREAK_TAG = "splitPageBreak";
+exports.PAGE_BREAK_TAG = PAGE_BREAK_TAG;
 
 var FIRST_HALF_TAG                     = "split_first_half";
 var FIRST_HALF_WITH_MORE_AND_CONTD_TAG = "split_with_more_and_contd_first_half";
@@ -377,9 +378,9 @@ exports.blockElements = function() {
   return [FIRST_HALF_TAG, FIRST_HALF_WITH_MORE_AND_CONTD_TAG, SECOND_HALF_TAG];
 }
 
-exports.cleanPageBreaks = function(attributeManager, rep, editorInfo) {
+exports.cleanPageBreaks = function(startAtLine, attributeManager, rep, editorInfo) {
   var totalLines = rep.lines.length();
-  for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
+  for (var lineNumber = totalLines - 1; lineNumber >= startAtLine; lineNumber--) {
     // remove marker(s) of a split line
     if (exports.lineIsFirstHalfOfSplit(lineNumber, attributeManager)) {
       mergeLines(lineNumber, rep, attributeManager, editorInfo);

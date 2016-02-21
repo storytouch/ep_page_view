@@ -3,9 +3,9 @@ var utils = require('./utils');
 var PAGE_NUMBER_ATTRIB = "pageNumber";
 exports.PAGE_NUMBER_ATTRIB = PAGE_NUMBER_ATTRIB;
 
-exports.cleanPageBreaks = function(attributeManager, rep) {
+exports.cleanPageBreaks = function(startAtLine, attributeManager, rep) {
   var totalLines = rep.lines.length();
-  for (var lineNumber = totalLines - 1; lineNumber >= 0; lineNumber--) {
+  for (var lineNumber = totalLines - 1; lineNumber >= startAtLine; lineNumber--) {
     // remove marker of page number
     if (lineHasPageNumberMarker(lineNumber, attributeManager)) {
       removePageNumberFrom(lineNumber, attributeManager);
