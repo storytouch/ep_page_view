@@ -75,6 +75,11 @@ exports.aceEditEvent = function(hook, context) {
   var eventType = callstack.type;
 
   if (finishedLoadingPad(eventType)) {
+    // when script is imported, it does not have any pagination, so we need to trigger it
+    if (scriptHasNoPaginationYet()) {
+      continuePagination(context);
+    }
+
     paginationLinesChanged.reset(context.rep);
   }
   // pagination was previously scheduled
@@ -106,6 +111,11 @@ exports.aceEditEvent = function(hook, context) {
 var finishedLoadingPad = function(eventType) {
   // this is the last event when loading a pad before user can start typing
   return eventType === "setWraps";
+}
+
+var scriptHasNoPaginationYet = function() {
+  var $linesWithPageBreak = utils.getPadInner().find(DIV_WITH_PAGE_BREAK);
+  return ($linesWithPageBreak.length === 0);
 }
 
 // based on similar method from ep_autocomp
