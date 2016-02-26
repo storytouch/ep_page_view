@@ -492,3 +492,8 @@ var addPageBreakBetweenLines = function(splitPosition, pageNumber, attributeMana
 exports.nodeHasPageBreak = function($node) {
   return $node.find(PAGE_BREAK_TAG).length > 0;
 }
+
+exports.lineHasPageBreak = function(lineNumber, attributeManager) {
+  return attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB) ||
+         attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
+}

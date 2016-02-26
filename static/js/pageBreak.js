@@ -7,6 +7,7 @@ var paginationSplit        = require('./paginationSplit');
 var paginationNonSplit     = require('./paginationNonSplit');
 var paginationPageNumber   = require('./paginationPageNumber');
 var paginationLinesChanged = require('./paginationLinesChanged');
+var undoElementType        = require('./undoElementType');
 
 var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
 var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
@@ -209,6 +210,10 @@ var savePageBreaks = function(pageBreaksInfo, callstack, attributeManager, rep, 
       var pageBreakInfo = pageBreaksInfo[i];
       pageBreakInfo.save(pageBreakInfo.data, pageNumber, attributeManager, rep, editorInfo);
     }
+
+    // Bug fix: when user changes element to general and then undoes this change, the UNDO might
+    // not work properly if line has a page break. So we need to make an adjustment to avoid that
+    undoElementType.fix(rep, attributeManager);
   });
 }
 

@@ -54,13 +54,13 @@ exports.blockElements = function() {
 exports.cleanPageBreaks = function(startAtLine, attributeManager, rep) {
   var totalLines = rep.lines.length();
   for (var lineNumber = totalLines - 1; lineNumber >= startAtLine; lineNumber--) {
-    if (lineHasPageBreak(lineNumber, attributeManager)) {
+    if (exports.lineHasPageBreak(lineNumber, attributeManager)) {
       removePageBreak(lineNumber, attributeManager);
     }
   }
 }
 
-var lineHasPageBreak = function(lineNumber, attributeManager) {
+exports.lineHasPageBreak = function(lineNumber, attributeManager) {
   return attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB) ||
          attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
 }
