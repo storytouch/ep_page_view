@@ -1322,6 +1322,8 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
 
         it("splits transition between the two pages, and second page has the last two lines of the transition", function(done) {
+          this.timeout(4000);
+
           var firstLineOnPage2 = sentences[GENERALS_PER_PAGE-1];
           utils.testSplitPageBreakIsOn(firstLineOnPage2, done);
         });

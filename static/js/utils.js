@@ -4,6 +4,8 @@ var EMPTY_CHARACTER_NAME = "empty";
 
 exports.SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
 
+exports.CLONED_ELEMENTS_CLASS = "cloned";
+
 // Easier access to outer pad
 var padOuter;
 exports.getPadOuter = function() {

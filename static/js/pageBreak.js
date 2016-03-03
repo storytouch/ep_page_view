@@ -12,6 +12,8 @@ var undoElementType        = require('./undoElementType');
 var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
 var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
 
+var CLONED_ELEMENTS_SELECTOR = "." + utils.CLONED_ELEMENTS_CLASS;
+
 // Letter
 // var REGULAR_LINES_PER_PAGE = 54;
 // A4
@@ -75,27 +77,23 @@ exports.aceEditEvent = function(hook, context) {
   var eventType = callstack.type;
 
   if (finishedLoadingPad(eventType)) {
-    // when script is imported, it does not have any pagination, so we need to trigger it
+    // when script is imported to Etherpad, it does not have any pagination, so we need to
+    // trigger it when user opens it for the first time on the editor
     if (scriptHasNoPaginationYet()) {
       continuePagination(context);
     }
 
-    paginationLinesChanged.reset(context.rep);
-  }
-  // pagination was previously scheduled
-  else if (readyFor2ndPhaseOfPagination(callstack)) {
-    continuePagination(context);
-
+    // when pad is loaded, it marks all lines as changed, so we need to reset counter
     paginationLinesChanged.reset(context.rep);
   }
   // only proceed if pagination was scheduled by me.
   // This avoids getting an error if two users have the same pad opened
   else if (isAPaginationScheduledByMe(eventType)) {
-    restartPagination(context);
+    repaginate(context);
   }
   // user changed the type of one of the lines
   else if (isAChangeOnElementType(eventType)) {
-    restartPagination(context);
+    repaginate(context);
   }
   // any other edition on the pad
   else {
@@ -133,12 +131,6 @@ var isAPaginationScheduledByMe = function(eventType) {
   return eventType === "pagination-" + clientVars.userId;
 }
 
-var needToPaginate = false;
-var readyFor2ndPhaseOfPagination = function(callstack) {
-  var domReadyForPagination = callstack.domClean;
-
-  return needToPaginate && domReadyForPagination;
-}
 
 var myPaginationEventType = function() {
   return "pagination-" + clientVars.userId;
@@ -166,22 +158,28 @@ var resetTimerToRestartPagination = function(context) {
   }, clientVars.plugins.plugins.ep_script_page_view.paginationDelay);
 }
 
-var restartPagination = function(context) {
+var repaginate = function(context) {
+  // HACK: make sure we have the latest changes made by the user, as pagination is a delayed process
+  synchronizeEditorWithUserChanges(context.editorInfo);
+
+  cleanPagination(context);
+  continuePagination(context);
+
+  paginationLinesChanged.reset(context.rep);
+
+}
+
+var synchronizeEditorWithUserChanges = function(editorInfo) {
+  editorInfo.ace_fastIncorp();
+}
+
+var cleanPagination = function(context) {
   var callstack        = context.callstack;
   var attributeManager = context.documentAttributeManager;
   var rep              = context.rep;
   var editorInfo       = context.editorInfo;
 
-  // HACK: make sure we have the latest changes made by the user, as pagination is a delayed process
-  synchronizeEditorWithUserChanges(editorInfo);
-
   cleanPageBreaks(callstack, attributeManager, rep, editorInfo);
-
-  needToPaginate = true;
-}
-
-var synchronizeEditorWithUserChanges = function(editorInfo) {
-  editorInfo.ace_fastIncorp();
 }
 
 var cleanPageBreaks = function(callstack, attributeManager, rep, editorInfo) {
@@ -199,8 +197,6 @@ var cleanPageBreaks = function(callstack, attributeManager, rep, editorInfo) {
 }
 
 var continuePagination = function(context) {
-  needToPaginate = false;
-
   var callstack        = context.callstack;
   var attributeManager = context.documentAttributeManager;
   var rep              = context.rep;
@@ -227,20 +223,46 @@ var savePageBreaks = function(pageBreaksInfo, callstack, attributeManager, rep, 
   });
 }
 
+var nextPageNumber = function() {
+  var maxPageNumber;
+
+  var $linesWithPageBreak = utils.getPadInner().find(PAGE_BREAK);
+  if ($linesWithPageBreak.length === 0) {
+    // pad does not have any page break yet, so it has only one page
+    maxPageNumber = 1;
+  } else {
+    maxPageNumber = parseInt($linesWithPageBreak.last().attr("data-page-number") || 1);
+  }
+
+  return maxPageNumber + 1;
+}
+
 var calculatePageBreaks = function(attributeManager, rep) {
   var maxPageHeight = getMaxPageHeight();
   var pageBreaks = [];
 
   // start paginating only from first line after last page break
   var $firstLineAfterLastPageBreak = firstLineAfterPageBreak();
+  var $lastLine = utils.getPadInner().find("div").last();
   var $currentLine = $firstLineAfterLastPageBreak;
 
   var currentPageHeight = 0;
+  var lineNumberShift = 0;
   while(!reachedEndOfPad($currentLine)) {
+    var $clonedLine = cloneLine($currentLine, $lastLine);
+
+    // if current line is a split line, it will be merged when cleaned, so we need to shift all lines
+    // after it one position up. A merged line has text of both halves, so its text won't be the same
+    // of current line
+    var lineWillBeMergedOnClean = ($clonedLine.text() !== $currentLine.text());
+    if (lineWillBeMergedOnClean) {
+      lineNumberShift--;
+    }
+
     // get height including margins and paddings
-    var lineHeight = utils.getLineHeight($currentLine);
+    var lineHeight = utils.getLineHeight($clonedLine);
     // get height excluding margins and paddings
-    var lineInnerHeight = utils.getLineHeightWithoutMargins($currentLine);
+    var lineInnerHeight = utils.getLineHeightWithoutMargins($clonedLine);
 
     // Q: if this line is placed on current page, will the page height be over the
     // allowed max height?
@@ -248,7 +270,7 @@ var calculatePageBreaks = function(attributeManager, rep) {
       // A: yes, so check if line can be split or belongs to a block
 
       var availableHeightOnPage = maxPageHeight - currentPageHeight;
-      var splitElementInfo = paginationSplit.getRegularSplitInfo($currentLine, lineHeight, lineInnerHeight, availableHeightOnPage, attributeManager, rep);
+      var splitElementInfo = paginationSplit.getRegularSplitInfo($currentLine, $clonedLine, lineNumberShift, lineHeight, lineInnerHeight, availableHeightOnPage, attributeManager, rep);
       // can we split current line?
       if (splitElementInfo) {
         // restart counting page height again
@@ -269,7 +291,7 @@ var calculatePageBreaks = function(attributeManager, rep) {
         var availableHeightOnPage = maxPageHeight;
 
         // calculate where line needs to be split
-        var forcedSplitElementInfo = paginationSplit.getForcedSplitInfo($currentLine, lineHeight, lineInnerHeight, availableHeightOnPage, attributeManager, rep);
+        var forcedSplitElementInfo = paginationSplit.getForcedSplitInfo($currentLine, $clonedLine, lineNumberShift, lineHeight, lineInnerHeight, availableHeightOnPage, attributeManager, rep);
 
         // restart counting page height again
         currentPageHeight = forcedSplitElementInfo.heightAfterPageBreak;
@@ -297,6 +319,8 @@ var calculatePageBreaks = function(attributeManager, rep) {
 
       currentPageHeight += adjustedHeight;
     }
+
+    removeClonedLines();
 
     // move to next line before next iteration of while-loop
     $currentLine = $currentLine.next();
@@ -335,29 +359,31 @@ var reachedEndOfPad = function($currentLine) {
 }
 
 var firstLineAfterPageBreak = function() {
-  var $lines;
+  var $lineAfterPageBreak;
 
   var $linesWithPageBreak = utils.getPadInner().find(DIV_WITH_PAGE_BREAK);
   if ($linesWithPageBreak.length === 0) {
     // pad does not have any page break yet, get all lines
-    $lines = utils.getPadInner().find("div").first();
+    $lineAfterPageBreak = utils.getPadInner().find("div").first();
   } else {
-    $lines = $linesWithPageBreak.last().next();
+    $lineAfterPageBreak = $linesWithPageBreak.last().next();
   }
 
-  return $lines;
+  return $lineAfterPageBreak;
 }
 
-var nextPageNumber = function() {
-  var maxPageNumber;
+var cloneLine = function($targetLine, $lastLine) {
+  var $clonedLine = paginationSplit.clonePaginatedLine($targetLine);
 
-  var $linesWithPageBreak = utils.getPadInner().find(PAGE_BREAK);
-  if ($linesWithPageBreak.length === 0) {
-    // pad does not have any page break yet, so it has only one page
-    maxPageNumber = 1;
-  } else {
-    maxPageNumber = parseInt($linesWithPageBreak.last().attr("data-page-number") || 1);
-  }
+  // make sure cloned lines have all information needed by paginationBlocks
+  paginationBlocks.adjustClonedBlock($clonedLine, $targetLine);
 
-  return maxPageNumber + 1;
+  $clonedLine.insertAfter($lastLine);
+
+  return $clonedLine;
+}
+
+var removeClonedLines = function() {
+  var $clones = utils.getPadInner().find(CLONED_ELEMENTS_SELECTOR).remove();
+  $clones.remove();
 }

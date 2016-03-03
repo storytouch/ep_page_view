@@ -99,6 +99,11 @@
   }
 */
 
+  /* TODO do we need this? */
+  #innerdocbody.breakPages div.cloned {
+    display: hidden;
+  }
+
   #innerdocbody.breakPages div splitPageBreak,
   #innerdocbody.breakPages div nonSplitPageBreak,
   #innerdocbody.breakPages div contdLine,

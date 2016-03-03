@@ -1,4 +1,5 @@
 var utils = require('./utils');
+var paginationSplit = require('./paginationSplit');
 
 exports.getBlockInfo = function($currentLine, currentLineHeight, currentLineInnerHeight) {
   var blockInfo = {
@@ -16,10 +17,12 @@ exports.getBlockInfo = function($currentLine, currentLineHeight, currentLineInne
   var typeOfPreviousLine = utils.typeOf($previousLine);
   var typeOfNextLine     = utils.typeOf($nextLine);
 
+  var innerLinesOfCurrentLine = getNumberOfInnerLinesOf($currentLine);
+
   // block type:
   // (*) => transition (only one line of text)
   //        +--------- $currentLine ----------+
-  if (typeOfCurrentLine === "transition" && getNumberOfInnerLinesOf($currentLine) === 1) {
+  if (typeOfCurrentLine === "transition" && innerLinesOfCurrentLine === 1) {
     if (typeOfPreviousLine !== "parenthetical" && typeOfPreviousLine !== "dialogue" ) {
       buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousLine);
     }
@@ -58,7 +61,7 @@ exports.getBlockInfo = function($currentLine, currentLineHeight, currentLineInne
       // block type:
       // !character => (parenthetical || dialogue) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
       //                                              +------------------ $currentLine -----------------+
-      if (getNumberOfInnerLinesOf($currentLine) === 1) {
+      if (innerLinesOfCurrentLine === 1) {
         var $lineBeforePrevious = $previousLine.prev();
         var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
         if (typeOfLineBeforePrevious !== "character" && typeOfNextLine !== "dialogue" && typeOfNextLine !== "parenthetical") {
@@ -81,7 +84,7 @@ exports.getBlockInfo = function($currentLine, currentLineHeight, currentLineInne
     //                 +------------------ $currentLine -----------------+
     else if ((typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
       &&
-      getNumberOfInnerLinesOf($currentLine) === 1) {
+      innerLinesOfCurrentLine === 1) {
       buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousLine);
     }
   }
@@ -89,7 +92,7 @@ exports.getBlockInfo = function($currentLine, currentLineHeight, currentLineInne
     &&
     (typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
     &&
-    getNumberOfInnerLinesOf($currentLine) === 1) {
+    innerLinesOfCurrentLine === 1) {
     buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousLine);
   }
   // block type:
@@ -124,4 +127,15 @@ var buildBlockWithTwoPreviousLines = function(blockInfo, currentLineHeight, $pre
   var blockHeight = currentLineHeight + utils.getLineHeight($previousLine) + utils.getLineHeightWithoutMargins($lineBeforePrevious);
   blockInfo.blockHeight = blockHeight;
   blockInfo.$topOfBlock = $lineBeforePrevious;
+}
+
+// copy 2 previous lines + next line to have all lines needed for getBlockInfo()
+exports.adjustClonedBlock = function($clonedLine, $targetLine) {
+  var $cloneOfNextLine           = paginationSplit.clonePaginatedLine($targetLine.next());
+  var $cloneOfPreviousLine       = paginationSplit.clonePaginatedLine($targetLine.prev());
+  var $cloneOfLineBeforePrevious = paginationSplit.clonePaginatedLine($targetLine.prev().prev());
+
+  $cloneOfNextLine.insertAfter($clonedLine);
+  $cloneOfPreviousLine.insertBefore($clonedLine);
+  $cloneOfLineBeforePrevious.insertBefore($cloneOfPreviousLine);
 }
