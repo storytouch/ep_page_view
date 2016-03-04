@@ -1,0 +1,62 @@
+describe("ep_script_page_view - other MORE/CONT'D tests", function() {
+  var utils, scriptBuilder, lastLineText;
+
+  before(function(){
+    utils = ep_script_page_view_test_helper.utils;
+  });
+
+  beforeEach(function(cb){
+    helper.newPad(function() {
+      utils.cleanPad(function() {
+        utils.createScriptWith(scriptBuilder(), lastLineText, cb);
+      });
+    });
+    this.timeout(60000);
+  });
+
+  context("when first page ends on a dialogue and second page starts on a parenthetical", function() {
+    before(function() {
+      scriptBuilder = function() {
+        var line1 = utils.buildStringWithLength(24, "1") + ".";
+        var line2 = utils.buildStringWithLength(24, "2") + ".";
+        var longParenthetical = line1 + line2;
+        lastLineText = "last general";
+
+        var generals      = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE-2);
+        var dialogue      = utils.dialogue("dialogue");
+        var parenthetical = utils.parenthetical(longParenthetical);
+        var lastGeneral   = utils.general(lastLineText);
+
+        return generals + dialogue + parenthetical + lastGeneral;
+      };
+    });
+
+    it("adds the MORE/CONT'D tags", function(done) {
+      var noCharacter = "";
+      utils.testPageBreakHasMoreAndContd(noCharacter, done);
+    });
+  });
+
+  context("when first page ends on a parenthetical and second page starts on a dialogue", function() {
+    before(function() {
+      scriptBuilder = function() {
+        var line1 = utils.buildStringWithLength(34, "1") + ".";
+        var line2 = utils.buildStringWithLength(34, "2") + ".";
+        var longDialogue = line1 + line2;
+        lastLineText = "last general";
+
+        var generals      = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE-2);
+        var parenthetical = utils.parenthetical("parenthetical");
+        var dialogue      = utils.dialogue(longDialogue);
+        var lastGeneral   = utils.general(lastLineText);
+
+        return generals + parenthetical + dialogue + lastGeneral;
+      };
+    });
+
+    it("adds the MORE/CONT'D tags", function(done) {
+      var noCharacter = "";
+      utils.testPageBreakHasMoreAndContd(noCharacter, done);
+    });
+  });
+});

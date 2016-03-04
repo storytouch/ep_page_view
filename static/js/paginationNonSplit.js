@@ -74,8 +74,9 @@ exports.getNonSplitInfo = function($line, rep) {
   // Bug fix: if we place page breaks before the element, caret will start moving alone
   // when placed on an element immediately after page break; to avoid that, we place page
   // break after the last element of previous page, instead of first element of next page
-  var lineNumber = utils.getLineNumberFromDOMLine($line.prev(), rep);
-  var moreAndContdInfo = getMoreAndContdInfo($line);
+  var $targetLine = $line.prev();
+  var lineNumber = utils.getLineNumberFromDOMLine($targetLine, rep);
+  var moreAndContdInfo = getMoreAndContdInfo($targetLine);
 
   return {
     lineNumber: lineNumber,
@@ -86,6 +87,7 @@ exports.getNonSplitInfo = function($line, rep) {
 var getMoreAndContdInfo = function($line) {
   var lineIsParentheticalOrDialogue = $line.has("parenthetical, dialogue").length > 0;
   var nextLineIsParentheticalOrDialogue = $line.next().has("parenthetical, dialogue").length > 0;
+
   if (lineIsParentheticalOrDialogue && nextLineIsParentheticalOrDialogue) {
     return {
       characterName: utils.findCharacterNameOf($line),
