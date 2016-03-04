@@ -72,11 +72,11 @@ var HAVE_MORE_AND_CONTD = {
   parenthetical: true,
 }
 
-exports.getForcedSplitInfo = function($dirtyLine, $cleanLine, lineNumberShift, totalOutterHeight, totalInnerHeight, availableHeightOnPage, attributeManager, rep) {
+exports.getForcedSplitInfo = function($dirtyLine, $cleanLine, lineNumberShift, totalOutterHeight, totalInnerHeight, availableHeightOnPage, originalCaretPosition, attributeManager, rep) {
   // forced split places element on top of page, so there's no top margin displayed on editor
   var noTopMarging = true;
   var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage(totalOutterHeight, totalInnerHeight, availableHeightOnPage, noTopMarging);
-  var lineInfo = getLineInfo($dirtyLine, $cleanLine, attributeManager, rep);
+  var lineInfo = getLineInfo($dirtyLine, $cleanLine, originalCaretPosition, attributeManager, rep);
 
   var splitPosition = calculateForcedSplitPosition(linesAvailableBeforePageBreak, lineInfo, lineNumberShift);
   if (splitPosition) {
@@ -85,8 +85,8 @@ exports.getForcedSplitInfo = function($dirtyLine, $cleanLine, lineNumberShift, t
   }
 }
 
-exports.getRegularSplitInfo = function($dirtyLine, $cleanLine, lineNumberShift, totalOutterHeight, totalInnerHeight, availableHeightOnPage, attributeManager, rep) {
-  var lineInfo = getLineInfo($dirtyLine, $cleanLine, attributeManager, rep);
+exports.getRegularSplitInfo = function($dirtyLine, $cleanLine, lineNumberShift, totalOutterHeight, totalInnerHeight, availableHeightOnPage, originalCaretPosition, attributeManager, rep) {
+  var lineInfo = getLineInfo($dirtyLine, $cleanLine, originalCaretPosition, attributeManager, rep);
 
   if (canSplit(lineInfo)) {
     var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage(totalOutterHeight, totalInnerHeight, availableHeightOnPage);
@@ -105,10 +105,17 @@ exports.getRegularSplitInfo = function($dirtyLine, $cleanLine, lineNumberShift, 
 
 // Put together information about the line. Use the returned value to move around line information
 // through the functions of this file
-var getLineInfo = function($dirtyLine, $cleanLine, attributeManager, rep) {
+var getLineInfo = function($dirtyLine, $cleanLine, originalCaretPosition, attributeManager, rep) {
   var lineIdBeforeRepagination     = $dirtyLine.attr("id");
   var lineNumberBeforeRepagination = rep.lines.indexOfKey(lineIdBeforeRepagination);
   var lineHasMarker                = lineHasMarkerExcludingSplitLineMarkers(lineNumberBeforeRepagination, attributeManager);
+  // If line has no marker, it means it lost its "*", so we need to decrement column number
+  // (assuming caret was on a split line before repagination started)
+  // WARNING: this logic to calculate caret column might need a revision if we use caretAtColumn
+  // for something else other than checking if caret was originally on split position
+  // (see calculateSplitPosition())
+  var caretAtColumn = lineHasMarker ? originalCaretPosition[1] : originalCaretPosition[1] - 1;
+  var caretIsAtLine = (originalCaretPosition[0] === lineNumberBeforeRepagination);
 
   return {
     // properties always needed
@@ -117,6 +124,8 @@ var getLineInfo = function($dirtyLine, $cleanLine, attributeManager, rep) {
     lineHasMarker: lineHasMarker,
     typeOfLine: utils.typeOf($dirtyLine),
     $originalLine: $dirtyLine,
+    caretIsAtLine: caretIsAtLine,
+    caretAtColumn: caretAtColumn,
     // properties needed only on some scenarios. Use functions instead of calculated property to
     // postpone calculation until (and if) needed
     typeOfPreviousLine: function() {
@@ -181,13 +190,15 @@ var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift
   var position = findPositionWhereLineCanBeSplit(innerLineNumber, lineInfo, method);
   // if found position to split, return its split attributes
   if (position) {
-    var afterLastSentenceThatFits = [lineNumber, position.column];
-    var moreAndContdInfo          = getMoreAndContdInfo(lineInfo);
+    var afterLastSentenceThatFits  = [lineNumber, position.column];
+    var moreAndContdInfo           = getMoreAndContdInfo(lineInfo);
+    var caretOriginallyOnFirstHalf = (lineInfo.caretIsAtLine && lineInfo.caretAtColumn <= position.column);
 
     return {
       heightAfterPageBreak: position.heightAfterPageBreak,
       addMoreAndContd: moreAndContdInfo,
       start: afterLastSentenceThatFits,
+      caretOriginallyOnFirstHalf: caretOriginallyOnFirstHalf,
     };
   }
 }
@@ -480,19 +491,29 @@ var lineHasMarkerExcludingSplitLineMarkers = function(lineNumber, attributeManag
   return countAttribsWithMarker > 0;
 }
 
-exports.savePageBreak = function(splitPosition, pageNumber, attributeManager, editorInfo) {
-  splitLine(splitPosition, attributeManager, editorInfo);
+exports.savePageBreak = function(splitPosition, pageNumber, attributeManager, editorInfo, rep) {
+  splitLine(splitPosition, attributeManager, editorInfo, rep);
   addPageBreakBetweenLines(splitPosition, pageNumber, attributeManager);
 }
 
-var splitLine = function(splitPosition, attributeManager, editorInfo) {
-  var lineNumber = splitPosition.start[0];
-  var typeOfLineToBeSplit = utils.getLineTypeOf(lineNumber, attributeManager);
+var splitLine = function(splitPosition, attributeManager, editorInfo, rep) {
+  var splitLine                        = splitPosition.start[0];
+  var splitColumn                      = splitPosition.start[1];
+  var typeOfLineToBeSplit              = utils.getLineTypeOf(splitLine, attributeManager);
+  var caretIsOriginallyAtSplitPosition = (rep.selStart[0] === splitPosition.start[0] && rep.selStart[1] === splitPosition.start[1]);
 
   editorInfo.ace_replaceRange(splitPosition.start, splitPosition.start, "\n");
 
+  // if caret was at the same place of the split before we started repaginating the script,
+  // the insertion of "\n" above moves caret to the beginning of 2nd half of split.
+  // If originally caret was on 1st half, we need to move it back one position
+  if (caretIsOriginallyAtSplitPosition && splitPosition.caretOriginallyOnFirstHalf) {
+    var endOfFirstHalf = [splitLine, splitColumn];
+    editorInfo.ace_performSelectionChange(endOfFirstHalf, endOfFirstHalf);
+  }
+
   // we need to make sure both halves of the split line have the same type
-  setTypeOfSecondHalfOfLine(lineNumber, typeOfLineToBeSplit, attributeManager);
+  setTypeOfSecondHalfOfLine(splitLine, typeOfLineToBeSplit, attributeManager);
 }
 
 var setTypeOfSecondHalfOfLine = function(lineNumber, lineType, attributeManager) {

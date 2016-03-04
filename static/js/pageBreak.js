@@ -162,8 +162,11 @@ var repaginate = function(context) {
   // HACK: make sure we have the latest changes made by the user, as pagination is a delayed process
   synchronizeEditorWithUserChanges(context.editorInfo);
 
+  // need to keep caret original position so we don't mess up with it on pagination
+  var originalCaretPosition = context.rep.selStart.slice();
+
   cleanPagination(context);
-  continuePagination(context);
+  continuePagination(context, originalCaretPosition);
 
   paginationLinesChanged.reset(context.rep);
 
@@ -196,13 +199,13 @@ var cleanPageBreaks = function(callstack, attributeManager, rep, editorInfo) {
   });
 }
 
-var continuePagination = function(context) {
+var continuePagination = function(context, originalCaretPosition) {
   var callstack        = context.callstack;
   var attributeManager = context.documentAttributeManager;
   var rep              = context.rep;
   var editorInfo       = context.editorInfo;
 
-  var pageBreaksInfo = calculatePageBreaks(attributeManager, rep);
+  var pageBreaksInfo = calculatePageBreaks(originalCaretPosition, attributeManager, rep);
 
   savePageBreaks(pageBreaksInfo, callstack, attributeManager, rep, editorInfo);
 }
@@ -237,7 +240,7 @@ var nextPageNumber = function() {
   return maxPageNumber + 1;
 }
 
-var calculatePageBreaks = function(attributeManager, rep) {
+var calculatePageBreaks = function(originalCaretPosition, attributeManager, rep) {
   var maxPageHeight = getMaxPageHeight();
   var pageBreaks = [];
 
@@ -270,7 +273,7 @@ var calculatePageBreaks = function(attributeManager, rep) {
       // A: yes, so check if line can be split or belongs to a block
 
       var availableHeightOnPage = maxPageHeight - currentPageHeight;
-      var splitElementInfo = paginationSplit.getRegularSplitInfo($currentLine, $clonedLine, lineNumberShift, lineHeight, lineInnerHeight, availableHeightOnPage, attributeManager, rep);
+      var splitElementInfo = paginationSplit.getRegularSplitInfo($currentLine, $clonedLine, lineNumberShift, lineHeight, lineInnerHeight, availableHeightOnPage, originalCaretPosition, attributeManager, rep);
       // can we split current line?
       if (splitElementInfo) {
         // restart counting page height again
@@ -291,7 +294,7 @@ var calculatePageBreaks = function(attributeManager, rep) {
         var availableHeightOnPage = maxPageHeight;
 
         // calculate where line needs to be split
-        var forcedSplitElementInfo = paginationSplit.getForcedSplitInfo($currentLine, $clonedLine, lineNumberShift, lineHeight, lineInnerHeight, availableHeightOnPage, attributeManager, rep);
+        var forcedSplitElementInfo = paginationSplit.getForcedSplitInfo($currentLine, $clonedLine, lineNumberShift, lineHeight, lineInnerHeight, availableHeightOnPage, originalCaretPosition, attributeManager, rep);
 
         // restart counting page height again
         currentPageHeight = forcedSplitElementInfo.heightAfterPageBreak;
@@ -342,7 +345,7 @@ var splitPageBreak = function(splitInfo) {
   return {
     data: splitInfo,
     save: function(data, pageNumber, attributeManager, rep, editorInfo) {
-      paginationSplit.savePageBreak(data, pageNumber, attributeManager, editorInfo);
+      paginationSplit.savePageBreak(data, pageNumber, attributeManager, editorInfo, rep);
     }
   };
 }

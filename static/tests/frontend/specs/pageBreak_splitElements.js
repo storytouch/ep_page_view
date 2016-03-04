@@ -760,30 +760,74 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
 
       context("and user adds text to the end of 1st half of split line", function() {
-        beforeEach(function(done) {
-          this.timeout(6000);
+        var theText;
 
+        beforeEach(function(done) {
           var inner$ = helper.padInner$;
 
           // write something on fist half of last split line
           var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
           $firstHalfOfSplitLine.sendkeys("{selectall}{rightarrow}");
-          $firstHalfOfSplitLine.sendkeys("something");
+          $firstHalfOfSplitLine.sendkeys(theText);
 
-          var textBeforePageBreak = sentences[0];
-
-          // wait for pagination to finish
-          helper.waitFor(function() {
-            var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
-            return $firstHalfOfSplitLine.text() === textBeforePageBreak;
-          }, 3000).done(done);
+          done();
         });
 
-        it("keeps caret at the end of inserted text", function(done) {
-          var secondHalfOfSplitLine = function() { return helper.padInner$("div:has(splitPageBreak)").last().next() };
-          var textAfterInsertedText = "something".length;
+        context("and text inserted is short", function() {
+          var textBeforePageBreak;
 
-          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+          before(function() {
+            theText = "0.";
+            textBeforePageBreak = sentences[0] + theText;
+          });
+
+          beforeEach(function(done) {
+            this.timeout(6000);
+
+            var inner$ = helper.padInner$;
+
+            helper.waitFor(function() {
+              var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
+              return $firstHalfOfSplitLine.text() === textBeforePageBreak;
+            }, 3000).done(function() {
+              // there's no way to check if pagination was done or not. We need to force a timeout here
+              setTimeout(done, 1000);
+            });
+          });
+
+          it("keeps caret at the end of inserted text", function(done) {
+            var firstHalfOfSplitLine = function() { return helper.padInner$("div:has(splitPageBreak)").last() };
+            var textAfterInsertedText = textBeforePageBreak.length;
+
+            splitElements.testCaretIsOn(firstHalfOfSplitLine, textAfterInsertedText, false, done);
+          });
+        });
+
+        context("and text inserted is long", function() {
+          before(function() {
+            theText = "something";
+          });
+
+          beforeEach(function(done) {
+            this.timeout(6000);
+
+            var inner$ = helper.padInner$;
+
+            var textBeforePageBreak = sentences[0];
+
+            // wait for pagination to finish
+            helper.waitFor(function() {
+              var $firstHalfOfSplitLine = inner$("div:has(splitPageBreak)").last();
+              return $firstHalfOfSplitLine.text() === textBeforePageBreak;
+            }, 3000).done(done);
+          });
+
+          it("keeps caret at the end of inserted text", function(done) {
+            var secondHalfOfSplitLine = function() { return helper.padInner$("div:has(splitPageBreak)").last().next() };
+            var textAfterInsertedText = theText.length;
+
+            splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+          });
         });
       });
 
