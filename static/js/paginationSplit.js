@@ -49,7 +49,7 @@ var MINIMUM_LINES_AFTER_PAGE_BREAK = {
 var CHARS_PER_LINE = {
   character: 38,
   dialogue: 35,
-  transition: 15,
+  transition: 16,
   parenthetical: 25,
 };
 

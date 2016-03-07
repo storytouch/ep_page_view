@@ -1278,7 +1278,7 @@ describe("ep_script_page_view - page break on split elements", function() {
     context("and there is room on previous page for minimum number of lines (1)", function() {
       before(function() {
         linesBeforeTargetElement = GENERALS_PER_PAGE - 2;
-        var line1 = utils.buildStringWithLength(14, "1") + ".";
+        var line1 = utils.buildStringWithLength(15, "1") + ".";
         // build sentence that is ~1.25 line long (when split it needs 2 lines)
         var line2 = utils.buildStringWithLength(20, "2") + ".";
         sentences = [line1, line2];
@@ -1298,8 +1298,8 @@ describe("ep_script_page_view - page break on split elements", function() {
 
       context("but next page will have less then the minimum lines (2) of an transition", function() {
         before(function() {
-          var line1 = utils.buildStringWithLength(14, "1") + ".";
-          var line2 = utils.buildStringWithLength(14, "2") + ".";
+          var line1 = utils.buildStringWithLength(15, "1") + ".";
+          var line2 = utils.buildStringWithLength(15, "2") + ".";
           sentences = [line1, line2];
           lastLineText = line1 + line2;
         });
@@ -1315,12 +1315,12 @@ describe("ep_script_page_view - page break on split elements", function() {
       before(function() {
         // give enough space for first 3 lines of transition to fit on first page
         linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
-        var line1 = utils.buildStringWithLength(14, "1") + ".";
-        var line2 = utils.buildStringWithLength(14, "2") + ".";
-        var line3 = utils.buildStringWithLength(14, "3") + ".";
-        var line4 = utils.buildStringWithLength(14, "4") + ".";
-        var line5 = utils.buildStringWithLength(14, "5") + ".";
-        var line6 = utils.buildStringWithLength(14, "6") + ".";
+        var line1 = utils.buildStringWithLength(15, "1") + ".";
+        var line2 = utils.buildStringWithLength(15, "2") + ".";
+        var line3 = utils.buildStringWithLength(15, "3") + ".";
+        var line4 = utils.buildStringWithLength(15, "4") + ".";
+        var line5 = utils.buildStringWithLength(15, "5") + ".";
+        var line6 = utils.buildStringWithLength(15, "6") + ".";
         sentences = [line1, line2, line3, line4, line5, line6];
         lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
       });
@@ -1357,7 +1357,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // page 1: GENERALS_PER_PAGE lines;
         // page 2: 2 lines;
         var numberOfInnerLines = GENERALS_PER_PAGE+2;
-        var charsPerLine = 15;
+        var charsPerLine = 16;
         sentences = splitElements.buildLongLine(numberOfInnerLines, charsPerLine);
         lastLineText = sentences.join("");
         transitionText = lastLineText;
@@ -1374,7 +1374,7 @@ describe("ep_script_page_view - page break on split elements", function() {
           // page 1: GENERALS_PER_PAGE-1 lines;
           // page 2: 2 lines;
           var numberOfInnerLines = GENERALS_PER_PAGE+1;
-          var charsPerLine = 15;
+          var charsPerLine = 16;
           sentences = splitElements.buildLongLine(numberOfInnerLines, charsPerLine);
           lastLineText = sentences.join("");
           transitionText = lastLineText;
@@ -1443,7 +1443,7 @@ describe("ep_script_page_view - page break on split elements", function() {
           linesBeforeTargetElement = 0;
 
           var numberOfInnerLines = GENERALS_PER_PAGE+1;
-          // fill 9 out of 15 columns of each inner line
+          // fill 9 out of 16 columns of each inner line
           var charsPerLine = 9;
           sentences = splitElements.buildLongLine(numberOfInnerLines, charsPerLine);
           lastLineText = sentences.join("");
