@@ -210,6 +210,7 @@ var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift
 //
 // Return column where line should be split (char that should be 1st on next page)
 var findPositionWhereLineCanBeSplit = function(innerLineNumber, lineInfo, findColumnAfterPageBreak) {
+  var regularLineHeight           = utils.getRegularLineHeight();
   var targetInnerLine             = innerLineNumber;
   var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor(lineInfo);
   var minimumLinesAfterPageBreak  = getMinimumLinesAfterPageBreakFor(lineInfo);
@@ -217,25 +218,40 @@ var findPositionWhereLineCanBeSplit = function(innerLineNumber, lineInfo, findCo
   var columnAfterPageBreak = findColumnAfterPageBreak(targetInnerLine, lineInfo);
   // only can split element if it has a sentence that fits the available height. If no sentence
   // marker is found, columnAfterPageBreak is 0
-  while (columnAfterPageBreak && targetInnerLine >= minimumLinesBeforePageBreak) {
+  while (columnAfterPageBreak) {
+    // found at least one sentence to try to split. Now needs to check if it satisfies the constraints
+    // of minimum lines before and after page break for this line type
+    var textBeforePageBreak   = lineInfo.lineText.substring(0, columnAfterPageBreak);
+    var heightBeforePageBreak = calculateHeightToFitText(textBeforePageBreak, lineInfo);
+    var linesBeforePageBreak  = parseInt(heightBeforePageBreak / regularLineHeight);
+
+    if (linesBeforePageBreak < minimumLinesBeforePageBreak) {
+      // did not find any place to split line that would keep minimum lines before page break.
+      // Don't need to keep looking.
+      break;
+    }
+
+    // columnAfterPageBreak satisfies minimum lines before page break. Now need to check if it
+    // satisfies minimum lines after page break too
     var textAfterPageBreak   = lineInfo.lineText.substring(columnAfterPageBreak);
     var heightAfterPageBreak = calculateHeightToFitText(textAfterPageBreak, lineInfo);
-    var linesAfterPageBreak  = parseInt(heightAfterPageBreak / utils.getRegularLineHeight());
+    var linesAfterPageBreak  = parseInt(heightAfterPageBreak / regularLineHeight);
 
     if (linesAfterPageBreak >= minimumLinesAfterPageBreak) {
-      // need an adjustment on split position if lineHasMarker, because line will have "*"
-      // on the beginning of line
+      // found an inner line that satisfies all conditions. Now need to prepare data to be returned.
+
       if (lineInfo.lineHasMarker) {
+        // need an adjustment on split position if lineHasMarker, because line will have "*"
+        // on the beginning of line
         columnAfterPageBreak++;
       }
 
-      // found an inner line that satisfies all conditions
       return {
         column: columnAfterPageBreak,
         heightAfterPageBreak: heightAfterPageBreak
       };
     } else {
-      // this line did not satisfy conditions; try previous one
+      // this inner line did not satisfy conditions; try previous one
       targetInnerLine--;
       columnAfterPageBreak = findColumnAfterPageBreak(targetInnerLine, lineInfo);
     }

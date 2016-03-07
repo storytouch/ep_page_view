@@ -992,6 +992,21 @@ describe("ep_script_page_view - page break on split elements", function() {
           utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
+
+      context("but previous page will have less then the minimum lines (2) of an action", function() {
+        before(function() {
+          var line1 = utils.buildStringWithLength(60, "1") + ".";
+          var line2 = utils.buildStringWithLength(60, "2");
+          var line3 = utils.buildStringWithLength(60, "3");
+          sentences = [line1, line2, line3];
+          lastLineText = line1 + line2 + line3;
+        });
+
+        it("moves the entire action for next page", function(done) {
+          var wholeElement = lastLineText;
+          utils.testNonSplitPageBreakIsOn(wholeElement, done);
+        });
+      });
     });
 
     context("and there is room on previous page for more than the minimum line (+2)", function() {
