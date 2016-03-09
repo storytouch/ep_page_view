@@ -39,7 +39,7 @@ var getMergeInfo = function(editorInfo, attributeManager, evt, rep) {
       return {
         line: currentLine-1,
         charsOnFirstHalf: 1,
-        charsOnSecondHalf: 0,
+        charsOnSecondHalf: 1, // remove also the '*'
       };
     } else if (evt.keyCode === DELETE && caretPosition.endOfLine && atFirstHalfOfSplit) {
       return {

@@ -95,8 +95,8 @@ describe("ep_script_page_view - page break main tests", function() {
         beforeEach(function() {
           var inner$ = helper.padInner$;
 
-          // "PAGE2................(...)"
-          veryLongLineText = "PAGE2" + utils.buildStringWithLength(62 - "PAGE2".length, ".");
+          // "PAGE2.........(...). "
+          veryLongLineText = "PAGE2" + utils.buildStringWithLength(61 - "PAGE2".length, ".") + " ";
 
           // replaces last line with a very long text (> 61 chars, so it is
           // displayed in 2 lines on the editor)
@@ -114,7 +114,7 @@ describe("ep_script_page_view - page break main tests", function() {
             return $linesWithPageBreaks.length === 1;
           }).done(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            expect($linesWithPageBreaks.text()).to.be(veryLongLineText);
+            expect(utils.cleanText($linesWithPageBreaks.text())).to.be(veryLongLineText);
 
             done();
           });

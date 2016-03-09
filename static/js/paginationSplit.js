@@ -26,6 +26,9 @@ var FIRST_HALF_TAG                     = "split_first_half";
 var FIRST_HALF_WITH_MORE_AND_CONTD_TAG = "split_with_more_and_contd_first_half";
 var SECOND_HALF_TAG                    = "split_second_half";
 
+var SENTENCE_MARKER_AND_WHITESPACE_REGEX = /^(.*[.?!;]\s+)[^.?!;]*$/;
+var WHITESPACE_REGEX                     = /^(.*\s+)[^\s]*$/;
+
 // number of minimum lines each element needs before a page break so it can be split in two parts
 // (default is 1)
 // exception: if line is a dialogue or parenthetical, and previous line is a character,
@@ -181,8 +184,16 @@ var calculateForcedSplitPosition = function(innerLineNumber, lineInfo, lineNumbe
 }
 // split lines on end-of-sentence
 var calculateRegularSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift) {
-  var method = getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine;
+  var method = getSplitMethodForRegularSplit(lineInfo);
   return calculateSplitPosition(innerLineNumber, lineInfo, lineNumberShift, method);
+}
+var getSplitMethodForRegularSplit = function(lineInfo) {
+  var typeOfLine = lineInfo.typeOfLine;
+  if (typeOfLine === "general" || typeOfLine === "transition") {
+    return getFirstCharAfterLastSentenceMarkerAndWhitespacesOrFullInnerLine;
+  }
+  return getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine;
+
 }
 var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift, method) {
   var lineNumber = lineInfo.lineNumberBeforeRepagination + lineNumberShift;
@@ -269,18 +280,23 @@ var getMoreAndContdInfo = function(lineInfo) {
 }
 
 var getFirstCharAfterEndOfInnerLine = function(innerLineNumber, lineInfo) {
-  var lineHasMarker = lineInfo.lineHasMarker;
-  var fullText = lineInfo.lineText;
-
-  // get text until the end of target inner line
-  var innerLineLength = getInnerLineLengthOf(lineInfo);
-  var endOfTargetLine = innerLineNumber * innerLineLength;
-  var innerLineText   = fullText.substring(0, endOfTargetLine);
-
-  return innerLineText.length;
+  return getFirstCharAfterSeparator(innerLineNumber, lineInfo, true);
 }
 
 var getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine = function(innerLineNumber, lineInfo) {
+  return getFirstCharAfterSeparator(innerLineNumber, lineInfo, false, SENTENCE_MARKER_AND_WHITESPACE_REGEX);
+}
+
+var getFirstCharAfterLastSentenceMarkerAndWhitespacesOrFullInnerLine = function(innerLineNumber, lineInfo) {
+  return getFirstCharAfterSeparator(innerLineNumber, lineInfo, true, WHITESPACE_REGEX);
+}
+
+// Gets position of first char after last occurrence of a separator.
+// Parameters:
+//   - useEndOfInnerLineAsDefault: flag to indicate if should return position of the end of inner line
+//                                 if no separator is found. If false, use 0 as default position.
+//   - regex: the regex to look for the separator
+var getFirstCharAfterSeparator = function(innerLineNumber, lineInfo, useEndOfInnerLineAsDefault, regex) {
   var lineHasMarker = lineInfo.lineHasMarker;
   var fullText = lineInfo.lineText;
 
@@ -289,13 +305,16 @@ var getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine = function(inne
   var endOfTargetLine = innerLineNumber * innerLineLength;
   var innerLineText   = fullText.substring(0, endOfTargetLine);
 
-  // look backwards for the last sentence marker of the text
-  var sentenceMarkerPosition = /^(.*[.?!;]\s*)[^.?!;]*$/.exec(innerLineText);
-  if (sentenceMarkerPosition && sentenceMarkerPosition[1]) {
-    var firstCharAfterMarkerAndWhitespaces = sentenceMarkerPosition[1].length;
-    return firstCharAfterMarkerAndWhitespaces;
+  var firstCharAfterSeparator = useEndOfInnerLineAsDefault ? innerLineText.length : 0;
+  if (regex) {
+    // look backwards for the last separator of the text
+    var separatorPosition = regex.exec(innerLineText);
+    if (separatorPosition && separatorPosition[1]) {
+      firstCharAfterSeparator = separatorPosition[1].length;
+    }
   }
-  return 0;
+
+  return firstCharAfterSeparator;
 }
 
 var getInnerLineLengthOf = function(lineInfo) {

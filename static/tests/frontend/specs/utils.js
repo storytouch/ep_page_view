@@ -26,6 +26,7 @@ ep_script_page_view_test_helper.utils = {
   },
   createScriptWith: function(scriptContent, lastLineText, cb) {
     var inner$ = helper.padInner$;
+    var utils = ep_script_page_view_test_helper.utils;
 
     // set script content
     var $firstLine = inner$("div").first();
@@ -34,7 +35,7 @@ ep_script_page_view_test_helper.utils = {
     // wait for Etherpad to finish processing the lines
     helper.waitFor(function(){
       var $lastLine = inner$("div").last();
-      return $lastLine.text().trim() === lastLineText.trim();
+      return utils.cleanText($lastLine.text()) === lastLineText;
     }, 3000).done(cb);
   },
 
@@ -147,6 +148,10 @@ ep_script_page_view_test_helper.utils = {
     var columnWhereCaretIsOnElement = inner$.document.getSelection().anchorOffset;
 
     return columnWhereCaretIsOnElement;
+  },
+
+  cleanText: function(text) {
+    return text.replace(/\s/gi, " ");
   },
 
   buildStringWithLength: function(length, text) {
@@ -288,7 +293,7 @@ ep_script_page_view_test_helper.utils = {
       var $elementsWithPageBreaksOnTop = utils.linesAfterSplitPageBreaks();
       var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
       var startWithTextAfterPageBreak = new RegExp("^" + textAfterPageBreak);
-      expect($firstPageBreak.text()).to.match(startWithTextAfterPageBreak);
+      expect(utils.cleanText($firstPageBreak.text())).to.match(startWithTextAfterPageBreak);
 
       // verify page number is correct
       var actualPageNumber = utils.pageBreakOfLine($firstPageBreak).attr("data-page-number");

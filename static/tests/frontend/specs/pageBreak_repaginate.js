@@ -33,9 +33,9 @@ describe("ep_script_page_view - repaginate", function() {
       this.timeout(4000);
 
       // insert text on line before page break to make it be 2 inner lines long
-      var fullLine = utils.buildStringWithLength(60, "1") + ".";
+      var fullLine = utils.buildStringWithLength(59, "1") + ". ";
       var $lineBeforePageBreak = utils.linesAfterNonSplitPageBreaks().last().prev();
-      $lineBeforePageBreak.sendkeys("{selectall}{rightarrow}."); // first page will have "general."
+      $lineBeforePageBreak.sendkeys("{selectall}{rightarrow}. "); // first page will have "general. "
       $lineBeforePageBreak.sendkeys(fullLine); // second page will have fullLine
 
       // wait for pagination to be re-run
@@ -46,7 +46,7 @@ describe("ep_script_page_view - repaginate", function() {
       }, 2000).done(function() {
         var $firstLineOfSecondPage = utils.linesAfterSplitPageBreaks().first();
 
-        expect($firstLineOfSecondPage.text()).to.be(fullLine);
+        expect(utils.cleanText($firstLineOfSecondPage.text())).to.be(fullLine);
 
         done();
       });
@@ -57,8 +57,8 @@ describe("ep_script_page_view - repaginate", function() {
     var firstHalfOfSplit, secondHalfOfSplit;
 
     before(function() {
-      firstHalfOfSplit = utils.buildStringWithLength(25, "1") + ".";
-      secondHalfOfSplit = utils.buildStringWithLength(25, "2") + ".";
+      firstHalfOfSplit = utils.buildStringWithLength(24, "1") + ". ";
+      secondHalfOfSplit = utils.buildStringWithLength(24, "2") + ". ";
     });
 
     beforeEach(function(done) {
@@ -100,7 +100,7 @@ describe("ep_script_page_view - repaginate", function() {
         var $lineBeforePageBreak = utils.linesAfterNonSplitPageBreaks().first().prev();
         var expectedLineBeforePageBreak = firstHalfOfSplit + secondHalfOfSplit;
 
-        expect($lineBeforePageBreak.text()).to.be(expectedLineBeforePageBreak);
+        expect(utils.cleanText($lineBeforePageBreak.text())).to.be(expectedLineBeforePageBreak);
 
         done();
       });
@@ -117,7 +117,7 @@ describe("ep_script_page_view - repaginate", function() {
       this.timeout(4000);
 
       var lastLineText = "last general";
-      var firstHalfOfSplit = "I was on second page before line was removed... ";
+      var firstHalfOfSplit = "I'm supposed to be on second page before line is removed... ";
       var secondHalfOfSplit = textToBeOnTopOfSecondPage;
 
       // build script with a general to be removed + page full of generals +

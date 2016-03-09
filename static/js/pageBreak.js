@@ -273,17 +273,8 @@ var calculatePageBreaks = function(originalCaretPosition, attributeManager, rep)
       // A: yes, so check if line can be split or belongs to a block
 
       var availableHeightOnPage = maxPageHeight - currentPageHeight;
-      var splitElementInfo = paginationSplit.getRegularSplitInfo($currentLine, $clonedLine, lineNumberShift, lineHeight, lineInnerHeight, availableHeightOnPage, originalCaretPosition, attributeManager, rep);
-      // can we split current line?
-      if (splitElementInfo) {
-        // restart counting page height again
-        currentPageHeight = splitElementInfo.heightAfterPageBreak;
-
-        // mark element to be split when pagination is done
-        pageBreaks.push(splitPageBreak(splitElementInfo));
-      }
       // is current line longer than a page? (so we need to force its split)
-      else if (lineInnerHeight > maxPageHeight) {
+      if (lineInnerHeight > maxPageHeight) {
         // mark current line to be on top of page when pagination is done
         // (but only if current line is not the first line of script)
         if ($currentLine.prev().length > 0) {
@@ -301,18 +292,28 @@ var calculatePageBreaks = function(originalCaretPosition, attributeManager, rep)
 
         // mark element to be split when pagination is done
         pageBreaks.push(splitPageBreak(forcedSplitElementInfo));
-      }
-      // is it a block of lines? (A block can have only a single line too)
-      else {
-        var blockInfo = paginationBlocks.getBlockInfo($currentLine, lineHeight, lineInnerHeight);
+      } else {
+        var splitElementInfo = paginationSplit.getRegularSplitInfo($currentLine, $clonedLine, lineNumberShift, lineHeight, lineInnerHeight, availableHeightOnPage, originalCaretPosition, attributeManager, rep);
+        // can we split current line?
+        if (splitElementInfo) {
+          // restart counting page height again
+          currentPageHeight = splitElementInfo.heightAfterPageBreak;
 
-        currentPageHeight = blockInfo.blockHeight;
+          // mark element to be split when pagination is done
+          pageBreaks.push(splitPageBreak(splitElementInfo));
+        }
+        // is it a block of lines? (A block can have only a single line too)
+        else {
+          var blockInfo = paginationBlocks.getBlockInfo($currentLine, lineHeight, lineInnerHeight);
 
-        // mark element to be on top of page when pagination is done
-        pageBreaks.push(nonSplitPageBreak(blockInfo.$topOfBlock, rep));
+          currentPageHeight = blockInfo.blockHeight;
 
-        // move $currentLine to end of the block
-        $currentLine = blockInfo.$bottomOfBlock;
+          // mark element to be on top of page when pagination is done
+          pageBreaks.push(nonSplitPageBreak(blockInfo.$topOfBlock, rep));
+
+          // move $currentLine to end of the block
+          $currentLine = blockInfo.$bottomOfBlock;
+        }
       }
     } else {
       // A: no, so simply increase current page height

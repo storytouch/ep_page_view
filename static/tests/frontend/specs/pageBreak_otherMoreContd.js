@@ -17,8 +17,8 @@ describe("ep_script_page_view - other MORE/CONT'D tests", function() {
   context("when first page ends on a dialogue and second page starts on a parenthetical", function() {
     before(function() {
       scriptBuilder = function() {
-        var line1 = utils.buildStringWithLength(24, "1") + ".";
-        var line2 = utils.buildStringWithLength(24, "2") + ".";
+        var line1 = utils.buildStringWithLength(23, "1") + ". ";
+        var line2 = utils.buildStringWithLength(23, "2") + ". ";
         var longParenthetical = line1 + line2;
         lastLineText = "last general";
 
@@ -40,8 +40,8 @@ describe("ep_script_page_view - other MORE/CONT'D tests", function() {
   context("when first page ends on a parenthetical and second page starts on a dialogue", function() {
     before(function() {
       scriptBuilder = function() {
-        var line1 = utils.buildStringWithLength(34, "1") + ".";
-        var line2 = utils.buildStringWithLength(34, "2") + ".";
+        var line1 = utils.buildStringWithLength(33, "1") + ". ";
+        var line2 = utils.buildStringWithLength(33, "2") + ". ";
         var longDialogue = line1 + line2;
         lastLineText = "last general";
 

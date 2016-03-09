@@ -31,10 +31,10 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
     before(function() {
       linesBeforeBlock = GENERALS_PER_PAGE - 4;
-      var line1 = utils.buildStringWithLength(60, "1") + ".";
-      var line2 = utils.buildStringWithLength(60, "2") + ".";
-      var line3 = utils.buildStringWithLength(60, "3") + ".";
-      var line4 = utils.buildStringWithLength(60, "4") + ".";
+      var line1 = utils.buildStringWithLength(59, "1") + ". ";
+      var line2 = utils.buildStringWithLength(59, "2") + ". ";
+      var line3 = utils.buildStringWithLength(59, "3") + ". ";
+      var line4 = utils.buildStringWithLength(59, "4") + ". ";
       sentences = [line1, line2, line3, line4];
       lastLineText = line1 + line2 + line3 + line4;
 
@@ -268,7 +268,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
         lastLineText = "last element";
         buildBlock = function() {
           // 4-line parenthetical, so it is long enough to be split if necessary
-          var fullLine = utils.buildStringWithLength(24, "1") + ".";
+          var fullLine = utils.buildStringWithLength(23, "1") + ". ";
           var parentheticalText = fullLine + fullLine + fullLine + fullLine;
 
           var lineBeforeLastOfPreviousPage = utils.heading("heading");
@@ -296,7 +296,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
         lastLineText = "last element";
         buildBlock = function() {
           // 4-line parenthetical, so it is long enough to be split if necessary
-          var fullLine = utils.buildStringWithLength(24, "1") + ".";
+          var fullLine = utils.buildStringWithLength(23, "1") + ". ";
           parentheticalText = fullLine + fullLine + fullLine + fullLine;
 
           var lineBeforeLastOfPreviousPage = utils.character("character");
@@ -520,7 +520,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
         lastLineText = "last element";
         buildBlock = function() {
           // 4-line dialogue, so it is long enough to be split if necessary
-          var fullLine = utils.buildStringWithLength(34, "1") + ".";
+          var fullLine = utils.buildStringWithLength(33, "1") + ". ";
           var dialogueText = fullLine + fullLine + fullLine + fullLine;
 
           var lineBeforeLastOfPreviousPage = utils.heading("heading");
@@ -548,7 +548,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
         lastLineText = "last element";
         buildBlock = function() {
           // 4-line dialogue, so it is long enough to be split if necessary
-          var fullLine = utils.buildStringWithLength(34, "1") + ".";
+          var fullLine = utils.buildStringWithLength(33, "1") + ". ";
           dialogueText = fullLine + fullLine + fullLine + fullLine;
 
           var lineBeforeLastOfPreviousPage = utils.character("character");

@@ -40,7 +40,7 @@ describe("ep_script_page_view - height of line numbers", function() {
       // build script with character => dialogue on first page, and parenthetical => dialogue
       // on second page (to have MORE/CONT'D)
       var lastLineText = "last dialogue";
-      var fullLine = utils.buildStringWithLength(24, "1") + ".";
+      var fullLine = utils.buildStringWithLength(23, "1") + ". ";
       // 2-line parenthetical
       var parentheticalText = fullLine + fullLine;
 
@@ -73,7 +73,7 @@ describe("ep_script_page_view - height of line numbers", function() {
 
       // build script with last line split between pages
       var lastLineText = "last line";
-      var fullLine = utils.buildStringWithLength(60, "1") + ".";
+      var fullLine = utils.buildStringWithLength(59, "1") + ". ";
 
       var pageFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE-1);
       var splitGeneral = utils.general(fullLine + fullLine);
@@ -101,7 +101,7 @@ describe("ep_script_page_view - height of line numbers", function() {
 
       // build script with very long parenthetical at the end of first page
       var lastLineText = "last line";
-      var fullLine = utils.buildStringWithLength(24, "1") + ".";
+      var fullLine = utils.buildStringWithLength(23, "1") + ". ";
       // 4-line parenthetical (to be split)
       var parentheticalText = fullLine + fullLine + fullLine + fullLine;
 
