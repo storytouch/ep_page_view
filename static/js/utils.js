@@ -3,6 +3,7 @@ var Security = require('ep_etherpad-lite/static/js/security');
 var EMPTY_CHARACTER_NAME = "empty";
 
 exports.SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
+var SCRIPT_ELEMENTS_SELECTOR = exports.SCRIPT_ELEMENTS_SELECTOR;
 
 exports.CLONED_ELEMENTS_CLASS = "cloned";
 
@@ -12,16 +13,18 @@ exports.getPadOuter = function() {
  padOuter = padOuter || $('iframe[name="ace_outer"]').contents();
  return padOuter;
 }
+var getPadOuter = exports.getPadOuter;
 
 // Easier access to inner pad
 var padInner;
 exports.getPadInner = function() {
- padInner = padInner || exports.getPadOuter().find('iframe[name="ace_inner"]').contents();
+ padInner = padInner || getPadOuter().find('iframe[name="ace_inner"]').contents();
  return padInner;
 }
+var getPadInner = exports.getPadInner;
 
 exports.typeOf = function($line) {
-  var $innerElement = $line.find(exports.SCRIPT_ELEMENTS_SELECTOR);
+  var $innerElement = $line.find(SCRIPT_ELEMENTS_SELECTOR);
   var tagName = $innerElement.prop("tagName") || "general"; // general does not have inner tag
 
   return tagName.toLowerCase();
@@ -36,7 +39,7 @@ exports.getLineHeight = function($targetLine) {
 
   // margin top/bottom are defined on script elements, not on div, so we need to get the
   // inner element
-  var $innerElement = $targetLine.find(exports.SCRIPT_ELEMENTS_SELECTOR);
+  var $innerElement = $targetLine.find(SCRIPT_ELEMENTS_SELECTOR);
 
   // general have no inner tag, so get height from targetLine
   var isGeneral = $innerElement.length === 0;
@@ -59,14 +62,15 @@ exports.getRegularLineHeight = function() {
 }
 
 var calculateRegularLineHeight = function() {
-  var $editor = exports.getPadInner().find("#innerdocbody");
+  var $editor = getPadInner().find("#innerdocbody");
   return getFloatValueOfCSSProperty($editor, "line-height");
 }
 
-var getFloatValueOfCSSProperty = function($element, property){
+exports.getFloatValueOfCSSProperty = function($element, property){
   var valueString = $element.css(property);
   return parseFloat(valueString);
 }
+var getFloatValueOfCSSProperty = exports.getFloatValueOfCSSProperty;
 
 exports.findCharacterNameOf = function($line) {
   // navigate up until find an element that is not a dialogue or parenthetical
@@ -104,7 +108,7 @@ exports.buildPageBreakWithMoreAndContd = function(cls, tagName) {
   var characterName = extractCharacterNameFromClass(cls);
 
   extraHTML = '<more></more>';
-  extraHTML += exports.buildSimplePageBreak(cls, tagName);
+  extraHTML += buildSimplePageBreak(cls, tagName);
   // Bug fix: contenteditable=false avoids caret being placed on CONT'D line
   extraHTML += '<contdLine contenteditable="false"><contd data-character="' + characterName + '"></contd></contdLine>';
 
@@ -115,6 +119,7 @@ exports.buildSimplePageBreak = function(cls, tagName) {
   var pageNumber = extractPageNumberFromClass(cls);
   return '<'+tagName+' data-page-number="'+pageNumber+'"></'+tagName+'>';
 }
+var buildSimplePageBreak = exports.buildSimplePageBreak;
 
 var extractCharacterNameFromClass = function(cls) {
   var regex  = "(?:^| )characterName:<([^>]*)>"; // "characterName:<character name>"

@@ -84,21 +84,12 @@
     border-radius: 0px 5px 0 0;
   }
 
-  .outerPV{
+/* WARNING: page width is not defined on CSS anymore due to an issue with small zooms.
+            See fixSmallZooms.js for more details.
+  .outerPV {
     width:641px !important;
   }
-
-/* Apparently not being used...
-  .pageViewOn {
-    width:641px;
-    margin-left:-102px;
-    height:40px;
-    background-color:#f7f7f7;
-    margin-top:77px;
-    margin-bottom:77px;
-  }
 */
-
   /* TODO do we need this? */
   #innerdocbody.breakPages div.cloned {
     display: hidden;
@@ -178,8 +169,7 @@
   #innerdocbody.breakPages div splitPageBreak:before,
   #innerdocbody.breakPages div nonSplitPageBreak:before {
     content: "";
-    width:641px;
-    margin-right:-79px;
+    margin-right:-85px;
     height:40px;
     background-color:#f7f7f7;
     margin-top:77px;
@@ -188,6 +178,11 @@
     border-top:1px dotted #aaa;
     float: right;
     cursor: default;
+
+    /* WARNING: page break width is not defined on CSS anymore due to an issue with small zooms.
+                See fixSmallZooms.js for more details.
+    width:641px;
+    */
 
     /* might be useful for printing: */
   /*  page-break-after: always;
@@ -236,7 +231,7 @@
 
   .outerBackground{
     background-color:#f7f7f7 !important;
-    width: 641px;
+    width: 641px; /* this is overwritten by ep_comments */
     margin:auto;
     border:none;
   }
@@ -253,20 +248,14 @@
     min-height:1500px;
   }
 
-/* Apparently not being used...
-  .innerPVDiv{
-    margin-left:100px;
-    margin-right:100px;
-  }
-*/
   #innerdocbody .innerPV{
     min-height:1500px;
     padding-top:77px !important;
   }
 
-  #innerdocbody > div{
-    margin-left:117px !important;
-    margin-right:78px !important;
+  #innerdocbody > div {
+    margin-left:117px !important; /* WARNING: if you change this here, you need to change on fixSmallZooms.js too */
+    margin-right:78px !important; /* WARNING: if you change this here, you need to change on fixSmallZooms.js too */
   }
 
   .pageBreakFullScreen{
@@ -288,11 +277,5 @@
   .outerBackground{
     background-color:#6e6e !important;
   }
-
-  #innerdocbody > div {
-    margin-left:117px;
-    margin-right:78px;
-  }
-
 }
 

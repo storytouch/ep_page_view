@@ -2,6 +2,7 @@ var _, $, jQuery;
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 var padcookie = require('ep_etherpad-lite/static/js/pad_cookie').padcookie;
+var fixSmallZooms = require('./fixSmallZooms');
 
 exports.postAceInit = function(hook, context){
   var $outerIframeContents = $('iframe[name="ace_outer"]').contents();
@@ -104,6 +105,8 @@ exports.postAceInit = function(hook, context){
   });
 
   if(!clientVars.plugins.plugins) clientVars.plugins.plugins = {};
+
+  fixSmallZooms.init();
 };
 
 
