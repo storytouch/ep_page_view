@@ -1643,8 +1643,7 @@ describe("ep_script_page_view - page break on split elements", function() {
               return $splitPageBreaks.length > 0;
             }, 2000).done(function() {
               // verify 2nd half is two-lines high
-              // (we need to get height of the span because the div will have page break + line -- so it's harder to test)
-              var secondHalfHeight = helper.padInner$("div span").last().outerHeight();
+              var secondHalfHeight = inner$("div").last().outerHeight();
               var twoLinesHigh = 2 * utils.regularLineHeight();
 
               expect(secondHalfHeight).to.be(twoLinesHigh);
@@ -1671,9 +1670,9 @@ describe("ep_script_page_view - page break on split elements", function() {
           };
         });
 
-        // this test is for the CSS of CONT'D (see comments about ellipsis on CSS file)
+        // this test is for the CSS of CONT'D (see comments about ellipsis on CSS file and fixSmallZoom.js)
         it("only uses one line to display character name and CONT'D", function(done) {
-          this.timeout(4000);
+          this.timeout(6000);
           var inner$ = helper.padInner$;
 
           // wait for pagination to be finished

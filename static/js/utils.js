@@ -57,20 +57,22 @@ exports.getLineHeightWithoutMargins = function($targetLine) {
 // cache regularLineHeight
 var regularLineHeight;
 exports.getRegularLineHeight = function() {
-  regularLineHeight = regularLineHeight || calculateRegularLineHeight();
+  regularLineHeight = regularLineHeight || getHeightOfOneLine();
   return regularLineHeight;
 }
 
-var calculateRegularLineHeight = function() {
-  var $editor = getPadInner().find("#innerdocbody");
-  return getFloatValueOfCSSProperty($editor, "line-height");
+exports.updateRegularLineHeight = function() {
+  regularLineHeight = getHeightOfOneLine();
 }
 
-exports.getFloatValueOfCSSProperty = function($element, property){
-  var valueString = $element.css(property);
-  return parseFloat(valueString);
+exports.getWidthOfOneChar = function() {
+  return getPadOuter().find("#linemetricsdiv").get(0).getBoundingClientRect().width;
 }
-var getFloatValueOfCSSProperty = exports.getFloatValueOfCSSProperty;
+
+exports.getHeightOfOneLine = function() {
+  return getPadOuter().find("#linemetricsdiv").get(0).getBoundingClientRect().height;
+}
+var getHeightOfOneLine = exports.getHeightOfOneLine;
 
 exports.findCharacterNameOf = function($line) {
   // navigate up until find an element that is not a dialogue or parenthetical

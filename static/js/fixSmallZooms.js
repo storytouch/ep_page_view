@@ -4,21 +4,42 @@
 
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var utils = require('./utils');
+var DEFAULT_MARGINS = require('ep_script_elements/static/js/fixSmallZooms').DEFAULT_MARGINS;
 
-var DEFAULT_MARGIN_LEFT  = 117; // WARNING: if you change this here, you need to change on the CSS too
-var DEFAULT_MARGIN_RIGHT = 78;  // WARNING: if you change this here, you need to change on the CSS too
+// Letter
+// var REGULAR_LINES_PER_PAGE = 54;
+// A4
+var REGULAR_LINES_PER_PAGE = 58;
+
+var DEFAULT_MARGIN_LEFT  = 117;
+var DEFAULT_MARGIN_RIGHT = 78;
 var DEFAULT_MARGIN       = DEFAULT_MARGIN_LEFT + DEFAULT_MARGIN_RIGHT;
 
-var DEFAULT_PAGE_WIDTH = 641; // WARNING: if you change this here, you need to change on the CSS too
+var DEFAULT_PAGE_WIDTH = 641;
 var DEFAULT_CHAR_WIDTH = 7.2; // this was calculated using 100% zoom on Chrome
 var DEFAULT_TEXT_WIDTH = DEFAULT_PAGE_WIDTH - DEFAULT_MARGIN;
 
+// values needed for MORE/CONT'D update
+var DEFAULT_MORE_RIGHT_MARGIN = 242;
+var DEFAULT_CONTD_RIGHT_MARGIN = 222;
+var DEFAULT_CONTD_WIDTH = 64;
+var DEFAULT_CONTD_WIDTH_PTBR = 58;
+// WARNING: if you change any of these values, you need to change on the CSS of page breaks too
+var DEFAULT_PAGE_BREAK_HEIGHT = 40;
+var DEFAULT_PAGE_BREAK_MARGING_TOP = 77;
+var DEFAULT_PAGE_BREAK_MARGING_BOTTOM = 77;
+var DEFAULT_PAGE_BREAK_BORDER_TOP = 1;
+var DEFAULT_PAGE_BREAK_BORDER_BOTTOM = 1;
+var DEFAULT_PAGE_BREAK_TOTAL_HEIGHT = DEFAULT_PAGE_BREAK_HEIGHT +  DEFAULT_PAGE_BREAK_MARGING_TOP + DEFAULT_PAGE_BREAK_MARGING_BOTTOM + DEFAULT_PAGE_BREAK_BORDER_TOP +  DEFAULT_PAGE_BREAK_BORDER_BOTTOM;
+
 exports.init = function() {
   waitForResizeToFinishThenCall(function() {
-    updatePageWidth();
+    updateWidthsAndMargins();
+    updatePageHeight();
   });
 
-  updatePageWidth();
+  updateWidthsAndMargins();
+  updatePageHeight();
 }
 
 // Copied form ep_comments_page
@@ -31,8 +52,15 @@ var waitForResizeToFinishThenCall = function(callback) {
   });
 }
 
-var updatePageWidth = function() {
-  var newPageWidth = calculatePageWidth();
+var updateWidthsAndMargins = function() {
+  var newCharProportion = getCharProportion();
+
+  updatePageWidth(newCharProportion);
+  updateMoreContdStyles(newCharProportion);
+}
+
+var updatePageWidth = function(newCharProportion) {
+  var newPageWidth = calculatePageWidth(newCharProportion);
 
   // this was moved from CSS file to here, so it can have a dynamic value
   var pageStyle      = ".outerPV { width: " + newPageWidth + "px !important; }";
@@ -47,15 +75,95 @@ var updatePageWidth = function() {
   utils.getPadInner().find("head").append("<style>" + pageBreakStyle + "</style>");
 }
 
-// Use char proportion to find width needed so we always have 61 chars/line for generals
-var calculatePageWidth = function() {
-  var oneCharWidth = getWidthOfOneChar();
+var updateMoreContdStyles = function(newCharProportion) {
+  var styles = [];
+
+  var characterLeftMargin  = newCharProportion * DEFAULT_MARGINS.character.horizontal.left;
+  var characterRightMargin = newCharProportion * DEFAULT_MARGINS.character.horizontal.right;
+  var moreRightMargin      = newCharProportion * DEFAULT_MORE_RIGHT_MARGIN;
+  var contdRightMargin     = newCharProportion * DEFAULT_CONTD_RIGHT_MARGIN;
+  var contdWidth           = newCharProportion * DEFAULT_CONTD_WIDTH;
+  var contdWidthPortuguese = newCharProportion * DEFAULT_CONTD_WIDTH_PTBR;
+  var moreContdLinesHeight = newCharProportion * utils.getHeightOfOneLine() * 2; // one line for MORE, another for CONT'D
+
+  // align with character left margin
+  styles.push("div more:before, div contdLine { margin-left: " + characterLeftMargin + "px; }");
+
+  // need this to move pad text down (and not be on the right of MORE/CONT'D)
+  styles.push("div more:before { margin-right: " + moreRightMargin + "px; }");
+  styles.push("div contd:after { margin-right: " + contdRightMargin + "px; }");
+
+  // make CONT'D and character name work together
+  var contdLineMaxWidthStyle =
+    "max-width: calc(100% - " +
+                     characterLeftMargin  + "px - " +
+                     characterRightMargin + "px + " +
+                     contdRightMargin     + "px); "
+  var contdLineMinWidthStyle =
+    "min-width: calc(100% - " +
+                     characterLeftMargin  + "px - " +
+                     characterRightMargin + "px); "
+  var contdRightMarginStyle = "margin-right: -" + contdRightMargin + "px; "
+  styles.push("div contdLine { " + contdLineMaxWidthStyle + contdLineMinWidthStyle + contdRightMarginStyle + " }");
+
+  // display ellipsis when character name is too long
+  var characterOnContdMaxWidth =
+    "max-width: calc(100% - " +
+                     contdWidth       + "px - " +
+                     contdRightMargin + "px); "
+  var characterOnContdMaxWidthPortuguese =
+    "max-width: calc(100% - " +
+                     contdWidthPortuguese + "px - " +
+                     contdRightMargin     + "px); "
+  styles.push("div contd:before { " + characterOnContdMaxWidth + " }");
+  styles.push("div contd:after { " + contdWidth + " }");
+  // override width because label in pt-br is shorter
+  styles.push("#innerdocbody[lang=pt-br] div contd:before { " + characterOnContdMaxWidthPortuguese + " }");
+  styles.push("#innerdocbody[lang=pt-br] div contd:after { " + contdWidthPortuguese + " }");
+
+  // leave room for page break on line at the end of the page
+  var pageBreakHeight =
+    "padding-bottom: calc(" +
+                     DEFAULT_PAGE_BREAK_TOTAL_HEIGHT + "px + " +
+                     moreContdLinesHeight            + "px) !important; "
+  styles.push("div.beforePageBreak.withMoreAndContd { " + pageBreakHeight + " }");
+
+  // add all styles to editor
+  utils.getPadInner().find("head").append("<style>" + styles.join("\n") + "</style>");
+}
+
+var getCharProportion = function() {
+  var oneCharWidth = utils.getWidthOfOneChar();
   var charProportion = oneCharWidth / DEFAULT_CHAR_WIDTH;
+
+  return charProportion;
+}
+
+// Use char proportion to find width needed so we always have 61 chars/line for generals
+var calculatePageWidth = function(charProportion) {
   var widthNeededToFit61CharsWithCurrentZoom = charProportion * DEFAULT_TEXT_WIDTH;
 
   return DEFAULT_MARGIN + widthNeededToFit61CharsWithCurrentZoom;
 }
 
-var getWidthOfOneChar = function() {
-  return utils.getPadOuter().find("#linemetricsdiv").get(0).getBoundingClientRect().width;
+// Use line proportion to find height needed so we always have REGULAR_LINES_PER_PAGE generals/page
+var calculatePageHeight = function() {
+  var oneLineHeight = utils.getHeightOfOneLine();
+  var pageHeightNeeded = oneLineHeight * REGULAR_LINES_PER_PAGE;
+
+  return pageHeightNeeded;
+}
+
+// cache maxPageHeight
+var maxPageHeight;
+exports.getMaxPageHeight = function() {
+  maxPageHeight = maxPageHeight || calculatePageHeight();
+  return maxPageHeight;
+}
+
+var updatePageHeight = function() {
+  maxPageHeight = calculatePageHeight();
+
+  // update cached value for line height
+  utils.updateRegularLineHeight();
 }

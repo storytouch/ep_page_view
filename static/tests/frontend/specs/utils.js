@@ -401,7 +401,9 @@ ep_script_page_view_test_helper.utils = {
         var actualLineNumberHeight = targetLineNumberPosition - originOfLineNumbers;
         var actualLineOnPadHeight  = targetLineOnPadPosition - originOfLineOnPad;
 
-        return actualLineNumberHeight === actualLineOnPadHeight;
+        // allow values to have up to 2px of difference
+        var heightsDifference = Math.abs(actualLineNumberHeight - actualLineOnPadHeight);
+        return heightsDifference >= 0 && heightsDifference <= 2;
       }, 3000).done(done);
     });
   },

@@ -1,3 +1,9 @@
+/* Etherpad does not set #linemetricsdiv with the same line-height as the editor, and we need
+   this in order to calculate page breaks when zoom is not 100% */
+#linemetricsdiv {
+  line-height: 16px;
+}
+
 .innerPV{
   background-color:#fff;
 }
@@ -84,12 +90,6 @@
     border-radius: 0px 5px 0 0;
   }
 
-/* WARNING: page width is not defined on CSS anymore due to an issue with small zooms.
-            See fixSmallZooms.js for more details.
-  .outerPV {
-    width:641px !important;
-  }
-*/
   /* TODO do we need this? */
   #innerdocbody.breakPages div.cloned {
     display: hidden;
@@ -110,26 +110,7 @@
     cursor: default;
   }
 
-  /* align with character left margin */
-  #innerdocbody.breakPages div more:before,
-  #innerdocbody.breakPages div contdLine {
-    margin-left: 152px;
-  }
-  /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
-  #innerdocbody.breakPages div more:before {
-    margin-right: 242px;
-  }
-  #innerdocbody.breakPages div contd:after {
-    margin-right: 222px;
-  }
-
-  #innerdocbody.breakPages div contdLine {
-    /* 152px === character margin left; 16px === character margin right; -222px === CONT'D right margin */
-    max-width: calc(100% - 152px - 16px + 222px);
-    min-width: calc(100% - 152px - 16px);
-    margin-right: -222px;
-  }
-
+  /* WARNING there are other styles for MORE and CONT'D dynamically set on fixSmallZooms.js */
   #innerdocbody.breakPages div more:before {
     content: "(MORE)";
   }
@@ -142,45 +123,41 @@
     text-transform: uppercase;
 
     /* the following attributes are necessary to display ellipsis when character name is too long */
-    max-width: calc(100% - 64px - 222px); /* 64px: CONT'D width; 222px: CONT'D right margin */
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
+    /* WARNING this is set on fixSmallZooms.js
+    max-width: calc(100% - 64px - 222px); */ /*64px: CONT'D width; 222px: CONT'D right margin */
   }
-  /* override width because label in pt-br is shorter */
-  #innerdocbody.breakPages[lang=pt-br] div contd:before {
-    max-width: calc(100% - 58px - 222px);
-  }
-
   #innerdocbody.breakPages div contd:after {
     content: "(CONT'D)";
 
     /* the following attributes are necessary to display ellipsis when character name is too long */
-    width: 64px;
     text-align: right;
+    /* WARNING this is set on fixSmallZooms.js
+    width: 64px;*/
   }
   #innerdocbody.breakPages[lang=pt-br] div contd:after {
     content: "(CONT.)";
-
-    /* override width because label in pt-br is shorter */
-    width: 58px;
   }
 
   #innerdocbody.breakPages div splitPageBreak:before,
   #innerdocbody.breakPages div nonSplitPageBreak:before {
     content: "";
     margin-right:-85px;
-    height:40px;
     background-color:#f7f7f7;
+    float: right;
+    cursor: default;
+    /* WARNING if any of these values is changed, you need to change div.beforePageBreak style and
+       fixSmallZooms.js too */
+    height:40px;
     margin-top:77px;
     margin-bottom:77px;
     border-bottom:1px dotted #aaa;
     border-top:1px dotted #aaa;
-    float: right;
-    cursor: default;
 
-    /* WARNING: page break width is not defined on CSS anymore due to an issue with small zooms.
-                See fixSmallZooms.js for more details.
+    /* WARNING page break width is not defined on CSS anymore due to an issue with small zooms.
+               See fixSmallZooms.js for more details.
     width:641px;
     */
 
@@ -195,10 +172,6 @@
     /* All values of calc are from page break */
     /* 40px: height; 77px: margin-top and margin-bottom; 1px: border-top and border-bottom */
     padding-bottom: calc(40px + 77px + 77px + 1px + 1px);
-  }
-  #innerdocbody.breakPages div.beforePageBreak.withMoreAndContd {
-    /* 16px: #innerdocbody line-height */
-    padding-bottom: calc(40px + 77px + 77px + 1px + 1px + 16px + 16px);
   }
 
   /* hide ")" from 1st half of split parenthetical: */
@@ -254,8 +227,8 @@
   }
 
   #innerdocbody > div {
-    margin-left:117px !important; /* WARNING: if you change this here, you need to change on fixSmallZooms.js too */
-    margin-right:78px !important; /* WARNING: if you change this here, you need to change on fixSmallZooms.js too */
+    margin-left:117px !important; /* WARNING if you change this here, you need to change on fixSmallZooms.js too */
+    margin-right:78px !important; /* WARNING if you change this here, you need to change on fixSmallZooms.js too */
   }
 
   .pageBreakFullScreen{

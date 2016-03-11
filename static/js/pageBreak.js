@@ -8,16 +8,12 @@ var paginationNonSplit     = require('./paginationNonSplit');
 var paginationPageNumber   = require('./paginationPageNumber');
 var paginationLinesChanged = require('./paginationLinesChanged');
 var undoElementType        = require('./undoElementType');
+var getMaxPageHeight       = require('./fixSmallZooms').getMaxPageHeight;
 
 var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
 var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
 
 var CLONED_ELEMENTS_SELECTOR = "." + utils.CLONED_ELEMENTS_CLASS;
-
-// Letter
-// var REGULAR_LINES_PER_PAGE = 54;
-// A4
-var REGULAR_LINES_PER_PAGE = 58;
 
 exports.aceRegisterBlockElements = function(hook, context) {
   return _.union(paginationSplit.blockElements(), paginationNonSplit.blockElements());
@@ -349,13 +345,6 @@ var splitPageBreak = function(splitInfo) {
       paginationSplit.savePageBreak(data, pageNumber, attributeManager, editorInfo, rep);
     }
   };
-}
-
-// cache maxPageHeight
-var maxPageHeight;
-var getMaxPageHeight = function() {
-  maxPageHeight = maxPageHeight || (REGULAR_LINES_PER_PAGE * utils.getRegularLineHeight());
-  return maxPageHeight;
 }
 
 var reachedEndOfPad = function($currentLine) {
