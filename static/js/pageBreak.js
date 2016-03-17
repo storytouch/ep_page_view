@@ -367,16 +367,19 @@ var firstLineAfterPageBreak = function() {
 
 var cloneLine = function($targetLine, $lastLine) {
   var $clonedLine = paginationSplit.clonePaginatedLine($targetLine);
+  var lineWasCloned = $clonedLine.find(CLONED_ELEMENTS_SELECTOR).length > 0;
 
-  // make sure cloned lines have all information needed by paginationBlocks
-  paginationBlocks.adjustClonedBlock($clonedLine, $targetLine);
+  if (lineWasCloned) {
+    // make sure cloned lines have all information needed by paginationBlocks
+    paginationBlocks.adjustClonedBlock($clonedLine, $targetLine);
 
-  $clonedLine.insertAfter($lastLine);
+    $clonedLine.insertAfter($lastLine);
+  }
 
   return $clonedLine;
 }
 
 var removeClonedLines = function() {
-  var $clones = utils.getPadInner().find(CLONED_ELEMENTS_SELECTOR).remove();
+  var $clones = utils.getPadInner().find(CLONED_ELEMENTS_SELECTOR);
   $clones.remove();
 }

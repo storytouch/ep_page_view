@@ -587,8 +587,7 @@ exports.lineHasPageBreak = function(lineNumber, attributeManager) {
 }
 
 exports.clonePaginatedLine = function($targetLine) {
-  var $clonedLine = $targetLine.clone();
-  $clonedLine.addClass(utils.CLONED_ELEMENTS_CLASS);
+  var $clonedLine = $targetLine;
 
   // if line is 1st half of split line, join it with next line
   var lineIsFirstHalfOfSplit = $targetLine.find("splitPageBreak").length > 0;
@@ -598,9 +597,15 @@ exports.clonePaginatedLine = function($targetLine) {
     var secondHalfClass = $nextLine.find("split_second_half").attr("class");
     var splitIdOfFirstHalf  = getSplitIdFromClass(firstHalfClass);
     var splitIdOfSecondHalf = getSplitIdFromClass(secondHalfClass);
+
     var linesAreHalvesOfSameSplit = (splitIdOfFirstHalf === splitIdOfSecondHalf);
 
     if (linesAreHalvesOfSameSplit) {
+      // only clone line if need to merge it with its second half of split
+      $clonedLine = $targetLine.clone();
+      $clonedLine.addClass(utils.CLONED_ELEMENTS_CLASS);
+      $clonedLine.attr("id", "");
+
       var mergedContent = $targetLine.text() + $nextLine.text();
       $clonedLine.text(mergedContent);
     }
