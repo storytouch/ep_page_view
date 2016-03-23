@@ -192,7 +192,7 @@ var repaginate = function(context) {
   var startAtLine = Math.max(0, firstLineToPaginate);
 
   var paginationInfo = calculatePageBreaks(startAtLine, originalCaretPosition, attributeManager, rep);
-  var endAtLine = getLastLineNumberWithPageBreak(paginationInfo, rep);
+  var endAtLine = getLineNumberBeforePaginationOfLastPageBreak(paginationInfo, rep);
 
   utils.performNonUnduableEvent(callstack, function() {
     cleanPageBreaks(startAtLine, endAtLine, attributeManager, rep, editorInfo);
@@ -203,7 +203,8 @@ var repaginate = function(context) {
   // it on next cycle
   paginationLinesChanged.reset(rep);
   if (!paginationInfo.done) {
-    var continuePaginationFromLine = endAtLine + 1;
+    var endAtLineAfterClean = getLineNumberAfterPaginationOfLastPageBreak(paginationInfo, rep);
+    var continuePaginationFromLine = endAtLineAfterClean + 1;
     // this avoids an infinite loop when next pagination cycle starts (we always look
     // REPAGINATION_LINE_SHIFT lines back to start paginating)
     continuePaginationFromLine += REPAGINATION_LINE_SHIFT;
@@ -226,7 +227,7 @@ var cleanPageBreaks = function(startAtLine, endAtLine, attributeManager, rep, ed
 }
 
 var savePageBreaks = function(pageBreaksInfo, attributeManager, rep, editorInfo) {
-  var initialPageNumber = nextPageNumber(pageBreaksInfo);
+  var initialPageNumber = nextPageNumber(pageBreaksInfo, rep);
   for (var i = pageBreaksInfo.length - 1; i >= 0; i--) {
     var pageNumber = initialPageNumber + i;
 
@@ -239,14 +240,15 @@ var savePageBreaks = function(pageBreaksInfo, attributeManager, rep, editorInfo)
   undoElementType.fix(rep, attributeManager);
 }
 
-var nextPageNumber = function(pageBreaksInfo) {
+var nextPageNumber = function(pageBreaksInfo, rep) {
   // if pad does not have any page break before content being paginated, start from 1
   var maxPageNumber = 1;
 
   var firstPageBreakInfo = pageBreaksInfo[0];
   if (firstPageBreakInfo) {
     // find page breaks that will not be modified by this pagination
-    var $lineOfFirstPageBreakInfo = firstPageBreakInfo.$line;
+    var firstLineWithPageBreak = firstPageBreakInfo.lineNumberAfterClean;
+    var $lineOfFirstPageBreakInfo = $(rep.lines.atIndex(firstLineWithPageBreak).lineNode);
     var $linesWithUnchangedPageBreaks = $lineOfFirstPageBreakInfo.prevAll(DIV_WITH_PAGE_BREAK);
 
     if ($linesWithUnchangedPageBreaks.length > 0) {
@@ -364,7 +366,8 @@ var nonSplitPageBreak = function($line, lineNumberShift, rep) {
   var nonSplitInfo = paginationNonSplit.getNonSplitInfo($line, lineNumberShift, rep);
   return {
     data: nonSplitInfo,
-    $line: $line,
+    lineNumberBeforeClean: utils.getLineNumberFromDOMLine($line, rep),
+    lineNumberAfterClean: nonSplitInfo.lineNumberAfterClean,
     save: function(data, pageNumber, attributeManager, rep, editorInfo) {
       paginationNonSplit.savePageBreak(data, pageNumber, attributeManager);
     }
@@ -373,7 +376,8 @@ var nonSplitPageBreak = function($line, lineNumberShift, rep) {
 var splitPageBreak = function(splitInfo, $line, rep) {
   return {
     data: splitInfo,
-    $line: $line,
+    lineNumberBeforeClean: utils.getLineNumberFromDOMLine($line, rep),
+    lineNumberAfterClean: splitInfo.lineNumberAfterClean,
     save: function(data, pageNumber, attributeManager, rep, editorInfo) {
       paginationSplit.savePageBreak(data, pageNumber, attributeManager, editorInfo, rep);
     }
@@ -381,8 +385,8 @@ var splitPageBreak = function(splitInfo, $line, rep) {
 }
 
 // returns line number of last line that will receive a page break, or last number of pad
-// if pagination is done
-var getLastLineNumberWithPageBreak = function(paginationInfo, rep) {
+// if pagination is done. Line number refers to pad BEFORE pagination cleanup
+var getLineNumberBeforePaginationOfLastPageBreak = function(paginationInfo, rep) {
   var lastLineWithPageBreak;
 
   if (paginationInfo.done) {
@@ -391,7 +395,23 @@ var getLastLineNumberWithPageBreak = function(paginationInfo, rep) {
   } else {
     var pageBreaksInfo = paginationInfo.pageBreaksInfo;
     var lastPageBreakInfo = pageBreaksInfo[pageBreaksInfo.length - 1];
-    lastLineWithPageBreak = utils.getLineNumberFromDOMLine(lastPageBreakInfo.$line, rep);
+    lastLineWithPageBreak = lastPageBreakInfo.lineNumberBeforeClean;
+  }
+
+  return lastLineWithPageBreak;
+}
+// returns line number of last line that received a page break, or last number of pad
+// if pagination is done. Line number refers to pad AFTER pagination cleanup
+var getLineNumberAfterPaginationOfLastPageBreak = function(paginationInfo, rep) {
+  var lastLineWithPageBreak;
+
+  if (paginationInfo.done) {
+    var totalLines = rep.lines.length() - 1;
+    lastLineWithPageBreak = totalLines;
+  } else {
+    var pageBreaksInfo = paginationInfo.pageBreaksInfo;
+    var lastPageBreakInfo = pageBreaksInfo[pageBreaksInfo.length - 1];
+    lastLineWithPageBreak = lastPageBreakInfo.lineNumberAfterClean;
   }
 
   return lastLineWithPageBreak;

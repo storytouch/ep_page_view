@@ -76,11 +76,11 @@ exports.getNonSplitInfo = function($line, lineNumberShift, rep) {
   var $targetLine = $line.prev();
   // some lines before $targetLine might be split lines that would be merged on pagination,
   // so we need to shift line number to address that
-  var lineNumber = utils.getLineNumberFromDOMLine($targetLine, rep) + lineNumberShift;
+  var lineNumberAfterClean = utils.getLineNumberFromDOMLine($targetLine, rep) + lineNumberShift;
   var moreAndContdInfo = getMoreAndContdInfo($targetLine);
 
   return {
-    lineNumber: lineNumber,
+    lineNumberAfterClean: lineNumberAfterClean,
     addMoreAndContd: moreAndContdInfo,
   };
 }
@@ -98,7 +98,7 @@ var getMoreAndContdInfo = function($line) {
 }
 
 exports.savePageBreak = function(nonSplitInfo, pageNumber, attributeManager) {
-  var lineWithPageBreak = nonSplitInfo.lineNumber;
+  var lineWithPageBreak = nonSplitInfo.lineNumberAfterClean;
 
   var attributeName = PAGE_BREAKS_ATTRIB;
   var attributeValue = true;

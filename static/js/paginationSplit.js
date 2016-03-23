@@ -196,18 +196,19 @@ var getSplitMethodForRegularSplit = function(lineInfo) {
 
 }
 var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift, method) {
-  var lineNumber = lineInfo.lineNumberBeforeRepagination + lineNumberShift;
+  var lineNumberAfterClean = lineInfo.lineNumberBeforeRepagination + lineNumberShift;
 
   var position = findPositionWhereLineCanBeSplit(innerLineNumber, lineInfo, method);
   // if found position to split, return its split attributes
   if (position) {
-    var afterLastSentenceThatFits  = [lineNumber, position.column];
+    var afterLastSentenceThatFits  = [lineNumberAfterClean, position.column];
     var moreAndContdInfo           = getMoreAndContdInfo(lineInfo);
     var caretOriginallyOnFirstHalf = (lineInfo.caretIsAtLine && lineInfo.caretAtColumn <= position.column);
 
     return {
       heightAfterPageBreak: position.heightAfterPageBreak,
       addMoreAndContd: moreAndContdInfo,
+      lineNumberAfterClean: lineNumberAfterClean,
       start: afterLastSentenceThatFits,
       caretOriginallyOnFirstHalf: caretOriginallyOnFirstHalf,
     };
