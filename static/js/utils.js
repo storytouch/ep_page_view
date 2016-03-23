@@ -2,10 +2,10 @@ var Security = require('ep_etherpad-lite/static/js/security');
 
 var EMPTY_CHARACTER_NAME = "empty";
 
-exports.SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
-var SCRIPT_ELEMENTS_SELECTOR = exports.SCRIPT_ELEMENTS_SELECTOR;
+var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
 
 exports.CLONED_ELEMENTS_CLASS = "cloned";
+var CLONED_ELEMENTS_CLASS = exports.CLONED_ELEMENTS_CLASS;
 
 // Easier access to outer pad
 var padOuter;
@@ -152,4 +152,40 @@ exports.getLineNumberFromDOMLine = function($line, rep) {
 
 exports.nodeHasMoreAndContd = function($node) {
   return $node.find("more").length > 0;
+}
+
+exports.setTextOfLine = function($targetLine, text) {
+  var $innerTarget = $targetLine.find(SCRIPT_ELEMENTS_SELECTOR);
+
+  var isGeneral = $innerTarget.length === 0;
+  if (isGeneral) {
+    // general has no inner tag, so use the whole div
+    $targetLine.text(text);
+  } else {
+    $innerTarget.text(text);
+  }
+}
+
+exports.createCleanCopyOf = function($targetLine, text) {
+  var $innerTarget = $targetLine.find(SCRIPT_ELEMENTS_SELECTOR);
+  var innerHtml;
+
+  var isGeneral = $innerTarget.length === 0;
+  if (isGeneral) {
+    // general has no inner tag, so use only the text
+    innerHtml = text;
+  } else {
+    var tag = $innerTarget.get(0).tagName.toLowerCase();
+    innerHtml = "<" + tag + ">" + text + "</" + tag + ">";
+  }
+
+  return $("<div>" + innerHtml + "</div>");
+}
+
+exports.cloneLine = function($targetLine) {
+  var $clonedLine = $targetLine.clone();
+  $clonedLine.addClass(CLONED_ELEMENTS_CLASS);
+  $clonedLine.attr("id", "");
+
+  return $clonedLine;
 }

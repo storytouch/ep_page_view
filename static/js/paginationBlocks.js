@@ -131,9 +131,9 @@ var buildBlockWithTwoPreviousLines = function(blockInfo, currentLineHeight, $pre
 
 // copy 2 previous lines + next line to have all lines needed for getBlockInfo()
 exports.adjustClonedBlock = function($clonedLine, $targetLine) {
-  var $cloneOfNextLine           = paginationSplit.clonePaginatedLine($targetLine.next());
-  var $cloneOfPreviousLine       = paginationSplit.clonePaginatedLine($targetLine.prev());
-  var $cloneOfLineBeforePrevious = paginationSplit.clonePaginatedLine($targetLine.prev().prev());
+  var $cloneOfNextLine           = utils.cloneLine($targetLine.next());
+  var $cloneOfPreviousLine       = utils.cloneLine($targetLine.prev());
+  var $cloneOfLineBeforePrevious = utils.cloneLine($targetLine.prev().prev());
 
   $cloneOfNextLine.insertAfter($clonedLine);
   $cloneOfPreviousLine.insertBefore($clonedLine);

@@ -326,22 +326,12 @@ var getInnerLineLengthOf = function(lineInfo) {
 var calculateHeightToFitText = function(text, lineInfo) {
   // create a clone to know the height needed
   var $originalLine = lineInfo.$originalLine;
-  var $theClone = $originalLine.clone();
-  var $innerClone = $theClone.find(utils.SCRIPT_ELEMENTS_SELECTOR);
+  var $theClone = utils.createCleanCopyOf($originalLine, text);
 
   // parentheticals need this to calculate line height without any "()"
   $theClone.addClass("clone");
 
-  // set the text, so we can measure the height it needs
-  var isGeneral = $innerClone.length === 0;
-  if (isGeneral) {
-    // general has no inner tag, so use the whole div
-    $theClone.text(text);
-  } else {
-    $innerClone.text(text);
-  }
-
-  var height = $theClone.appendTo($originalLine).height();
+  var height = $theClone.insertAfter($originalLine).height();
   $theClone.remove();
 
   return height;
@@ -455,12 +445,11 @@ exports.blockElements = function() {
   return [FIRST_HALF_TAG, FIRST_HALF_WITH_MORE_AND_CONTD_TAG, SECOND_HALF_TAG];
 }
 
-exports.cleanPageBreaks = function(startAtLine, attributeManager, rep, editorInfo) {
-  var totalLines = rep.lines.length();
+exports.cleanPageBreaks = function(startAtLine, endAtLine, attributeManager, rep, editorInfo) {
   // this loop MUST be from bottom to top! If the direction of the loop needs to be changed, it
   // is necessary to change the value of lineNumberShift every time a line is split
   // (on pageBreak.js, function calculatePageBreaks())
-  for (var lineNumber = totalLines - 1; lineNumber >= startAtLine; lineNumber--) {
+  for (var lineNumber = endAtLine; lineNumber >= startAtLine; lineNumber--) {
     // remove marker(s) of a split line
     if (exports.lineIsFirstHalfOfSplit(lineNumber, attributeManager)) {
       mergeLines(lineNumber, rep, attributeManager, editorInfo);
@@ -589,27 +578,35 @@ exports.lineHasPageBreak = function(lineNumber, attributeManager) {
 exports.clonePaginatedLine = function($targetLine) {
   var $clonedLine = $targetLine;
 
-  // if line is 1st half of split line, join it with next line
-  var lineIsFirstHalfOfSplit = $targetLine.find("splitPageBreak").length > 0;
+  // only clone line if need to merge it with its second half of split
+  var fullTextOfLine = fullTextOfSplitLine($targetLine);
+  var lineNeedsToBeCloned = (fullTextOfLine !== $targetLine.text());
+  if (lineNeedsToBeCloned) {
+    $clonedLine = utils.cloneLine($targetLine);
+    utils.setTextOfLine($clonedLine, fullTextOfLine);
+  }
+
+  return $clonedLine;
+}
+
+var fullTextOfSplitLine = function($targetLine) {
+  var fullText = $targetLine.text();
+
+  var lineIsFirstHalfOfSplit = $targetLine.find(PAGE_BREAK_TAG).length > 0;
   if (lineIsFirstHalfOfSplit) {
     var $nextLine = $targetLine.next();
-    var firstHalfClass  = $targetLine.find("split_first_half, split_with_more_and_contd_first_half").attr("class");
-    var secondHalfClass = $nextLine.find("split_second_half").attr("class");
+    var firstHalfClass  = $targetLine.find(FIRST_HALF_TAG + "," + FIRST_HALF_WITH_MORE_AND_CONTD_TAG).attr("class");
+    var secondHalfClass = $nextLine.find(SECOND_HALF_TAG).attr("class");
     var splitIdOfFirstHalf  = getSplitIdFromClass(firstHalfClass);
     var splitIdOfSecondHalf = getSplitIdFromClass(secondHalfClass);
 
     var linesAreHalvesOfSameSplit = (splitIdOfFirstHalf === splitIdOfSecondHalf);
 
     if (linesAreHalvesOfSameSplit) {
-      // only clone line if need to merge it with its second half of split
-      $clonedLine = $targetLine.clone();
-      $clonedLine.addClass(utils.CLONED_ELEMENTS_CLASS);
-      $clonedLine.attr("id", "");
-
-      var mergedContent = $targetLine.text() + $nextLine.text();
-      $clonedLine.text(mergedContent);
+      // if line is 1st half of split line, join it with next line
+      fullText += $nextLine.text();
     }
   }
 
-  return $clonedLine;
+  return fullText;
 }

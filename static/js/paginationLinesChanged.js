@@ -37,6 +37,10 @@ exports.markLineAsChanged = function(lineNumber) {
   }
 }
 
+exports.hasLinesChanged = function() {
+  return linesChanged.lines.size > 0;
+}
+
 exports.minLineChanged = function() {
   return _.min(Array.from(linesChanged.lines));
 }

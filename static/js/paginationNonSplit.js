@@ -51,9 +51,8 @@ exports.blockElements = function() {
   return ['line_with_page_break'];
 }
 
-exports.cleanPageBreaks = function(startAtLine, attributeManager, rep) {
-  var totalLines = rep.lines.length();
-  for (var lineNumber = totalLines - 1; lineNumber >= startAtLine; lineNumber--) {
+exports.cleanPageBreaks = function(startAtLine, endAtLine, attributeManager) {
+  for (var lineNumber = endAtLine; lineNumber >= startAtLine; lineNumber--) {
     if (exports.lineHasPageBreak(lineNumber, attributeManager)) {
       removePageBreak(lineNumber, attributeManager);
     }
@@ -70,12 +69,14 @@ var removePageBreak = function(lineNumber, attributeManager) {
   attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
 }
 
-exports.getNonSplitInfo = function($line, rep) {
+exports.getNonSplitInfo = function($line, lineNumberShift, rep) {
   // Bug fix: if we place page breaks before the element, caret will start moving alone
   // when placed on an element immediately after page break; to avoid that, we place page
   // break after the last element of previous page, instead of first element of next page
   var $targetLine = $line.prev();
-  var lineNumber = utils.getLineNumberFromDOMLine($targetLine, rep);
+  // some lines before $targetLine might be split lines that would be merged on pagination,
+  // so we need to shift line number to address that
+  var lineNumber = utils.getLineNumberFromDOMLine($targetLine, rep) + lineNumberShift;
   var moreAndContdInfo = getMoreAndContdInfo($targetLine);
 
   return {
