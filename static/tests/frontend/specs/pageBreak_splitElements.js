@@ -2,7 +2,7 @@ describe("ep_script_page_view - page break on split elements", function() {
   // shortcuts for helper functions
   var utils, splitElements;
   // context-dependent values/functions
-  var linesBeforeTargetElement, buildTargetElement, lastLineText, sentences;
+  var linesBeforeTargetElement, buildTargetElement, targetElementText, sentences;
 
   before(function(){
     utils = ep_script_page_view_test_helper.utils;
@@ -14,9 +14,10 @@ describe("ep_script_page_view - page break on split elements", function() {
       utils.cleanPad(function() {
         var generals      = utils.buildScriptWithGenerals("general", linesBeforeTargetElement);
         var targetElement = buildTargetElement();
-        var script        = generals + targetElement;
+        var lastGeneral   = utils.general("last general")
+        var script        = generals + targetElement + lastGeneral;
 
-        utils.createScriptWith(script, lastLineText, cb);
+        utils.createScriptWith(script, "last general", cb);
       });
     });
     this.timeout(60000);
@@ -31,9 +32,9 @@ describe("ep_script_page_view - page break on split elements", function() {
       var line3 = utils.buildStringWithLength(59, "3") + ". ";
       var line4 = utils.buildStringWithLength(59, "4") + ". ";
       sentences = [line1, line2, line3, line4];
-      lastLineText = line1 + line2 + line3 + line4;
+      targetElementText = line1 + line2 + line3 + line4;
       buildTargetElement = function() {
-        return utils.general(lastLineText);
+        return utils.general(targetElementText);
       };
     });
 
@@ -46,11 +47,12 @@ describe("ep_script_page_view - page break on split elements", function() {
         return $splitElementsWithPageBreaks.length === 1;
       }, 2000).done(function() {
         var $lines = inner$("div");
+        var $targetLine = $lines.last().prev();
         var textOnLastDiv = sentences[1] + sentences[2] + sentences[3];
         var textOnDivBeforeLast = sentences[0];
 
-        expect(utils.cleanText($lines.last().text())).to.be(textOnLastDiv);
-        expect(utils.cleanText($lines.last().prev().text())).to.be(textOnDivBeforeLast);
+        expect(utils.cleanText($targetLine.text())).to.be(textOnLastDiv);
+        expect(utils.cleanText($targetLine.prev().text())).to.be(textOnDivBeforeLast);
 
         done();
       });
@@ -67,7 +69,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       }, 2000).done(function() {
         // create another very long general before the last one, so pagination needs to be re-done
         // (The extra ".prev()" is because we insert a "\n" when line is split between pages)
-        var $threeLinesGeneral = inner$("div").last().prev().prev();
+        var $threeLinesGeneral = inner$("div").last().prev().prev().prev();
         var line1 = utils.buildStringWithLength(59, "A") + ". ";
         var line2 = utils.buildStringWithLength(59, "B") + ". ";
         var line3 = utils.buildStringWithLength(59, "C") + ". ";
@@ -82,9 +84,9 @@ describe("ep_script_page_view - page break on split elements", function() {
           // page break was added to third line of first very long general
           return utils.cleanText($firstPageBreak.text()) === line3;
         }, 3000).done(function() {
-          // now the last line should had been merged back to the original line
-          var $lastLine = inner$("div").last();
-          expect(utils.cleanText($lastLine.text())).to.be(lastLineText);
+          // now the target line should had been merged back to the original line
+          var $targetLine = inner$("div").last().prev();
+          expect(utils.cleanText($targetLine.text())).to.be(targetElementText);
 
           done();
         });
@@ -102,7 +104,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       }, 2000).done(function() {
         // create another very long general before the last one, so pagination needs to be re-done
         // (The extra ".prev()" is because we insert a "\n" when line is split between pages)
-        var $threeLinesGeneral = inner$("div").last().prev().prev();
+        var $threeLinesGeneral = inner$("div").last().prev().prev().prev();
         var line1 = utils.buildStringWithLength(59, "A") + ". ";
         var line2 = utils.buildStringWithLength(59, "B") + ". ";
         var line3 = utils.buildStringWithLength(59, "C") + ". ";
@@ -243,8 +245,8 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
 
       it("splits general between the two pages, and first page has as much lines as it can fit", function(done) {
-        var lastLine = sentences[3];
-        utils.testSplitPageBreakIsOn(lastLine, done);
+        var targetLine = sentences[3];
+        utils.testSplitPageBreakIsOn(targetLine, done);
       });
     });
 
@@ -255,7 +257,7 @@ describe("ep_script_page_view - page break on split elements", function() {
       });
 
       it("moves the entire general for next page", function(done) {
-        var wholeElement = lastLineText;
+        var wholeElement = targetElementText;
         utils.testNonSplitPageBreakIsOn(wholeElement, done);
       });
     });
@@ -266,7 +268,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         linesBeforeTargetElement = GENERALS_PER_PAGE - 2;
         buildTargetElement = function() {
           var generalToBeEdited = utils.general("I'm a general, edit me, please");
-          var twoLinesGeneral = utils.general(lastLineText);
+          var twoLinesGeneral = utils.general(targetElementText);
           return generalToBeEdited + twoLinesGeneral;
         };
       });
@@ -280,14 +282,14 @@ describe("ep_script_page_view - page break on split elements", function() {
           return $splitElementsWithPageBreaks.length === 1;
         }, 2000).done(function() {
           // edit one element
-          var $elementToBeEdited = inner$("div").last().prev();
+          var $elementToBeEdited = inner$("div").last().prev().prev();
           var originalText = $elementToBeEdited.text();
           $elementToBeEdited.sendkeys("{selectall}");
           $elementToBeEdited.sendkeys("Now I'm edited!");
 
           // first UNDO: should revert edition made on previous step
           utils.undo();
-          var $elementToBeEdited = inner$("div").last().prev();
+          var $elementToBeEdited = inner$("div").last().prev().prev();
           expect($elementToBeEdited.text()).to.be(originalText);
 
           // second UNDO: should revert full script creation
@@ -307,9 +309,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         var sentence1 = utils.buildStringWithLength(90, "1") + ". "; // 1.5 line long
         var sentence2 = utils.buildStringWithLength(45, "2") + ". "; // .75 line long
         sentences = [sentence1, sentence2];
-        lastLineText = sentence1 + sentence2;
+        targetElementText = sentence1 + sentence2;
         buildTargetElement = function() {
-          return utils.general(lastLineText);
+          return utils.general(targetElementText);
         };
       });
 
@@ -331,9 +333,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         linesBeforeTargetElement = 2*GENERALS_PER_PAGE - 3;
         var sentence = "This line should be on third page";
         sentences = [sentence];
-        lastLineText = sentence;
+        targetElementText = sentence;
         buildTargetElement = function() {
-          return utils.general(lastLineText);
+          return utils.general(targetElementText);
         };
       });
 
@@ -366,7 +368,7 @@ describe("ep_script_page_view - page break on split elements", function() {
             utils.testSplitPageBreakIsOn(sentence2, function() {
               // 2: verify second page break was added on top of last line
               var pageNumber = 3;
-              utils.testNonSplitPageBreakIsOn(lastLineText, done, pageNumber);
+              utils.testNonSplitPageBreakIsOn(targetElementText, done, pageNumber);
             });
           });
         });
@@ -379,7 +381,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         var sentence1 = utils.buildStringWithLength(45, "1") + ".     ";
         var sentence2 = utils.buildStringWithLength(45, "2") + ". ";
         sentences = [sentence1, sentence2];
-        lastLineText = sentences.join("");
+        targetElementText = sentences.join("");
       });
 
       it("leaves whitespaces on previous page", function(done) {
@@ -394,7 +396,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         var sentence1 = utils.buildStringWithLength(55, "1") + " 1 ";
         var sentence2 = utils.buildStringWithLength(58, "2");
         sentences = [sentence1, sentence2];
-        lastLineText = sentences.join("");
+        targetElementText = sentences.join("");
       });
 
       it("splits line by whitespace", function(done) {
@@ -409,9 +411,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         var sentence1 = utils.buildStringWithLength(61, "1");
         var sentence2 = "2";
         sentences = [sentence1, sentence2];
-        lastLineText = sentence1 + sentence2;
+        targetElementText = sentence1 + sentence2;
         buildTargetElement = function() {
-          return utils.general(lastLineText);
+          return utils.general(targetElementText);
         };
       });
 
@@ -431,9 +433,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line5 = utils.buildStringWithLength(59, "5") + ". ";
         var line6 = utils.buildStringWithLength(59, "6") + ". ";
         sentences = [line1, line2, line3, line4, line5, line6];
-        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+        targetElementText = line1 + line2 + line3 + line4 + line5 + line6;
         buildTargetElement = function() {
-          return utils.general(lastLineText);
+          return utils.general(targetElementText);
         };
       });
 
@@ -468,9 +470,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
         var line1 = "last general";
         sentences = [line1];
-        lastLineText = line1;
+        targetElementText = line1;
         buildTargetElement = function() {
-          return utils.general(lastLineText);
+          return utils.general(targetElementText);
         };
       });
 
@@ -488,15 +490,15 @@ describe("ep_script_page_view - page break on split elements", function() {
         var multiLineText = line1 + line2 + line3 + line4;
 
         // Add a part in bold to be able to select part of the text later
-        var $lineBeforeLast = inner$("div").last().prev();
-        $lineBeforeLast.html("not<b> bold</b>" + veryLongLine);
+        var $targetLine = inner$("div").last().prev().prev();
+        $targetLine.html("not<b> bold</b>" + veryLongLine);
 
         // Replace single-line general by a multi-line general;
         // Select part of 1st and 2nd halves of same split to be able to remove them at the same time.
-        var $partOfLineBeforeLast = inner$("div b").last();
-        $partOfLineBeforeLast.sendkeys("{selectall}");
-        $partOfLineBeforeLast.sendkeys(multiLineText);
-        $partOfLineBeforeLast.sendkeys("{selectall}");
+        var $partOfTargetLine = inner$("div b").last();
+        $partOfTargetLine.sendkeys("{selectall}");
+        $partOfTargetLine.sendkeys(multiLineText);
+        $partOfTargetLine.sendkeys("{selectall}");
 
         // wait for pagination to finish
         helper.waitFor(function() {
@@ -512,12 +514,12 @@ describe("ep_script_page_view - page break on split elements", function() {
             return $nonSplitElementsWithPageBreaks.length === 1;
           }, 2000).done(function() {
             var $lines = inner$("div");
-            var $lastLine = $lines.last();
-            var $lineBeforeLast = $lastLine.prev();
+            var $targetLine = $lines.last().prev();
+            var $lineBeforeTarget = $targetLine.prev();
 
             // last two lines should be "not.....(...)" and "last general"
-            expect($lastLine.text()).to.be("last general");
-            expect(utils.cleanText($lineBeforeLast.text())).to.be("not" + veryLongLine);
+            expect($targetLine.text()).to.be("last general");
+            expect(utils.cleanText($lineBeforeTarget.text())).to.be("not" + veryLongLine);
 
             done();
           });
@@ -534,9 +536,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line3 = "AA" + utils.buildStringWithLength(55, "3") + "ZZ. ";
         var line4 = "AA" + utils.buildStringWithLength(55, "4") + "ZZ. ";
         sentences = [line1, line2, line3, line4];
-        lastLineText = line1 + line2 + line3 + line4;
+        targetElementText = line1 + line2 + line3 + line4;
         buildTargetElement = function() {
-          return utils.general(lastLineText);
+          return utils.general(targetElementText);
         };
       });
 
@@ -586,9 +588,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line3 = "AA" + utils.buildStringWithLength(55, "3") + "ZZ. ";
         var line4 = "AA" + utils.buildStringWithLength(55, "4") + "ZZ. ";
         sentences = [line1, line2, line3, line4];
-        lastLineText = line1 + line2 + line3 + line4;
+        targetElementText = line1 + line2 + line3 + line4;
         buildTargetElement = function() {
-          return utils.general(lastLineText);
+          return utils.general(targetElementText);
         };
       });
 
@@ -643,9 +645,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line3 = utils.buildStringWithLength(56, "3") + ". ";
         var line4 = utils.buildStringWithLength(56, "4") + ". ";
         sentences = [line1, line2, line3, line4];
-        lastLineText = "the end of the pad";
+        targetElementText = "the end of the pad";
         buildTargetElement = function() {
-          return utils.general(line1 + line2 + line3 + line4) + utils.general(lastLineText);
+          return utils.general(line1 + line2 + line3 + line4) + utils.general(targetElementText);
         };
       });
 
@@ -708,23 +710,23 @@ describe("ep_script_page_view - page break on split elements", function() {
 
           var inner$ = helper.padInner$;
 
-          // write something on last line
-          var $lastLine = inner$("div").last();
-          $lastLine.sendkeys("{selectall}{leftarrow}");
-          $lastLine.sendkeys("AAAAAAAAA{enter}BBBBBBBBBBBB");
+          // write something on target line
+          var $targetLine = inner$("div").last().prev();
+          $targetLine.sendkeys("{selectall}{leftarrow}");
+          $targetLine.sendkeys("AAAAAAAAA{enter}BBBBBBBBBBBB");
 
           // wait for changes to be processed and pagination to finish
           helper.waitFor(function() {
-            var $lastLine = inner$("div").last();
-            return $lastLine.text() === "BBBBBBBBBBBB" + lastLineText;
+            var $targetLine = inner$("div").last().prev();
+            return $targetLine.text() === "BBBBBBBBBBBB" + targetElementText;
           }, 3000).done(done);
         });
 
         it("keeps caret at the end of inserted text", function(done) {
-          var lastLine = function() { return helper.padInner$("div").last() };
+          var targetLine = function() { return helper.padInner$("div").last().prev() };
           var textAfterInsertedText = "BBBBBBBBBBBB".length;
 
-          splitElements.testCaretIsOn(lastLine, textAfterInsertedText, true, done);
+          splitElements.testCaretIsOn(targetLine, textAfterInsertedText, true, done);
         });
       });
 
@@ -890,7 +892,7 @@ describe("ep_script_page_view - page break on split elements", function() {
   context("when first line of page is a very long action", function() {
     before(function() {
       buildTargetElement = function() {
-        return utils.action(lastLineText);
+        return utils.action(targetElementText);
       };
     });
 
@@ -902,11 +904,11 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line3 = utils.buildStringWithLength(59, "3") + ". ";
         var line4 = utils.buildStringWithLength(59, "4") + ". ";
         sentences = [line1, line2, line3, line4];
-        lastLineText = line1 + line2 + line3 + line4;
+        targetElementText = line1 + line2 + line3 + line4;
       });
 
       it("moves the entire action for next page", function(done) {
-        var wholeElement = lastLineText;
+        var wholeElement = targetElementText;
         utils.testNonSplitPageBreakIsOn(wholeElement, done);
       });
     });
@@ -918,7 +920,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line1 = utils.buildStringWithLength(75, "1") + ". ";
         var line2 = utils.buildStringWithLength(75, "2") + ". ";
         sentences = [line1, line2];
-        lastLineText = line1 + line2;
+        targetElementText = line1 + line2;
       });
 
       it("splits action between the two pages, and first page has two lines of the action", function(done) {
@@ -934,7 +936,7 @@ describe("ep_script_page_view - page break on split elements", function() {
           var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
           return $splitElementsWithPageBreaks.length === 1;
         }, 2000).done(function() {
-          var $secondHalfOfAction = inner$("div").last();
+          var $secondHalfOfAction = inner$("div").last().prev();
           var $firstHalfOfAction = $secondHalfOfAction.prev();
 
           var secondHalfIsAnAction = $secondHalfOfAction.find("action").length > 0;
@@ -962,15 +964,15 @@ describe("ep_script_page_view - page break on split elements", function() {
             return $splitElementsWithPageBreaks.length === 1;
           }, 2000).done(function() {
             // edit last line of previous page
-            var $lastLineOfFirstPage = inner$("div").last().prev();
+            var $lastLineOfFirstPage = inner$("div").last().prev().prev();
             $lastLineOfFirstPage.sendkeys("{selectall}{rightarrow}");
             $lastLineOfFirstPage.sendkeys("something");
 
             // new content should be moved to next page
-            var newLastLine = "something" + sentences[1];
+            var newTargetLine = "something" + sentences[1];
             helper.waitFor(function() {
-              var $lastLine = inner$("div").last();
-              return utils.cleanText($lastLine.text()) === newLastLine;
+              var $targetLine = inner$("div").last().prev();
+              return utils.cleanText($targetLine.text()) === newTargetLine;
             }, 2000).done(done);
           });
         });
@@ -982,11 +984,11 @@ describe("ep_script_page_view - page break on split elements", function() {
           var line2 = utils.buildStringWithLength(59, "2") + ". ";
           var line3 = utils.buildStringWithLength(59, "3") + ". ";
           sentences = [line1, line2, line3];
-          lastLineText = line1 + line2 + line3;
+          targetElementText = line1 + line2 + line3;
         });
 
         it("moves the entire action for next page", function(done) {
-          var wholeElement = lastLineText;
+          var wholeElement = targetElementText;
           utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
@@ -997,11 +999,11 @@ describe("ep_script_page_view - page break on split elements", function() {
           var line2 = utils.buildStringWithLength(59, "2");
           var line3 = utils.buildStringWithLength(59, "3");
           sentences = [line1, line2, line3];
-          lastLineText = line1 + line2 + line3;
+          targetElementText = line1 + line2 + line3;
         });
 
         it("moves the entire action for next page", function(done) {
-          var wholeElement = lastLineText;
+          var wholeElement = targetElementText;
           utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
@@ -1018,12 +1020,12 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line5 = utils.buildStringWithLength(59, "5") + ". ";
         var line6 = utils.buildStringWithLength(59, "6") + ". ";
         sentences = [line1, line2, line3, line4, line5, line6];
-        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+        targetElementText = line1 + line2 + line3 + line4 + line5 + line6;
       });
 
       it("splits action between the two pages, and first page has as much lines as it can fit", function(done) {
-        var beforeLastLine = sentences[3];
-        utils.testSplitPageBreakIsOn(beforeLastLine, done);
+        var targetLine = sentences[3];
+        utils.testSplitPageBreakIsOn(targetLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of an action", function() {
@@ -1034,8 +1036,8 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
 
         it("splits action between the two pages, and second page keep the minimum lines it needs", function(done) {
-          var beforeLastLine = sentences[4];
-          utils.testSplitPageBreakIsOn(beforeLastLine, done);
+          var targetLine = sentences[4];
+          utils.testSplitPageBreakIsOn(targetLine, done);
         });
       });
     });
@@ -1048,14 +1050,14 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line3 = utils.buildStringWithLength(61, "3");
         var line4 = utils.buildStringWithLength(61, "4");
         sentences = [line1, line2, line3];
-        lastLineText = sentences.join("");
+        targetElementText = sentences.join("");
         buildTargetElement = function() {
-          return utils.action(lastLineText);
+          return utils.action(targetElementText);
         };
       });
 
       it("moves the entire action for next page", function(done) {
-        var wholeElement = lastLineText;
+        var wholeElement = targetElementText;
         utils.testNonSplitPageBreakIsOn(wholeElement, done);
       });
     });
@@ -1083,9 +1085,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line3 = utils.buildStringWithLength(57, "3") + ". ";
         var line4 = utils.buildStringWithLength(57, "4") + ". ";
         sentences = [line1, line2, line3, line4];
-        lastLineText = "the end of the pad";
+        targetElementText = "the end of the pad";
         buildTargetElement = function() {
-          return utils.action(line1 + line2 + line3 + line4) + utils.general(lastLineText);
+          return utils.action(line1 + line2 + line3 + line4) + utils.general(targetElementText);
         };
       });
 
@@ -1151,23 +1153,23 @@ describe("ep_script_page_view - page break on split elements", function() {
 
           var inner$ = helper.padInner$;
 
-          // write something on last line
-          var $lastLine = inner$("div").last();
-          $lastLine.sendkeys("{selectall}{leftarrow}");
-          $lastLine.sendkeys("AAAAAAAAA{enter}BBBBBBBBBBBB");
+          // write something on target line
+          var $targetLine = inner$("div").last().prev();
+          $targetLine.sendkeys("{selectall}{leftarrow}");
+          $targetLine.sendkeys("AAAAAAAAA{enter}BBBBBBBBBBBB");
 
           // wait for changes to be processed and pagination to finish
           helper.waitFor(function() {
-            var $lastLine = inner$("div").last();
-            return $lastLine.text() === "BBBBBBBBBBBB" + lastLineText;
+            var $targetLine = inner$("div").last().prev();
+            return $targetLine.text() === "BBBBBBBBBBBB" + targetElementText;
           }, 3000).done(done);
         });
 
         it("keeps caret at the end of inserted text", function(done) {
-          var lastLine = function() { return helper.padInner$("div").last() };
+          var targetLine = function() { return helper.padInner$("div").last().prev() };
           var textAfterInsertedText = "BBBBBBBBBBBB".length;
 
-          splitElements.testCaretIsOn(lastLine, textAfterInsertedText, true, done);
+          splitElements.testCaretIsOn(targetLine, textAfterInsertedText, true, done);
         });
       });
 
@@ -1289,7 +1291,7 @@ describe("ep_script_page_view - page break on split elements", function() {
   context("when first line of page is a very long transition", function() {
     before(function() {
       buildTargetElement = function() {
-        return utils.transition(lastLineText);
+        return utils.transition(targetElementText);
       };
     });
 
@@ -1300,7 +1302,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // build sentence that is ~1.25 line long (when split it needs 2 lines)
         var line2 = utils.buildStringWithLength(19, "2") + ". ";
         sentences = [line1, line2];
-        lastLineText = line1 + line2;
+        targetElementText = line1 + line2;
       });
 
       it("splits transition between the two pages, and first page has one line of the transition", function(done) {
@@ -1319,11 +1321,11 @@ describe("ep_script_page_view - page break on split elements", function() {
           var line1 = utils.buildStringWithLength(14, "1") + ". ";
           var line2 = utils.buildStringWithLength(14, "2") + ". ";
           sentences = [line1, line2];
-          lastLineText = line1 + line2;
+          targetElementText = line1 + line2;
         });
 
         it("moves the entire transition for next page", function(done) {
-          var wholeElement = lastLineText;
+          var wholeElement = targetElementText;
           utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
@@ -1340,12 +1342,12 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line5 = utils.buildStringWithLength(14, "5") + ". ";
         var line6 = utils.buildStringWithLength(14, "6") + ". ";
         sentences = [line1, line2, line3, line4, line5, line6];
-        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+        targetElementText = line1 + line2 + line3 + line4 + line5 + line6;
       });
 
       it("splits transition between the two pages, and first page has as much lines as it can fit", function(done) {
-        var beforeLastLine = sentences[3];
-        utils.testSplitPageBreakIsOn(beforeLastLine, done);
+        var targetLine = sentences[3];
+        utils.testSplitPageBreakIsOn(targetLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of an transition", function() {
@@ -1356,8 +1358,8 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
 
         it("splits transition between the two pages, and second page keep the minimum lines it needs", function(done) {
-          var beforeLastLine = sentences[4];
-          utils.testSplitPageBreakIsOn(beforeLastLine, done);
+          var targetLine = sentences[4];
+          utils.testSplitPageBreakIsOn(targetLine, done);
         });
       });
     });
@@ -1377,8 +1379,8 @@ describe("ep_script_page_view - page break on split elements", function() {
         var numberOfInnerLines = GENERALS_PER_PAGE+2;
         var charsPerLine = 16;
         sentences = splitElements.buildLongLine(numberOfInnerLines, charsPerLine);
-        lastLineText = sentences.join("");
-        transitionText = lastLineText;
+        targetElementText = sentences.join("");
+        transitionText = targetElementText;
       });
 
       it("splits transition between the two pages, and second page has the last two lines of the transition", function(done) {
@@ -1394,8 +1396,8 @@ describe("ep_script_page_view - page break on split elements", function() {
           var numberOfInnerLines = GENERALS_PER_PAGE+1;
           var charsPerLine = 16;
           sentences = splitElements.buildLongLine(numberOfInnerLines, charsPerLine);
-          lastLineText = sentences.join("");
-          transitionText = lastLineText;
+          targetElementText = sentences.join("");
+          transitionText = targetElementText;
         });
 
         it("splits transition between the two pages, and second page has the last two lines of the transition", function(done) {
@@ -1412,7 +1414,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
           // pagination will split last line, so we need to get only the part that will be on 2nd half
           var sentencesOnLastPage = sentences.slice(GENERALS_PER_PAGE-1);
-          lastLineText = sentencesOnLastPage.join("");
+          targetElementText = sentencesOnLastPage.join("");
         });
 
         it("moves the transition to second page and splits the transition between the two pages", function(done) {
@@ -1434,10 +1436,10 @@ describe("ep_script_page_view - page break on split elements", function() {
           // page 2: 2nd half of transition, with 2 lines + GENERALS_PER_PAGE-2 generals
           // page 3: 1 general
           var pageFilledWithGenerals = utils.general("general on 2nd page").repeat(GENERALS_PER_PAGE-2);
-          lastLineText = "general on 3rd page";
+          targetElementText = "general on 3rd page";
 
           buildTargetElement = function() {
-            return utils.transition(transitionText) + pageFilledWithGenerals + utils.general(lastLineText);
+            return utils.transition(transitionText) + pageFilledWithGenerals + utils.general(targetElementText);
           };
         });
 
@@ -1449,7 +1451,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
 
         it("considers the height of the resulting second half of the transition split", function(done) {
-          var firstLineOnPage3 = lastLineText;
+          var firstLineOnPage3 = targetElementText;
           var pageNumber = 3;
           utils.testNonSplitPageBreakIsOn(firstLineOnPage3, done, 3);
         });
@@ -1464,7 +1466,7 @@ describe("ep_script_page_view - page break on split elements", function() {
           // fill 9 out of 16 columns of each inner line
           var charsPerLine = 9;
           sentences = splitElements.buildLongLine(numberOfInnerLines, charsPerLine);
-          lastLineText = sentences.join("");
+          targetElementText = sentences.join("");
         });
 
         xit("splits transition between the two pages, and second page has the last two lines of the transition", function(done) {
@@ -1481,9 +1483,9 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line2 = utils.buildStringWithLength(16, "2");
         var line3 = utils.buildStringWithLength(16, "3");
         sentences = [line1, line2, line3];
-        lastLineText = sentences.join("");
+        targetElementText = sentences.join("");
         buildTargetElement = function() {
-          return utils.transition(lastLineText);
+          return utils.transition(targetElementText);
         };
       });
 
@@ -1500,7 +1502,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line2 = utils.buildStringWithLength(16, "2");
         var line3 = "3";
         sentences = [line1, line2, line3];
-        lastLineText = sentences.join("");
+        targetElementText = sentences.join("");
       });
 
       it("forces transition to be split at the end of first line", function(done) {
@@ -1513,7 +1515,7 @@ describe("ep_script_page_view - page break on split elements", function() {
   context("when first line of page is a very long dialogue", function() {
     before(function() {
       buildTargetElement = function() {
-        return utils.dialogue(lastLineText);
+        return utils.dialogue(targetElementText);
       };
     });
 
@@ -1524,7 +1526,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // build sentence that is ~1.25 line long (when split it needs 2 lines)
         var line2 = utils.buildStringWithLength(44, "2") + ". ";
         sentences = [line1, line2];
-        lastLineText = line1 + line2;
+        targetElementText = line1 + line2;
       });
 
       it("splits dialogue between the two pages, and first page has one line of the dialogue", function(done) {
@@ -1540,7 +1542,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         before(function() {
           linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
           var character = utils.character(characterName);
-          var dialogue = utils.dialogue(lastLineText);
+          var dialogue = utils.dialogue(targetElementText);
           buildTargetElement = function() {
             return character + dialogue;
           };
@@ -1548,7 +1550,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // revert changed buildTargetElement
         after(function() {
           buildTargetElement = function() {
-            return utils.dialogue(lastLineText);
+            return utils.dialogue(targetElementText);
           };
         });
 
@@ -1563,11 +1565,11 @@ describe("ep_script_page_view - page break on split elements", function() {
           var line1 = utils.buildStringWithLength(33, "1") + ". ";
           var line2 = utils.buildStringWithLength(33, "2") + ". ";
           sentences = [line1, line2];
-          lastLineText = line1 + line2;
+          targetElementText = line1 + line2;
         });
 
         it("moves the entire dialogue for next page", function(done) {
-          var wholeElement = lastLineText;
+          var wholeElement = targetElementText;
           utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
@@ -1584,12 +1586,12 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line5 = utils.buildStringWithLength(33, "5") + ". ";
         var line6 = utils.buildStringWithLength(33, "6") + ". ";
         sentences = [line1, line2, line3, line4, line5, line6];
-        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+        targetElementText = line1 + line2 + line3 + line4 + line5 + line6;
       });
 
       it("splits dialogue between the two pages, and first page has as much lines as it can fit", function(done) {
-        var beforeLastLine = sentences[3];
-        utils.testSplitPageBreakIsOn(beforeLastLine, done);
+        var targetLine = sentences[3];
+        utils.testSplitPageBreakIsOn(targetLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of a dialogue", function() {
@@ -1600,8 +1602,8 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
 
         it("splits dialogue between the two pages, and second page keep the minimum lines it needs", function(done) {
-          var beforeLastLine = sentences[4];
-          utils.testSplitPageBreakIsOn(beforeLastLine, done);
+          var targetLine = sentences[4];
+          utils.testSplitPageBreakIsOn(targetLine, done);
         });
       });
 
@@ -1611,7 +1613,7 @@ describe("ep_script_page_view - page break on split elements", function() {
           var line1 = utils.buildStringWithLength(45, "1") + ". ";
           var line2 = utils.buildStringWithLength(45, "2") + ". ";
           sentences = [line1, line2];
-          lastLineText = line1 + line2;
+          targetElementText = line1 + line2;
         });
 
         it("adds the MORE/CONT'D tags with an empty character name", function(done) {
@@ -1628,7 +1630,7 @@ describe("ep_script_page_view - page break on split elements", function() {
             var line3 = "3 " + utils.buildStringWithLength(30, "3") + ". "; // "3 " is the short sentence
             var line4 = utils.buildStringWithLength(32, "4") + ". ";
             sentences = [line1, line2, line3, line4];
-            lastLineText = line1 + line2 + line3 + line4;
+            targetElementText = line1 + line2 + line3 + line4;
           });
 
           // this test is for the CSS of page break and MORE/CONT'D
@@ -1643,7 +1645,7 @@ describe("ep_script_page_view - page break on split elements", function() {
               return $splitPageBreaks.length > 0;
             }, 2000).done(function() {
               // verify 2nd half is two-lines high
-              var secondHalfHeight = inner$("div").last().outerHeight();
+              var secondHalfHeight = inner$("div").last().prev().outerHeight();
               var twoLinesHigh = 2 * utils.regularLineHeight();
 
               expect(secondHalfHeight).to.be(twoLinesHigh);
@@ -1658,7 +1660,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         before(function() {
           linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
           var character = utils.character("VERY LOOOOOOOOOOOOOONG CHARACTER NAME");
-          var dialogue = utils.dialogue(lastLineText);
+          var dialogue = utils.dialogue(targetElementText);
           buildTargetElement = function() {
             return character + dialogue;
           };
@@ -1666,7 +1668,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // revert changed buildTargetElement
         after(function() {
           buildTargetElement = function() {
-            return utils.dialogue(lastLineText);
+            return utils.dialogue(targetElementText);
           };
         });
 
@@ -1694,7 +1696,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         before(function() {
           linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
           var character = utils.character(characterName);
-          var dialogue = utils.dialogue(lastLineText);
+          var dialogue = utils.dialogue(targetElementText);
           buildTargetElement = function() {
             return character + dialogue;
           };
@@ -1702,7 +1704,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // revert changed buildTargetElement
         after(function() {
           buildTargetElement = function() {
-            return utils.dialogue(lastLineText);
+            return utils.dialogue(targetElementText);
           };
         });
 
@@ -1723,9 +1725,9 @@ describe("ep_script_page_view - page break on split elements", function() {
             var line2 = utils.buildStringWithLength(33, "2") + ". ";
             var line3 = utils.buildStringWithLength(33, "3") + ". ";
             sentences = [line1, line2, line3];
-            lastLineText = line1 + line2 + line3;
+            targetElementText = line1 + line2 + line3;
             var character = utils.character(characterName);
-            var dialogue = utils.dialogue(lastLineText);
+            var dialogue = utils.dialogue(targetElementText);
             buildTargetElement = function() {
               return character + dialogue;
             };
@@ -1742,7 +1744,7 @@ describe("ep_script_page_view - page break on split elements", function() {
   context("when first line of page is a very long parenthetical", function() {
     before(function() {
       buildTargetElement = function() {
-        return utils.parenthetical(lastLineText);
+        return utils.parenthetical(targetElementText);
       };
     });
 
@@ -1753,7 +1755,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // build sentence that is ~1.25 line long (when split it needs 2 lines)
         var line2 = utils.buildStringWithLength(30, "2") + ". ";
         sentences = [line1, line2];
-        lastLineText = line1 + line2;
+        targetElementText = line1 + line2;
       });
 
       it("splits parenthetical between the two pages, and first page has one line of the parenthetical", function(done) {
@@ -1769,7 +1771,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         before(function() {
           linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
           var character = utils.character(characterName);
-          var parenthetical = utils.parenthetical(lastLineText);
+          var parenthetical = utils.parenthetical(targetElementText);
           buildTargetElement = function() {
             return character + parenthetical;
           };
@@ -1777,7 +1779,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // revert changed buildTargetElement
         after(function() {
           buildTargetElement = function() {
-            return utils.parenthetical(lastLineText);
+            return utils.parenthetical(targetElementText);
           };
         });
 
@@ -1792,11 +1794,11 @@ describe("ep_script_page_view - page break on split elements", function() {
           var line1 = utils.buildStringWithLength(23, "1") + ". ";
           var line2 = utils.buildStringWithLength(23, "2") + ". ";
           sentences = [line1, line2];
-          lastLineText = line1 + line2;
+          targetElementText = line1 + line2;
         });
 
         it("moves the entire parenthetical for next page", function(done) {
-          var wholeElement = lastLineText;
+          var wholeElement = targetElementText;
           utils.testNonSplitPageBreakIsOn(wholeElement, done);
         });
       });
@@ -1813,12 +1815,12 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line5 = utils.buildStringWithLength(23, "5") + ". ";
         var line6 = utils.buildStringWithLength(23, "6") + ". ";
         sentences = [line1, line2, line3, line4, line5, line6];
-        lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+        targetElementText = line1 + line2 + line3 + line4 + line5 + line6;
       });
 
       it("splits parenthetical between the two pages, and first page has as much lines as it can fit", function(done) {
-        var beforeLastLine = sentences[3];
-        utils.testSplitPageBreakIsOn(beforeLastLine, done);
+        var targetLine = sentences[3];
+        utils.testSplitPageBreakIsOn(targetLine, done);
       });
 
       context("but next page will have less then the minimum lines (2) of an parenthetical", function() {
@@ -1829,8 +1831,8 @@ describe("ep_script_page_view - page break on split elements", function() {
         });
 
         it("splits parenthetical between the two pages, and second page keep the minimum lines it needs", function(done) {
-          var beforeLastLine = sentences[4];
-          utils.testSplitPageBreakIsOn(beforeLastLine, done);
+          var targetLine = sentences[4];
+          utils.testSplitPageBreakIsOn(targetLine, done);
         });
       });
 
@@ -1840,7 +1842,7 @@ describe("ep_script_page_view - page break on split elements", function() {
           var line1 = utils.buildStringWithLength(30, "1") + ". ";
           var line2 = utils.buildStringWithLength(30, "2") + ". ";
           sentences = [line1, line2];
-          lastLineText = line1 + line2;
+          targetElementText = line1 + line2;
         });
 
         it("adds the MORE/CONT'D tags with an empty character name", function(done) {
@@ -1861,9 +1863,9 @@ describe("ep_script_page_view - page break on split elements", function() {
           var line5 = utils.buildStringWithLength(23, "5") + ". ";
           var line6 = utils.buildStringWithLength(23, "6") + ". ";
           sentences = [line1, line2, line3, line4, line5, line6];
-          lastLineText = line1 + line2 + line3 + line4 + line5 + line6;
+          targetElementText = line1 + line2 + line3 + line4 + line5 + line6;
           var character = utils.character(characterName);
-          var parenthetical = utils.parenthetical(lastLineText);
+          var parenthetical = utils.parenthetical(targetElementText);
           buildTargetElement = function() {
             return character + parenthetical;
           };
@@ -1872,7 +1874,7 @@ describe("ep_script_page_view - page break on split elements", function() {
         // revert changed buildTargetElement
         after(function() {
           buildTargetElement = function() {
-            return utils.parenthetical(lastLineText);
+            return utils.parenthetical(targetElementText);
           };
         });
 
@@ -1893,9 +1895,9 @@ describe("ep_script_page_view - page break on split elements", function() {
             var line2 = utils.buildStringWithLength(23, "2") + ". ";
             var line3 = utils.buildStringWithLength(23, "3") + ". ";
             sentences = [line1, line2, line3];
-            lastLineText = line1 + line2 + line3;
+            targetElementText = line1 + line2 + line3;
             var character = utils.character(characterName);
-            var parenthetical = utils.parenthetical(lastLineText);
+            var parenthetical = utils.parenthetical(targetElementText);
             buildTargetElement = function() {
               return character + parenthetical;
             };
@@ -1914,14 +1916,14 @@ describe("ep_script_page_view - page break on split elements", function() {
       linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
       var line1 = utils.buildStringWithLength(59, "1") + ". ";
       var line2 = utils.buildStringWithLength(59, "2") + ". ";
-      lastLineText = line1 + line2;
+      targetElementText = line1 + line2;
       buildTargetElement = function() {
-        return utils.heading(lastLineText);
+        return utils.heading(targetElementText);
       };
     });
 
     it("does not split heading into two parts, one on each page", function(done) {
-      var fullElementText = lastLineText;
+      var fullElementText = targetElementText;
       utils.testNonSplitPageBreakIsOn(fullElementText, done);
     });
   });
@@ -1931,14 +1933,14 @@ describe("ep_script_page_view - page break on split elements", function() {
       linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
       var line1 = utils.buildStringWithLength(59, "1") + ". ";
       var line2 = utils.buildStringWithLength(59, "2") + ". ";
-      lastLineText = line1 + line2;
+      targetElementText = line1 + line2;
       buildTargetElement = function() {
-        return utils.shot(lastLineText);
+        return utils.shot(targetElementText);
       };
     });
 
     it("does not split shot into two parts, one on each page", function(done) {
-      var fullElementText = lastLineText;
+      var fullElementText = targetElementText;
       utils.testNonSplitPageBreakIsOn(fullElementText, done);
     });
   });
@@ -1948,14 +1950,14 @@ describe("ep_script_page_view - page break on split elements", function() {
       linesBeforeTargetElement = GENERALS_PER_PAGE - 2;
       var line1 = utils.buildStringWithLength(36, "1") + ". ";
       var line2 = utils.buildStringWithLength(36, "2") + ". ";
-      lastLineText = line1 + line2;
+      targetElementText = line1 + line2;
       buildTargetElement = function() {
-        return utils.character(lastLineText);
+        return utils.character(targetElementText);
       };
     });
 
     it("does not split character into two parts, one on each page", function(done) {
-      var fullElementText = lastLineText;
+      var fullElementText = targetElementText;
       utils.testNonSplitPageBreakIsOn(fullElementText, done);
     });
   });

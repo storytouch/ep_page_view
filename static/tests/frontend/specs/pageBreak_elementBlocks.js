@@ -7,7 +7,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
   // shortcuts for helper functions
   var utils;
   // context-dependent values/functions
-  var linesBeforeBlock, buildBlock, lastLineText;
+  var linesBeforeBlock, buildBlock, targetLineText;
 
   before(function(){
     utils = ep_script_page_view_test_helper.utils;
@@ -16,11 +16,12 @@ describe("ep_script_page_view - page break on element blocks", function() {
   beforeEach(function(cb){
     helper.newPad(function() {
       utils.cleanPad(function() {
-        var generals = utils.buildScriptWithGenerals("general", linesBeforeBlock);
-        var block    = buildBlock();
-        var script   = generals + block;
+        var generals    = utils.buildScriptWithGenerals("general", linesBeforeBlock);
+        var block       = buildBlock();
+        var lastGeneral = utils.general("last general");
+        var script      = generals + block + lastGeneral;
 
-        utils.createScriptWith(script, lastLineText, cb);
+        utils.createScriptWith(script, "last general", cb);
       });
     });
     this.timeout(60000);
@@ -36,7 +37,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var line3 = utils.buildStringWithLength(59, "3") + ". ";
       var line4 = utils.buildStringWithLength(59, "4") + ". ";
       sentences = [line1, line2, line3, line4];
-      lastLineText = line1 + line2 + line3 + line4;
+      targetLineText = line1 + line2 + line3 + line4;
 
       buildBlock = function() {
         // block of 1st page to be moved to 2nd page (5 lines high, including 2 lines are top margin)
@@ -46,7 +47,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
         var pageAlmostFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE - 5);
 
         // element of 2nd page to be split between pages
-        var lastLine = utils.general(lastLineText);
+        var lastLine = utils.general(targetLineText);
 
         return lastLineOfPreviousPage + firstLineOfNextPage + pageAlmostFullOfGenerals + lastLine;
       };
@@ -71,7 +72,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
     before(function() {
       linesBeforeBlock = GENERALS_PER_PAGE - 4;
-      lastLineText = "action";
+      targetLineText = "action";
       buildBlock = function() {
         var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
         var firstLineOfNextPage = utils.action("action");
@@ -127,7 +128,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
     before(function() {
       linesBeforeBlock = GENERALS_PER_PAGE - 4;
-      lastLineText = "character";
+      targetLineText = "character";
       buildBlock = function() {
         var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
         var firstLineOfNextPage = utils.character("character");
@@ -183,7 +184,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
     before(function() {
       linesBeforeBlock = GENERALS_PER_PAGE - 3;
-      lastLineText = "another general";
+      targetLineText = "another general";
       buildBlock = function() {
         var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
         var firstLineOfNextPage = utils.general("another general");
@@ -244,11 +245,11 @@ describe("ep_script_page_view - page break on element blocks", function() {
     context("and previous line is a character and line before is not a heading", function() {
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 2;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           var lastLineOfPreviousPage = utils.character("character");
           var firstLineOfNextPage = utils.parenthetical("parenthetical");
-          var secondLineOfNextPage = utils.dialogue(lastLineText);
+          var secondLineOfNextPage = utils.dialogue(targetLineText);
 
           return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
         };
@@ -265,7 +266,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     context("and previous line is a character and line before is a heading", function() {
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 5;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           // 4-line parenthetical, so it is long enough to be split if necessary
           var fullLine = utils.buildStringWithLength(23, "1") + ". ";
@@ -274,7 +275,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
           var lineBeforeLastOfPreviousPage = utils.heading("heading");
           var lastLineOfPreviousPage = utils.character("character");
           var firstLineOfNextPage = utils.parenthetical(parentheticalText);
-          var secondLineOfNextPage = utils.dialogue(lastLineText);
+          var secondLineOfNextPage = utils.dialogue(targetLineText);
 
           return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
         };
@@ -293,7 +294,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 3;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           // 4-line parenthetical, so it is long enough to be split if necessary
           var fullLine = utils.buildStringWithLength(23, "1") + ". ";
@@ -302,7 +303,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
           var lineBeforeLastOfPreviousPage = utils.character("character");
           var lastLineOfPreviousPage = utils.dialogue(dialogueText);
           var firstLineOfNextPage = utils.parenthetical(parentheticalText);
-          var secondLineOfNextPage = utils.dialogue(lastLineText);
+          var secondLineOfNextPage = utils.dialogue(targetLineText);
 
           return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
         };
@@ -344,7 +345,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 1;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           var lastLineOfPreviousPage = utils.dialogue("dialogue");
           var firstLineOfNextPage = utils.parenthetical(parentheticalText);
@@ -357,7 +358,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is not parenthetical nor dialogue", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.general(lastLineText);
+            return utils.general(targetLineText);
           };
         });
 
@@ -387,7 +388,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is a parenthetical", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.parenthetical(lastLineText);
+            return utils.parenthetical(targetLineText);
           };
         });
 
@@ -400,7 +401,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is a dialogue", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.dialogue(lastLineText);
+            return utils.dialogue(targetLineText);
           };
         });
 
@@ -418,7 +419,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 1;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           var lastLineOfPreviousPage = utils.general("general");
           var firstLineOfNextPage = utils.parenthetical(parentheticalText);
@@ -431,7 +432,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is not parenthetical nor dialogue", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.general(lastLineText);
+            return utils.general(targetLineText);
           };
         });
 
@@ -465,7 +466,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is a parenthetical", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.parenthetical(lastLineText);
+            return utils.parenthetical(targetLineText);
           };
         });
 
@@ -478,7 +479,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is a dialogue", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.dialogue(lastLineText);
+            return utils.dialogue(targetLineText);
           };
         });
 
@@ -496,11 +497,11 @@ describe("ep_script_page_view - page break on element blocks", function() {
     context("and previous line is a character and line before is not a heading", function() {
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 2;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           var lastLineOfPreviousPage = utils.character("character");
           var firstLineOfNextPage = utils.dialogue("dialogue");
-          var secondLineOfNextPage = utils.dialogue(lastLineText);
+          var secondLineOfNextPage = utils.dialogue(targetLineText);
 
           return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
         };
@@ -517,7 +518,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     context("and previous line is a character and line before is a heading", function() {
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 6;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           // 4-line dialogue, so it is long enough to be split if necessary
           var fullLine = utils.buildStringWithLength(33, "1") + ". ";
@@ -526,7 +527,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
           var lineBeforeLastOfPreviousPage = utils.heading("heading");
           var lastLineOfPreviousPage = utils.character("character");
           var firstLineOfNextPage = utils.dialogue(dialogueText);
-          var secondLineOfNextPage = utils.dialogue(lastLineText);
+          var secondLineOfNextPage = utils.dialogue(targetLineText);
 
           return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
         };
@@ -545,7 +546,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 3;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           // 4-line dialogue, so it is long enough to be split if necessary
           var fullLine = utils.buildStringWithLength(33, "1") + ". ";
@@ -554,7 +555,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
           var lineBeforeLastOfPreviousPage = utils.character("character");
           var lastLineOfPreviousPage = utils.parenthetical(parentheticalText);
           var firstLineOfNextPage = utils.parenthetical(dialogueText);
-          var secondLineOfNextPage = utils.dialogue(lastLineText);
+          var secondLineOfNextPage = utils.dialogue(targetLineText);
 
           return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
         };
@@ -596,7 +597,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 1;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           var lastLineOfPreviousPage = utils.parenthetical("parenthetical");
           var firstLineOfNextPage = utils.dialogue(dialogueText);
@@ -609,7 +610,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is not dialogue nor parenthetical", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.general(lastLineText);
+            return utils.general(targetLineText);
           };
         });
 
@@ -639,7 +640,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is a dialogue", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.dialogue(lastLineText);
+            return utils.dialogue(targetLineText);
           };
         });
 
@@ -652,7 +653,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is a parenthetical", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.parenthetical(lastLineText);
+            return utils.parenthetical(targetLineText);
           };
         });
 
@@ -670,7 +671,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
       before(function() {
         linesBeforeBlock = GENERALS_PER_PAGE - 1;
-        lastLineText = "last element";
+        targetLineText = "last element";
         buildBlock = function() {
           var lastLineOfPreviousPage = utils.general("general");
           var firstLineOfNextPage = utils.dialogue(dialogueText);
@@ -683,7 +684,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is not dialogue nor parenthetical", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.general(lastLineText);
+            return utils.general(targetLineText);
           };
         });
 
@@ -713,7 +714,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is a dialogue", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.dialogue(lastLineText);
+            return utils.dialogue(targetLineText);
           };
         });
 
@@ -726,7 +727,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       context("and next line is a parenthetical", function() {
         before(function() {
           buildNextLine = function() {
-            return utils.parenthetical(lastLineText);
+            return utils.parenthetical(targetLineText);
           };
         });
 
@@ -744,11 +745,11 @@ describe("ep_script_page_view - page break on element blocks", function() {
     var transitionText;
 
     before(function() {
-      lastLineText = "last element";
+      targetLineText = "last element";
       buildBlock = function() {
         var lastLineOfPreviousPage = utils.action("action");
         var firstLineOfNextPage = utils.transition(transitionText);
-        var secondLineOfNextPage = utils.general(lastLineText);
+        var secondLineOfNextPage = utils.general(targetLineText);
 
         return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
       };
@@ -776,7 +777,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
             var lineBeforeLastLineOfPreviousPage = utils.action("action");
             var lastLineOfPreviousPage           = utils.parenthetical("parenthetical");
             var firstLineOfNextPage              = utils.transition(transitionText);
-            var secondLineOfNextPage             = utils.general(lastLineText);
+            var secondLineOfNextPage             = utils.general(targetLineText);
 
             return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
           };
@@ -797,7 +798,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
             var lineBeforeLastLineOfPreviousPage = utils.action("action");
             var lastLineOfPreviousPage           = utils.dialogue("dialogue");
             var firstLineOfNextPage              = utils.transition(transitionText);
-            var secondLineOfNextPage             = utils.general(lastLineText);
+            var secondLineOfNextPage             = utils.general(targetLineText);
 
             return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
           };
@@ -820,7 +821,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
             var lineBeforeLastLineOfPreviousPage = utils.action("action");
             var lastLineOfPreviousPage           = utils.parenthetical("a very very very very very long parenthetical");
             var firstLineOfNextPage              = utils.transition(transitionText);
-            var secondLineOfNextPage             = utils.general(lastLineText);
+            var secondLineOfNextPage             = utils.general(targetLineText);
 
             return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
           };
@@ -841,7 +842,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
             var lineBeforeLastLineOfPreviousPage = utils.action("action");
             var lastLineOfPreviousPage           = utils.dialogue("a very very very very very long dialogue");
             var firstLineOfNextPage              = utils.transition(transitionText);
-            var secondLineOfNextPage             = utils.general(lastLineText);
+            var secondLineOfNextPage             = utils.general(targetLineText);
 
             return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
           };
