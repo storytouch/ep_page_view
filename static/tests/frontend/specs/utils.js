@@ -256,6 +256,35 @@ ep_script_page_view_test_helper.utils = {
     utils.pressKey(utils.DELETE);
   },
 
+  moveViewportToLine: function(lineNumber) {
+    var utils = ep_script_page_view_test_helper.utils;
+    var outer$ = helper.padOuter$;
+
+    var $targetLine = utils.getLine(lineNumber);
+    var targetScrollTop = $targetLine.offset().top;
+
+    var $editor = outer$("#outerdocbody");
+    $editor.scrollTop(targetScrollTop); // Works in Chrome
+    $editor.parent().scrollTop(targetScrollTop); // Works in Firefox
+  },
+
+  testLineIsOnTopOfViewport: function(lineNumber, done) {
+    var utils = ep_script_page_view_test_helper.utils;
+    var outer$ = helper.padOuter$;
+
+    var acceptedRange = 5;
+
+    var $targetLine = utils.getLine(lineNumber);
+    var expectedScrollTop = $targetLine.offset().top;
+
+    var $editor = outer$("#outerdocbody");
+    var actualScrollTop = $editor.scrollTop();
+
+    expect(actualScrollTop).to.be.within(expectedScrollTop - acceptedRange, expectedScrollTop + acceptedRange);
+
+    done();
+  },
+
   linesAfterNonSplitPageBreaks: function() {
     var inner$ = helper.padInner$;
 

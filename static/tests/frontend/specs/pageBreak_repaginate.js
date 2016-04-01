@@ -327,4 +327,159 @@ describe("ep_script_page_view - repaginate", function() {
       });
     });
   });
+
+  context("when user changes viewport to a line not repaginated yet", function() {
+    var MAX_PAGE_BREAKS_PER_CYCLE = 5;
+
+    // build script with lots of pages, so repagination takes a while to finish
+    var NUMBER_OF_PAGES = 20;
+    var targetLineNumber, targetLineText;
+
+    var targetLineNumberAfter1stCycleWithSplitPageBreaks = function() {
+      // after first repagination cycle, there are 5 new split lines
+      return targetLineNumber + MAX_PAGE_BREAKS_PER_CYCLE;
+    }
+    var targetLineNumberAfterFullRepaginationWithSplitPageBreaks = function() {
+      // after repagination is complete, each page end with a split line
+      var pageBeforeLast = NUMBER_OF_PAGES - 1;
+      return targetLineNumber + pageBeforeLast - 1;
+    }
+    var targetLineNumberAfter1stCycleWithNonSplitPageBreaks = function() {
+      // after first repagination cycle, 5 split lines were removed
+      return targetLineNumberAfterFullRepaginationWithSplitPageBreaks() - MAX_PAGE_BREAKS_PER_CYCLE;
+    }
+
+    beforeEach(function(done) {
+      this.timeout(14000);
+
+      var inner$ = helper.padInner$;
+
+      var lastLineText = "general";
+
+      // each page has several single-line generals, and last line is a two-lines general
+      // (so it is split later)
+      var line1 = utils.buildStringWithLength(50, "1") + ". ";
+      var line2 = utils.buildStringWithLength(50, "2") + ". ";
+      var fullPage = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE - 2) +
+                     utils.general(line1 + line2);
+      var lastLine = utils.general(lastLineText);
+      var script = utils.buildStringWithLength(NUMBER_OF_PAGES, fullPage) + lastLine;
+      utils.createScriptWith(script, lastLineText, function() {
+        // wait for initial pagination to finish
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+          return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
+        }, 10000).done(function() {
+          // change target line text, to be easier to visualize what should be on top of viewport
+          var $targetLine = utils.getLine(targetLineNumber);
+          $targetLine.sendkeys("{selectall}{backspace}");
+          $targetLine.sendkeys(targetLineText);
+
+          // inserts a long text to first line, so all lines will be shift one line down
+          // and pagination will change scroll position of elements
+          var longText = utils.buildStringWithLength(62, "1");
+          var $firstLine = inner$("div").first();
+          $firstLine.sendkeys(longText);
+
+          // wait for first cycle of repagination to be completed before moving viewport
+          // to target line (otherwise Etherpad will overrite this viewport moving)
+          helper.waitFor(function() {
+            var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
+            return $linesWithPageBreaks.length > 1;
+          }, 2000).done(function() {
+            utils.moveViewportToLine(targetLineNumberAfter1stCycleWithSplitPageBreaks());
+
+            done();
+          });
+        });
+      });
+    });
+
+    context("and line on top of viewport does not receive a page break", function() {
+      before(function() {
+        var middleOfPage = GENERALS_PER_PAGE/2;
+        var linesPerPage = GENERALS_PER_PAGE - 1; // -1: each page has a double-line at the end
+        var pageBeforeLast = NUMBER_OF_PAGES - 1;
+        var middleOfPageBeforeLast = pageBeforeLast * linesPerPage - middleOfPage;
+
+        targetLineNumber = middleOfPageBeforeLast;
+        targetLineText = "This line should be on top of viewport";
+      });
+
+      it("keeps first visible line always on top of viewport", function(done) {
+        this.timeout(14000);
+
+        // check if viewport is still where it should be after repagination is complete
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
+          return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
+        }, 10000).done(function() {
+          utils.testLineIsOnTopOfViewport(targetLineNumberAfterFullRepaginationWithSplitPageBreaks(), done);
+        });
+      });
+    });
+
+    context("and line on top of viewport receives a page break", function() {
+      before(function() {
+        var linesPerPage = GENERALS_PER_PAGE - 1; // -1: each page has a double-line at the end
+        var pageBeforeLast = NUMBER_OF_PAGES - 1;
+        var lastLineOfPageBeforeLast = pageBeforeLast * linesPerPage - 1; // -1: lines are zero-based
+
+        targetLineNumber = lastLineOfPageBeforeLast;
+        // as target line is a double-line, keep it that way and use a long text
+        targetLineText = "This very very very very very long line should be on top of viewport";
+      });
+
+      beforeEach(function(done) {
+        this.timeout(10000);
+
+        // wait for repagination to complete
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
+          return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
+        }, 10000).done(done);
+      });
+
+      it("keeps first visible line always on top of viewport", function(done) {
+        var lineNumberAfterFullRepagination = targetLineNumberAfterFullRepaginationWithSplitPageBreaks();
+        utils.testLineIsOnTopOfViewport(lineNumberAfterFullRepagination, done);
+      });
+
+      context("then line on top of viewport has its page break removed", function() {
+        beforeEach(function(done) {
+          var inner$ = helper.padInner$;
+
+          // edit first line to make it have one inner line only
+          var $firstLine = inner$("div").first();
+          $firstLine.sendkeys("{selectall}{backspace}");
+          $firstLine.sendkeys("general");
+
+          // wait for first cycle of repagination to be completed before moving viewport
+          // to target line (otherwise Etherpad will overrite this viewport moving)
+          helper.waitFor(function() {
+            var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
+            return $linesWithPageBreaks.length > 1;
+          }, 2000).done(function() {
+            debugger
+            var lineNumberAfterFirstCycle = targetLineNumberAfter1stCycleWithNonSplitPageBreaks();
+            utils.moveViewportToLine(lineNumberAfterFirstCycle);
+
+            done();
+          });
+        });
+
+        xit("keeps first visible line always on top of viewport", function(done) {
+          this.timeout(14000);
+
+          // check if viewport is still where it should be after repagination is complete
+          helper.waitFor(function() {
+            var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+            return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
+          }, 10000).done(function() {
+            utils.testLineIsOnTopOfViewport(targetLineNumber, done);
+          });
+        });
+      });
+    });
+  });
 });

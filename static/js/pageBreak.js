@@ -1,14 +1,15 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 
-var utils                  = require('./utils');
-var paginationBlocks       = require('./paginationBlocks');
-var paginationSplit        = require('./paginationSplit');
-var paginationNonSplit     = require('./paginationNonSplit');
-var paginationPageNumber   = require('./paginationPageNumber');
-var paginationLinesChanged = require('./paginationLinesChanged');
-var undoElementType        = require('./undoElementType');
-var getMaxPageHeight       = require('./fixSmallZooms').getMaxPageHeight;
+var utils                    = require('./utils');
+var paginationBlocks         = require('./paginationBlocks');
+var paginationSplit          = require('./paginationSplit');
+var paginationNonSplit       = require('./paginationNonSplit');
+var paginationPageNumber     = require('./paginationPageNumber');
+var paginationLinesChanged   = require('./paginationLinesChanged');
+var paginationScrollPosition = require('./paginationScrollPosition');
+var undoElementType          = require('./undoElementType');
+var getMaxPageHeight         = require('./fixSmallZooms').getMaxPageHeight;
 
 var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
 var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
@@ -17,6 +18,10 @@ var CLONED_ELEMENTS_SELECTOR = "." + utils.CLONED_ELEMENTS_CLASS;
 
 var REPAGINATION_LINE_SHIFT = 3;
 var MAX_PAGE_BREAKS_PER_CYCLE = 5;
+
+exports.aceRegisterNonScrollableEditEvents = function(hook, context) {
+  return [myPaginationEventType()];
+}
 
 exports.aceRegisterBlockElements = function(hook, context) {
   return _.union(paginationSplit.blockElements(), paginationNonSplit.blockElements());
@@ -191,28 +196,38 @@ var repaginate = function(context) {
   // if changed one of the first REPAGINATION_LINE_SHIFT lines of pad, start at first line (0)
   var startAtLine = Math.max(0, firstLineToPaginate);
 
-  var paginationInfo = calculatePageBreaks(startAtLine, originalCaretPosition, attributeManager, rep);
-  var endAtLine = getLineNumberBeforePaginationOfLastPageBreak(paginationInfo, rep);
+  // if repagination should start at a line after end of the pad, we simply clean lines marked as
+  // changed and do nothing else
+  var padLines = rep.lines.length();
+  if (startAtLine >= padLines) {
+    paginationLinesChanged.reset(rep);
+  } else {
+    var paginationInfo = calculatePageBreaks(startAtLine, originalCaretPosition, attributeManager, rep);
+    var endAtLine = getLineNumberBeforePaginationOfLastPageBreak(paginationInfo, rep);
 
-  utils.performNonUnduableEvent(callstack, function() {
-    cleanPageBreaks(startAtLine, endAtLine, attributeManager, rep, editorInfo);
-    savePageBreaks(paginationInfo.pageBreaksInfo, attributeManager, rep, editorInfo);
-  });
+    // avoid editor to go up & down while pagination is not finished
+    paginationScrollPosition.keepViewportScrollPosition(function() {
+      utils.performNonUnduableEvent(callstack, function() {
+        cleanPageBreaks(startAtLine, endAtLine, attributeManager, rep, editorInfo);
+        savePageBreaks(paginationInfo.pageBreaksInfo, attributeManager, rep, editorInfo);
+      });
+    }, paginationInfo, rep);
 
-  // clean pending lines to paginate and mark next line as changed so pagination will start from
-  // it on next cycle
-  paginationLinesChanged.reset(rep);
-  if (!paginationInfo.done) {
-    var endAtLineAfterClean = getLineNumberAfterPaginationOfLastPageBreak(paginationInfo, rep);
-    var continuePaginationFromLine = endAtLineAfterClean + 1;
-    // this avoids an infinite loop when next pagination cycle starts (we always look
-    // REPAGINATION_LINE_SHIFT lines back to start paginating)
-    continuePaginationFromLine += REPAGINATION_LINE_SHIFT;
+    // clean pending lines to paginate and mark next line as changed so pagination will start from
+    // it on next cycle
+    paginationLinesChanged.reset(rep);
+    if (!paginationInfo.done) {
+      var endAtLineAfterClean = getLineNumberAfterPaginationOfLastPageBreak(paginationInfo, rep);
+      var continuePaginationFromLine = endAtLineAfterClean + 1;
+      // this avoids an infinite loop when next pagination cycle starts (we always look
+      // REPAGINATION_LINE_SHIFT lines back to start paginating)
+      continuePaginationFromLine += REPAGINATION_LINE_SHIFT;
 
-    paginationLinesChanged.markLineAsChanged(continuePaginationFromLine);
+      paginationLinesChanged.markLineAsChanged(continuePaginationFromLine);
 
-    // schedule pagination to continue
-    resetTimerToRestartPagination(context);
+      // schedule pagination to continue
+      resetTimerToRestartPagination(context);
+    }
   }
 }
 
@@ -228,7 +243,7 @@ var cleanPageBreaks = function(startAtLine, endAtLine, attributeManager, rep, ed
 
 var savePageBreaks = function(pageBreaksInfo, attributeManager, rep, editorInfo) {
   var initialPageNumber = nextPageNumber(pageBreaksInfo, rep);
-  for (var i = pageBreaksInfo.length - 1; i >= 0; i--) {
+  for (var i = 0; i < pageBreaksInfo.length; i++) {
     var pageNumber = initialPageNumber + i;
 
     var pageBreakInfo = pageBreaksInfo[i];
@@ -307,6 +322,9 @@ var calculatePageBreaks = function(startLine, originalCaretPosition, attributeMa
 
         // mark element to be split when pagination is done
         pageBreaks.push(splitPageBreak(forcedSplitElementInfo, $currentLine, rep));
+
+        // there will be an extra line from now on
+        lineNumberShift++;
       } else {
         var splitElementInfo = paginationSplit.getRegularSplitInfo($currentLine, $clonedLine, lineNumberShift, lineHeight, lineInnerHeight, availableHeightOnPage, originalCaretPosition, attributeManager, rep);
         // can we split current line?
@@ -316,6 +334,9 @@ var calculatePageBreaks = function(startLine, originalCaretPosition, attributeMa
 
           // mark element to be split when pagination is done
           pageBreaks.push(splitPageBreak(splitElementInfo, $currentLine, rep));
+
+          // there will be an extra line from now on
+          lineNumberShift++;
         }
         // is it a block of lines? (A block can have only a single line too)
         else {
