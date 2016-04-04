@@ -396,6 +396,7 @@ var nonSplitPageBreak = function($line, lineNumberShift, rep) {
 }
 var splitPageBreak = function(splitInfo, $line, rep) {
   return {
+    isSplit: true,
     data: splitInfo,
     lineNumberBeforeClean: utils.getLineNumberFromDOMLine($line, rep),
     lineNumberAfterClean: splitInfo.lineNumberAfterClean,

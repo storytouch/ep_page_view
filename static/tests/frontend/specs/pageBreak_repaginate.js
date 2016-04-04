@@ -446,37 +446,98 @@ describe("ep_script_page_view - repaginate", function() {
       });
 
       context("then line on top of viewport has its page break removed", function() {
-        beforeEach(function(done) {
-          var inner$ = helper.padInner$;
+        var lineNumberAfterFirstCycle, editFirstLine;
 
-          // edit first line to make it have one inner line only
-          var $firstLine = inner$("div").first();
-          $firstLine.sendkeys("{selectall}{backspace}");
-          $firstLine.sendkeys("general");
+        beforeEach(function(done) {
+          this.timeout(14000);
+
+          // edit first line to trigger repagination
+          editFirstLine();
 
           // wait for first cycle of repagination to be completed before moving viewport
           // to target line (otherwise Etherpad will overrite this viewport moving)
           helper.waitFor(function() {
-            var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
+            var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
             return $linesWithPageBreaks.length > 1;
           }, 2000).done(function() {
-            debugger
-            var lineNumberAfterFirstCycle = targetLineNumberAfter1stCycleWithNonSplitPageBreaks();
             utils.moveViewportToLine(lineNumberAfterFirstCycle);
 
-            done();
+            helper.waitFor(function() {
+              var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+              return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
+            }, 10000).done(done);
           });
         });
 
-        xit("keeps first visible line always on top of viewport", function(done) {
-          this.timeout(14000);
+        context("and line is moved above a page break", function() {
+          before(function() {
+            editFirstLine = function() {
+              var inner$ = helper.padInner$;
 
-          // check if viewport is still where it should be after repagination is complete
-          helper.waitFor(function() {
-            var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
-          }, 10000).done(function() {
-            utils.testLineIsOnTopOfViewport(targetLineNumber, done);
+              // edit first line to make it have one inner line only
+              var $firstLine = inner$("div").first();
+              $firstLine.sendkeys("{selectall}{backspace}");
+              $firstLine.sendkeys("general");
+            };
+          });
+
+          context("and line on top is first half of split line", function() {
+            before(function() {
+              lineNumberAfterFirstCycle = targetLineNumberAfter1stCycleWithNonSplitPageBreaks();
+            });
+
+            it("keeps first visible line always on top of viewport", function(done) {
+              // check if viewport is still where it should be after repagination is complete
+              utils.testLineIsOnTopOfViewport(targetLineNumber, done);
+            });
+          });
+
+          context("and line on top is second half of split line", function() {
+            before(function() {
+              lineNumberAfterFirstCycle = 1 + targetLineNumberAfter1stCycleWithNonSplitPageBreaks();
+            });
+
+            it("keeps first visible line always on top of viewport", function(done) {
+              // top of viewport should have second inner line of target line
+              var innerLineNumber = 1;
+              utils.testLineIsOnTopOfViewport(targetLineNumber, done, innerLineNumber);
+            });
+          });
+        });
+
+        context("and line is moved bellow a page break", function() {
+          before(function() {
+            editFirstLine = function() {
+              var inner$ = helper.padInner$;
+
+              // edit first line to make it have three inner lines
+              var longText = utils.buildStringWithLength(60, "1");
+              var $firstLine = inner$("div").first();
+              $firstLine.sendkeys("{selectall}{backspace}");
+              $firstLine.sendkeys(longText + longText + longText);
+            };
+          });
+
+          context("and line on top is first half of split line", function() {
+            before(function() {
+              lineNumberAfterFirstCycle = targetLineNumberAfter1stCycleWithNonSplitPageBreaks();
+            });
+
+            it("keeps first visible line always on top of viewport", function(done) {
+              utils.testLineIsOnTopOfViewport(targetLineNumber, done);
+            });
+          });
+
+          context("and line on top is second half of split line", function() {
+            before(function() {
+              lineNumberAfterFirstCycle = 1 + targetLineNumberAfter1stCycleWithNonSplitPageBreaks();
+            });
+
+            it("keeps first visible line always on top of viewport", function(done) {
+              // top of viewport should have second inner line of target line
+              var innerLineNumber = 1;
+              utils.testLineIsOnTopOfViewport(targetLineNumber, done, innerLineNumber);
+            });
           });
         });
       });

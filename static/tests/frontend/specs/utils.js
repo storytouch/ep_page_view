@@ -268,14 +268,19 @@ ep_script_page_view_test_helper.utils = {
     $editor.parent().scrollTop(targetScrollTop); // Works in Firefox
   },
 
-  testLineIsOnTopOfViewport: function(lineNumber, done) {
+  testLineIsOnTopOfViewport: function(lineNumberOnPad, done, innerLineNumber) {
     var utils = ep_script_page_view_test_helper.utils;
     var outer$ = helper.padOuter$;
 
-    var acceptedRange = 5;
+    // default to first inner line on pad line
+    innerLineNumber = innerLineNumber || 0;
+    var innerLineShift = utils.regularLineHeight() * innerLineNumber;
 
-    var $targetLine = utils.getLine(lineNumber);
-    var expectedScrollTop = $targetLine.offset().top;
+    var acceptedRange = 1;
+
+    var $targetLine = utils.getLine(lineNumberOnPad);
+    // top of the line on pad + shift of inner line
+    var expectedScrollTop = $targetLine.offset().top + innerLineShift;
 
     var $editor = outer$("#outerdocbody");
     var actualScrollTop = $editor.scrollTop();
