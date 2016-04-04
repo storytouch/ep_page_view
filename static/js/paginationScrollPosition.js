@@ -65,9 +65,13 @@ var getFirstLineVisibleOnViewport = function(viewportScrollTop) {
   var $lines = utils.getPadInner().find("div");
   // TODO improve this:
   // (a) start from caret position and look around its line
-  // (b) stop when find first that match
+  var found = false;
   var $linesAfterViewportTop = $lines.filter(function() {
-    return $(this).offset().top >= viewportScrollTop;
+    if (!found && $(this).offset().top >= viewportScrollTop) {
+      // found first line that is visible, do not calculate offset().top anymore
+      found = true;
+      return true;
+    }
   });
 
   // if last line is very high and viewport is in the middle of it, there's no line on
