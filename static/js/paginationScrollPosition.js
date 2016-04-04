@@ -65,8 +65,8 @@ var getFirstLineVisibleOnViewport = function(viewportScrollTop) {
   var $lines = utils.getPadInner().find("div");
   var found = false;
   var $linesAfterViewportTop = $lines.filter(function() {
-    if (!found && $(this).offset().top >= viewportScrollTop) {
-      // found first line that is visible, do not calculate offset().top anymore
+    if (!found && this.offsetTop >= viewportScrollTop) {
+      // found first line that is visible, do not check if line is on viewport anymore
       found = true;
       return true;
     }
@@ -82,7 +82,7 @@ var getFirstLineVisibleOnViewport = function(viewportScrollTop) {
 }
 
 var buildLineInfo = function($line, targetScroll) {
-  var shift = $line.offset().top - targetScroll;
+  var shift = $line.get(0).offsetTop - targetScroll;
 
   return {
     $line: $line,
