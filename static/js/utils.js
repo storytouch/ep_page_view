@@ -48,10 +48,11 @@ exports.getLineHeight = function($targetLine) {
   } else {
     lineHeight = $innerElement.outerHeight(true);
   }
-  return lineHeight;
+  return Math.round(lineHeight);
 }
 exports.getLineHeightWithoutMargins = function($targetLine) {
-  return $targetLine.height();
+  // Bug fix: some cloned lines have a non-integer height, need to round it
+  return Math.round($targetLine.height());
 }
 
 // cache regularLineHeight
