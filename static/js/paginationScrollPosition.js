@@ -63,8 +63,6 @@ var getInfoOfFirstLineVisibleOnViewport = function(rep) {
 
 var getFirstLineVisibleOnViewport = function(viewportScrollTop) {
   var $lines = utils.getPadInner().find("div");
-  // TODO improve this:
-  // (a) start from caret position and look around its line
   var found = false;
   var $linesAfterViewportTop = $lines.filter(function() {
     if (!found && $(this).offset().top >= viewportScrollTop) {
@@ -100,7 +98,7 @@ var getNewTopPositionOf = function(originalLineInfo, paginationInfo, rep) {
   var currentLine = originalLineInfo.$line[0];
   var topPositionShift = originalLineInfo.shiftBetweenLineAndContainer;
 
-  var lineWasReplacedDuringPagination = !originalLineInfo.$line.is(":visible");
+  var lineWasReplacedDuringPagination = !lineIsStillOnPad(originalLineInfo);
   if (lineWasReplacedDuringPagination) {
     // line is not on editor anymore, we need to find where it went during pagination
     var pageBreaksInfo = paginationInfo.pageBreaksInfo;
@@ -115,9 +113,9 @@ var getNewTopPositionOf = function(originalLineInfo, paginationInfo, rep) {
     } else {
       // original line was merged during clean, find a neighbor that is still on the pad
       var neighbor;
-      if (originalLineInfo.previousLine && originalLineInfo.previousLine.$line.is(":visible")) {
+      if (originalLineInfo.previousLine && lineIsStillOnPad(originalLineInfo.previousLine)) {
         neighbor = originalLineInfo.previousLine;
-      } else if (originalLineInfo.nextLine && originalLineInfo.nextLine.$line.is(":visible")) {
+      } else if (originalLineInfo.nextLine && lineIsStillOnPad(originalLineInfo.nextLine)) {
         neighbor = originalLineInfo.nextLine;
       }
 
@@ -130,4 +128,8 @@ var getNewTopPositionOf = function(originalLineInfo, paginationInfo, rep) {
   }
 
   return currentLine.offsetTop - topPositionShift;
+}
+
+var lineIsStillOnPad = function(lineInfo) {
+  return $.contains(utils.getPadInner().get(0), lineInfo.$line.get(0));
 }
