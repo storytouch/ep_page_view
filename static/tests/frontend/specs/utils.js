@@ -290,6 +290,31 @@ ep_script_page_view_test_helper.utils = {
     done();
   },
 
+  testLineIsStillOnSamePositionOfViewport: function(lineNumberBeforeWaitFor, lineNumberAfterWaitFor, waitFor, timeout, done) {
+    var utils = ep_script_page_view_test_helper.utils;
+    var outer$ = helper.padOuter$;
+
+    var $editor = outer$("#outerdocbody");
+
+    var $targetLine = utils.getLine(lineNumberBeforeWaitFor);
+    var shiftBetweenTopAndLineWithCaret = $targetLine.offset().top - $editor.scrollTop();
+
+    helper.waitFor(waitFor, timeout).done(function() {
+      var acceptedRange = 1;
+
+      var $targetLine = utils.getLine(lineNumberAfterWaitFor);
+
+      // top of the line on pad - original shift
+      var expectedScrollTop = $targetLine.offset().top - shiftBetweenTopAndLineWithCaret;
+
+      var actualScrollTop = $editor.scrollTop();
+
+      expect(actualScrollTop).to.be.within(expectedScrollTop - acceptedRange, expectedScrollTop + acceptedRange);
+
+      done();
+    });
+  },
+
   linesAfterNonSplitPageBreaks: function() {
     var inner$ = helper.padInner$;
 

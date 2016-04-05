@@ -334,6 +334,7 @@ describe("ep_script_page_view - repaginate", function() {
     // build script with lots of pages, so repagination takes a while to finish
     var NUMBER_OF_PAGES = 20;
     var targetLineNumber, targetLineText;
+    var caretLineNumber = 0;
 
     var targetLineNumberAfter1stCycleWithSplitPageBreaks = function() {
       // after first repagination cycle, there are 5 new split lines
@@ -347,6 +348,14 @@ describe("ep_script_page_view - repaginate", function() {
     var targetLineNumberAfter1stCycleWithNonSplitPageBreaks = function() {
       // after first repagination cycle, 5 split lines were removed
       return targetLineNumberAfterFullRepaginationWithSplitPageBreaks() - MAX_PAGE_BREAKS_PER_CYCLE;
+    }
+
+    var lastLineOfPageBeforeLast = function() {
+      var linesPerPage = GENERALS_PER_PAGE - 1; // -1: each page has a double-line at the end
+      var pageBeforeLast = NUMBER_OF_PAGES - 1;
+      var lastLineOfPageBeforeLast = pageBeforeLast * linesPerPage - 1; // -1: lines are zero-based
+
+      return lastLineOfPageBeforeLast;
     }
 
     beforeEach(function(done) {
@@ -375,11 +384,21 @@ describe("ep_script_page_view - repaginate", function() {
           $targetLine.sendkeys("{selectall}{backspace}");
           $targetLine.sendkeys(targetLineText);
 
+          // change caret line text too, if not on beginning of pad
+          if (caretLineNumber !== 0) {
+            var $caretLine = utils.getLine(caretLineNumber);
+            $caretLine.sendkeys("{selectall}{backspace}");
+            $caretLine.sendkeys("This is the line where caret will be");
+          }
+
           // inserts a long text to first line, so all lines will be shift one line down
           // and pagination will change scroll position of elements
           var longText = utils.buildStringWithLength(62, "1");
           var $firstLine = inner$("div").first();
           $firstLine.sendkeys(longText);
+
+          // place caret where it should be
+          utils.placeCaretInTheBeginningOfLine(caretLineNumber);
 
           // wait for first cycle of repagination to be completed before moving viewport
           // to target line (otherwise Etherpad will overrite this viewport moving)
@@ -421,11 +440,7 @@ describe("ep_script_page_view - repaginate", function() {
 
     context("and line on top of viewport receives a page break", function() {
       before(function() {
-        var linesPerPage = GENERALS_PER_PAGE - 1; // -1: each page has a double-line at the end
-        var pageBeforeLast = NUMBER_OF_PAGES - 1;
-        var lastLineOfPageBeforeLast = pageBeforeLast * linesPerPage - 1; // -1: lines are zero-based
-
-        targetLineNumber = lastLineOfPageBeforeLast;
+        targetLineNumber = lastLineOfPageBeforeLast();
         // as target line is a double-line, keep it that way and use a long text
         targetLineText = "This very very very very very long line should be on top of viewport";
       });
@@ -540,6 +555,30 @@ describe("ep_script_page_view - repaginate", function() {
             });
           });
         });
+      });
+    });
+
+    context("and caret is visible but is not on line on top of viewport", function() {
+      before(function() {
+        targetLineNumber = lastLineOfPageBeforeLast();
+        // as target line is a double-line, keep it that way and use a long text
+        targetLineText = "This very very very very very long line should be on top of viewport";
+        // line with page break above caret was not split yet
+        caretLineNumber = targetLineNumber + 1;
+      });
+
+      it("keeps first visible line always on top of viewport", function(done) {
+        this.timeout(14000);
+
+        // there was one repagination cycle already
+        var lineNumberBeforePagination = caretLineNumber + MAX_PAGE_BREAKS_PER_CYCLE;
+        // line with page break above caret was split
+        var lineNumberAfterPagination = targetLineNumberAfterFullRepaginationWithSplitPageBreaks() + 2;
+        var waitFor = function() {
+          var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
+          return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
+        };
+        utils.testLineIsStillOnSamePositionOfViewport(lineNumberBeforePagination, lineNumberAfterPagination, waitFor, 10000, done);
       });
     });
   });

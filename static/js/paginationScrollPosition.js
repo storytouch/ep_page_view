@@ -8,22 +8,22 @@ exports.keepViewportScrollPosition = function(action, paginationInfo, rep) {
   var $editor = utils.getPadOuter().find('#outerdocbody');
 
   // get line info before performing any action that could change editor total height
-  var infoOfFirstLineVisibleOnViewport = getInfoOfFirstLineVisibleOnViewport(rep);
+  var infoOfAnchorLineOnViewport = getInfoOfAnchorLineOnViewport(rep);
 
   action();
 
   // Set the top of viewport to be the same Y as the target line
-  var targetScroll = getNewTopPositionOf(infoOfFirstLineVisibleOnViewport, paginationInfo, rep);
+  var targetScroll = getNewTopPositionOf(infoOfAnchorLineOnViewport, paginationInfo, rep);
   $editor.scrollTop(targetScroll); // Works in Chrome
   $editor.parent().scrollTop(targetScroll); // Works in Firefox
 }
 
-var getInfoOfFirstLineVisibleOnViewport = function(rep) {
+var getInfoOfAnchorLineOnViewport = function(rep) {
   var targetScroll = utils.getPadOuter().find('#outerdocbody').scrollTop();
-  var $firstLineAfterViewportTop = getFirstLineVisibleOnViewport(targetScroll);
+  var $anchorLine = getAnchorLine(targetScroll, rep);
 
   // build object with info needed after pagination
-  var info = buildLineInfo($firstLineAfterViewportTop, targetScroll);
+  var info = buildLineInfo($anchorLine, targetScroll);
   info.lineNumber = utils.getLineNumberFromDOMLine(info.$line, rep);
 
   // line might be merged during pagination. Get information about its neighbors
@@ -59,6 +59,35 @@ var getInfoOfFirstLineVisibleOnViewport = function(rep) {
   }
 
   return info;
+}
+
+var getAnchorLine = function(viewportScrollTop, rep) {
+  var $caretLine = getCaretLineOnViewport(viewportScrollTop, rep);
+
+  if ($caretLine) {
+    return $caretLine;
+  }
+
+  return getFirstLineVisibleOnViewport(viewportScrollTop);
+}
+
+var getCaretLineOnViewport = function(viewportScrollTop, rep) {
+  var caretLine = rep.selStart[0];
+  var caretLineNode = rep.lines.atIndex(caretLine).lineNode;
+
+  if (lineIsOnViewport(caretLineNode, viewportScrollTop)) {
+    return $(caretLineNode);
+  }
+}
+
+var lineIsOnViewport = function(lineNode, viewportScrollTop) {
+  var viewportHeight = $('#editorcontainer').height();
+  var viewportScrollBottom = viewportScrollTop + viewportHeight;
+
+  var lineIsAfterViewportTop = (lineNode.offsetTop >= viewportScrollTop);
+  var lineIsBeforeViewportBottom = (lineNode.offsetTop < viewportScrollBottom);
+
+  return lineIsAfterViewportTop && lineIsBeforeViewportBottom;
 }
 
 var getFirstLineVisibleOnViewport = function(viewportScrollTop) {
