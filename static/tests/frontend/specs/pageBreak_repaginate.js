@@ -329,6 +329,59 @@ describe("ep_script_page_view - repaginate", function() {
     });
   });
 
+  context("when a non-split line with page break is repaginated and split", function() {
+    var lines;
+
+    beforeEach(function(done) {
+      this.timeout(4000);
+
+      var lastLineText = "general";
+
+      // build script full of generals and with last line with 2 inner lines
+      var line1 = "AA" + utils.buildStringWithLength(50, "1") + ". ";
+      var line2 = "BB" + utils.buildStringWithLength(50, "2") + ". ";
+      lines = [line1, line2];
+
+      var fullPage = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE - 2) +
+                     utils.general(line1 + line2);
+      var lastGeneral = utils.general(lastLineText);
+
+      var script = fullPage + lastGeneral;
+      utils.createScriptWith(script, lastLineText, function() {
+        // wait for pagination to finish before start testing
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+          return $linesWithPageBreaks.length > 0;
+        }, 2000).done(done);
+      });
+    });
+
+    it("splits line after last whitespace that fits on previous page", function(done) {
+      this.timeout(4000);
+
+      var inner$ = helper.padInner$;
+
+      // insert text on first line to change page break from non-split to split
+      var longText = utils.buildStringWithLength(62, "1");
+      var $firstLine = inner$("div").first();
+      $firstLine.sendkeys(longText);
+
+      // wait for pagination to be re-run
+      helper.waitFor(function() {
+        // now we have a split page break instead of a non-split one
+        var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
+        return $linesWithPageBreaks.length > 0;
+      }, 2000).done(function() {
+        var $firstLineOfSecondPage = utils.linesAfterSplitPageBreaks().first();
+        var secondHalfOfSplit = lines[1];
+
+        expect(utils.cleanText($firstLineOfSecondPage.text())).to.be(secondHalfOfSplit);
+
+        done();
+      });
+    });
+  });
+
   context("when user changes viewport to a line not repaginated yet", function() {
     var MAX_PAGE_BREAKS_PER_CYCLE = 5;
 

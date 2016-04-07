@@ -3,6 +3,7 @@ var paginationPageNumber = require('./paginationPageNumber');
 
 var PAGE_BREAKS_ATTRIB                     = "nonSplitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "nonSplitPageBreakWithMoreAndContd";
+exports.PAGE_BREAK_ATTRIBS = [PAGE_BREAKS_ATTRIB, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB];
 
 var PAGE_BREAK_TAG = "nonSplitPageBreak";
 exports.PAGE_BREAK_TAG = PAGE_BREAK_TAG;

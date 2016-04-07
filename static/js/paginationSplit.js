@@ -1,8 +1,9 @@
 var _ = require('ep_etherpad-lite/static/js/underscore');
 
-var utils = require('./utils');
-var randomString = require('ep_etherpad-lite/static/js/pad_utils').randomString;
+var randomString         = require('ep_etherpad-lite/static/js/pad_utils').randomString;
+var utils                = require('./utils');
 var paginationPageNumber = require('./paginationPageNumber');
+var paginationNonSplit   = require('./paginationNonSplit');
 
 var PAGE_BREAKS_ATTRIB                     = "splitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "splitPageBreakWithMoreAndContd";
@@ -10,14 +11,18 @@ var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "splitPageBreakWithMoreAndContd";
 var FIRST_HALF_ATTRIB = "splitFirstHalf";
 var SECOND_HALF_ATTRIB = "splitSecondHalf";
 
-var ETHERPAD_AND_SPLIT_ATTRIBS = [
-  // Etherpad basic line attributes
-  'author', 'lmkr', 'insertorder', 'start',
-  // page number attrib
-  paginationPageNumber.PAGE_NUMBER_ATTRIB,
-  // attributes used to mark a line as split
-  PAGE_BREAKS_ATTRIB, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB, FIRST_HALF_ATTRIB, SECOND_HALF_ATTRIB
-];
+var ETHERPAD_AND_PAGE_BREAK_ATTRIBS = _.union(
+  [
+    // Etherpad basic line attributes
+    'author', 'lmkr', 'insertorder', 'start',
+    // page number attrib
+    paginationPageNumber.PAGE_NUMBER_ATTRIB,
+    // attributes used to mark a line as split
+    PAGE_BREAKS_ATTRIB, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB, FIRST_HALF_ATTRIB, SECOND_HALF_ATTRIB
+  ],
+  // attributes used to mark a line as non-split
+  paginationNonSplit.PAGE_BREAK_ATTRIBS
+);
 
 var PAGE_BREAK_TAG = "splitPageBreak";
 exports.PAGE_BREAK_TAG = PAGE_BREAK_TAG;
@@ -510,7 +515,7 @@ var lineHasMarkerExcludingSplitLineMarkers = function(lineNumber, attributeManag
   var countAttribsWithMarker = _.chain(lineAttributes).
     filter(function(a){return !!a[1];}). // remove absent attributes
     map(function(a){return a[0];}). // get only attribute names
-    difference(ETHERPAD_AND_SPLIT_ATTRIBS). // exclude Etherpad basic attributes + split markers
+    difference(ETHERPAD_AND_PAGE_BREAK_ATTRIBS). // exclude Etherpad basic attributes + page break markers
     size().value(); // get number of attributes
 
   return countAttribsWithMarker > 0;
