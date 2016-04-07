@@ -193,12 +193,30 @@
   }
 
   /* page number: */
-  #innerdocbody.breakPages div splitPageBreak:after,
-  #innerdocbody.breakPages div nonSplitPageBreak:after {
+  #innerdocbody.breakPages div pagenumber {
     margin-top: -38px;
     margin-right: 4px;
     float: right;
+  }
+  #innerdocbody.breakPages div pagenumber:before {
+    margin-right: 5px;
     content: attr(data-page-number) ".";
+  }
+  #innerdocbody.breakPages div calculating {
+    float: right;
+  }
+
+  /* Animation for page number calculation. Based on .loadingAnimation from pad.css of Etherpad. */
+  /* Selects all lines after line marked with lastPaginated class */
+  div.lastPaginated ~ div calculating {
+    -webkit-animation: loadingAnimation 2s infinite linear;
+    animation: loadingAnimation 2s infinite linear;
+    font-family: "fontawesome-etherpad";
+    z-index:150;
+  }
+
+  div.lastPaginated ~ div calculating:before {
+    content: "\e80e";
   }
 
   .outerBackground{

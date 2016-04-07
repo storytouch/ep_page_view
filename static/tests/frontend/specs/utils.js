@@ -355,7 +355,8 @@ ep_script_page_view_test_helper.utils = {
       expect(utils.cleanText($firstPageBreak.text())).to.match(startWithTextAfterPageBreak);
 
       // verify page number is correct
-      var actualPageNumber = utils.pageBreakOfLine($firstPageBreak).attr("data-page-number");
+      var $lineWithPageBreak = utils.pageBreakOfLine($firstPageBreak).closest("div");
+      var actualPageNumber = $lineWithPageBreak.find("pagenumber").attr("data-page-number");
       expect(actualPageNumber.toString()).to.be(expectedPageNumber.toString());
 
       done();
@@ -378,7 +379,8 @@ ep_script_page_view_test_helper.utils = {
       expect($firstPageBreak.text().trim()).to.be(textAfterPageBreak.trim());
 
       // verify page number is correct
-      var actualPageNumber = utils.pageBreakOfLine($firstPageBreak).attr("data-page-number");
+      var $lineWithPageBreak = utils.pageBreakOfLine($firstPageBreak).closest("div");
+      var actualPageNumber = $lineWithPageBreak.find("pagenumber").attr("data-page-number");
       expect(actualPageNumber.toString()).to.be(expectedPageNumber.toString());
 
       done();

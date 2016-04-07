@@ -320,7 +320,8 @@ describe("ep_script_page_view - repaginate", function() {
 
         var $linesAfterPageBreaks = utils.linesAfterNonSplitPageBreaks();
         var $lineAfterSecondPageBreak = $linesAfterPageBreaks.last();
-        var actualPageNumber = utils.pageBreakOfLine($lineAfterSecondPageBreak).attr("data-page-number");
+
+        var actualPageNumber = utils.pageBreakOfLine($lineAfterSecondPageBreak).closest("div").find("pagenumber").attr("data-page-number");
         expect(actualPageNumber.toString()).to.be("3");
 
         done();

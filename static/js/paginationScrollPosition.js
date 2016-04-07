@@ -73,7 +73,7 @@ var getAnchorLine = function(viewportScrollTop, rep) {
 
 var getCaretLineOnViewport = function(viewportScrollTop, rep) {
   var caretLine = rep.selStart[0];
-  var caretLineNode = rep.lines.atIndex(caretLine).lineNode;
+  var caretLineNode = utils.getDOMLineFromLineNumber(caretLine, rep);
 
   if (lineIsOnViewport(caretLineNode, viewportScrollTop)) {
     return $(caretLineNode);
@@ -138,7 +138,7 @@ var getNewTopPositionOf = function(originalLineInfo, paginationInfo, rep) {
     });
     if (originalLineWasSplit) {
       var newLineNumber = originalLineWasSplit.lineNumberAfterClean;
-      currentLine = rep.lines.atIndex(newLineNumber).lineNode;
+      currentLine = utils.getDOMLineFromLineNumber(newLineNumber, rep);
     } else {
       // original line was merged during clean, find a neighbor that is still on the pad
       var neighbor;

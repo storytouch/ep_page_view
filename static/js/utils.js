@@ -120,7 +120,9 @@ exports.buildPageBreakWithMoreAndContd = function(cls, tagName) {
 
 exports.buildSimplePageBreak = function(cls, tagName) {
   var pageNumber = extractPageNumberFromClass(cls);
-  return '<'+tagName+' data-page-number="'+pageNumber+'"></'+tagName+'>';
+  var pageNumberTag = '<pagenumber data-page-number="'+pageNumber+'"><calculating/></pagenumber>';
+  var pageBreakTag = '<'+tagName+'></'+tagName+'>';
+  return pageBreakTag + pageNumberTag;
 }
 var buildSimplePageBreak = exports.buildSimplePageBreak;
 
@@ -130,6 +132,10 @@ var extractCharacterNameFromClass = function(cls) {
   var characterName = characterNameFound ? characterNameFound[1] : "";
 
   return characterName;
+}
+
+exports.pageNumberOfDOMLine = function($line) {
+  return $line.find("pagenumber").attr("data-page-number");
 }
 
 exports.buildPageNumberToClass = function(value) {
@@ -149,6 +155,10 @@ exports.getLineNumberFromDOMLine = function($line, rep) {
   var lineNumber = rep.lines.indexOfKey(lineId);
 
   return lineNumber;
+}
+
+exports.getDOMLineFromLineNumber = function(lineNumber, rep) {
+  return rep.lines.atIndex(lineNumber).lineNode;
 }
 
 exports.nodeHasMoreAndContd = function($node) {
