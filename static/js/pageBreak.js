@@ -216,7 +216,9 @@ var repaginate = function(context) {
     // clean pending lines to paginate and mark next line as changed so pagination will start from
     // it on next cycle
     paginationLinesChanged.reset(rep);
-    if (!paginationInfo.done) {
+    if (paginationInfo.done) {
+      hideLoadingIcons();
+    } else {
       var endAtLineAfterClean = getLineNumberAfterPaginationOfLastPageBreak(paginationInfo, rep);
 
       makeNextCyclePaginateLinesAfter(endAtLineAfterClean);
@@ -275,9 +277,12 @@ var makeNextCyclePaginateLinesAfter = function(lineNumber) {
   paginationLinesChanged.markLineAsChanged(continuePaginationFromLine);
 }
 
-var displayLoadingIconOnPageNumbersAfterLine = function(lineNumber, rep) {
+var hideLoadingIcons = function() {
   var $lastPageBreakOfPreviousCycle = utils.getPadInner().find("div.lastPaginated");
   $lastPageBreakOfPreviousCycle.removeClass("lastPaginated");
+}
+var displayLoadingIconOnPageNumbersAfterLine = function(lineNumber, rep) {
+  hideLoadingIcons();
 
   var $lastPageBreakOfThisCycle = $(utils.getDOMLineFromLineNumber(lineNumber, rep));
   $lastPageBreakOfThisCycle.addClass("lastPaginated");

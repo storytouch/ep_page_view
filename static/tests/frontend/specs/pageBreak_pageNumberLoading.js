@@ -16,7 +16,7 @@ describe("ep_script_page_view - page number loading", function() {
     var MAX_PAGE_BREAKS_PER_CYCLE = 5;
 
     // build script with lots of pages, so repagination takes a while to finish
-    var NUMBER_OF_PAGES = 20;
+    var NUMBER_OF_PAGES = 22;
 
     beforeEach(function(done) {
       this.timeout(14000);
