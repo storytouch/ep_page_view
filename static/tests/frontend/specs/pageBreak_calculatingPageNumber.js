@@ -1,4 +1,4 @@
-describe("ep_script_page_view - page number loading", function() {
+describe("ep_script_page_view - calculating page number", function() {
   var utils;
 
   before(function(){

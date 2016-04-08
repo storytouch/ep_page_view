@@ -40,7 +40,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       targetLineText = line1 + line2 + line3 + line4;
 
       buildBlock = function() {
-        // block of 1st page to be moved to 2nd page (5 lines high, including 2 lines are top margin)
+        // block of 1st page to be moved to 2nd page (5 lines high, including 2 lines for top margin)
         var lastLineOfPreviousPage = utils.heading("heading");
         var firstLineOfNextPage = utils.transition("transition");
 

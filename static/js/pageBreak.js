@@ -1,15 +1,16 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 
-var utils                    = require('./utils');
-var paginationBlocks         = require('./paginationBlocks');
-var paginationSplit          = require('./paginationSplit');
-var paginationNonSplit       = require('./paginationNonSplit');
-var paginationPageNumber     = require('./paginationPageNumber');
-var paginationLinesChanged   = require('./paginationLinesChanged');
-var paginationScrollPosition = require('./paginationScrollPosition');
-var undoElementType          = require('./undoElementType');
-var getMaxPageHeight         = require('./fixSmallZooms').getMaxPageHeight;
+var utils                      = require('./utils');
+var paginationBlocks           = require('./paginationBlocks');
+var paginationSplit            = require('./paginationSplit');
+var paginationNonSplit         = require('./paginationNonSplit');
+var paginationPageNumber       = require('./paginationPageNumber');
+var paginationLinesChanged     = require('./paginationLinesChanged');
+var paginationScrollPosition   = require('./paginationScrollPosition');
+var undoElementType            = require('./undoElementType');
+var calculatingPageNumberIcons = require('./calculatingPageNumberIcons');
+var getMaxPageHeight           = require('./fixSmallZooms').getMaxPageHeight;
 
 var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
 var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
@@ -217,13 +218,13 @@ var repaginate = function(context) {
     // it on next cycle
     paginationLinesChanged.reset(rep);
     if (paginationInfo.done) {
-      hideLoadingIcons();
+      calculatingPageNumberIcons.hideAll();
     } else {
       var endAtLineAfterClean = getLineNumberAfterPaginationOfLastPageBreak(paginationInfo, rep);
 
       makeNextCyclePaginateLinesAfter(endAtLineAfterClean);
 
-      displayLoadingIconOnPageNumbersAfterLine(endAtLineAfterClean, rep);
+      calculatingPageNumberIcons.displayAllAfterLine(endAtLineAfterClean, rep);
 
       // schedule pagination to continue
       resetTimerToRestartPagination(context);
@@ -275,17 +276,6 @@ var makeNextCyclePaginateLinesAfter = function(lineNumber) {
   continuePaginationFromLine += REPAGINATION_LINE_SHIFT;
 
   paginationLinesChanged.markLineAsChanged(continuePaginationFromLine);
-}
-
-var hideLoadingIcons = function() {
-  var $lastPageBreakOfPreviousCycle = utils.getPadInner().find("div.lastPaginated");
-  $lastPageBreakOfPreviousCycle.removeClass("lastPaginated");
-}
-var displayLoadingIconOnPageNumbersAfterLine = function(lineNumber, rep) {
-  hideLoadingIcons();
-
-  var $lastPageBreakOfThisCycle = $(utils.getDOMLineFromLineNumber(lineNumber, rep));
-  $lastPageBreakOfThisCycle.addClass("lastPaginated");
 }
 
 var cleanPageBreaks = function(startAtLine, endAtLine, attributeManager, rep, editorInfo) {
