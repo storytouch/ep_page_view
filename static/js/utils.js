@@ -120,7 +120,7 @@ exports.buildPageBreakWithMoreAndContd = function(cls, tagName) {
 
 exports.buildSimplePageBreak = function(cls, tagName) {
   var pageNumber = extractPageNumberFromClass(cls);
-  var pageNumberTag = '<pagenumber data-page-number="'+pageNumber+'"><calculating/></pagenumber>';
+  var pageNumberTag = '<pagenumber contenteditable="false" data-page-number="'+pageNumber+'"><calculating/></pagenumber>';
   var pageBreakTag = '<'+tagName+'></'+tagName+'>';
   return pageBreakTag + pageNumberTag;
 }
