@@ -29,7 +29,7 @@ describe("ep_script_page_view - height of line numbers", function() {
 
     it("displays number of first line of next page on the top of its text", function(done) {
       var firstLineOfSecondPage = GENERALS_PER_PAGE+1;
-      utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, done);
+      utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
     });
   });
 
@@ -63,7 +63,7 @@ describe("ep_script_page_view - height of line numbers", function() {
 
     it("displays number of first line of next page on the top of its text", function(done) {
       var firstLineOfSecondPage = GENERALS_PER_PAGE-1;
-      utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, done);
+      utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
     });
   });
 
@@ -91,7 +91,7 @@ describe("ep_script_page_view - height of line numbers", function() {
 
     it("displays number of first line of next page on the top of its text", function(done) {
       var firstLineOfSecondPage = GENERALS_PER_PAGE+1;
-      utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, done);
+      utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
     });
   });
 
@@ -122,7 +122,7 @@ describe("ep_script_page_view - height of line numbers", function() {
 
     it("displays number of first line of next page on the top of its text", function(done) {
       var firstLineOfSecondPage = GENERALS_PER_PAGE-2;
-      utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, done);
+      utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
     });
   });
 });

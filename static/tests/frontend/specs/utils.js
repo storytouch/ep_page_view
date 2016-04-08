@@ -435,7 +435,9 @@ ep_script_page_view_test_helper.utils = {
     });
   },
 
-  testLineNumberIsOnTheSamePositionOfItsLineText: function(targetLine, done) {
+  testLineNumberIsOnTheSamePositionOfItsLineText: function(targetLine, test, done) {
+    test.timeout(4000);
+
     var utils = ep_script_page_view_test_helper.utils;
 
     // make sure line numbers are enabled

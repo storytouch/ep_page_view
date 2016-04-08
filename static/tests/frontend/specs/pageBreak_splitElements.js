@@ -1685,7 +1685,7 @@ describe("ep_script_page_view - page break on split elements", function() {
             // verify CONT'D is one line high
             // (if it is not, line number and line position on editor will be different)
             var firstLineOfSecondPage = GENERALS_PER_PAGE-1;
-            utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, done);
+            utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
           });
         });
       });
