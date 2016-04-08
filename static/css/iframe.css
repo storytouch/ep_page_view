@@ -94,6 +94,15 @@
     display: hidden;
   }
 
+  /* Removes top margin for elements after page breaks */
+  #innerdocbody.breakPages div.beforePageBreak + div heading,
+  #innerdocbody.breakPages div.beforePageBreak + div action,
+  #innerdocbody.breakPages div.beforePageBreak + div character,
+  #innerdocbody.breakPages div.beforePageBreak + div transition,
+  #innerdocbody.breakPages div.beforePageBreak + div shot {
+    margin-top: 0px;
+  }
+
   #innerdocbody.breakPages div splitPageBreak,
   #innerdocbody.breakPages div nonSplitPageBreak,
   #innerdocbody.breakPages div contdLine,

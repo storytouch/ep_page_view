@@ -4,8 +4,8 @@ var EMPTY_CHARACTER_NAME = "empty";
 
 var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
 
-exports.CLONED_ELEMENTS_CLASS = "cloned";
-var CLONED_ELEMENTS_CLASS = exports.CLONED_ELEMENTS_CLASS;
+var CLONED_ELEMENTS_CLASS = "cloned";
+var CLONED_ELEMENTS_SELECTOR = "." + CLONED_ELEMENTS_CLASS;
 
 // Easier access to outer pad
 var padOuter;
@@ -199,4 +199,9 @@ exports.cloneLine = function($targetLine) {
   $clonedLine.attr("id", "");
 
   return $clonedLine;
+}
+
+exports.removeClonedLines = function() {
+  var $clones = getPadInner().find(CLONED_ELEMENTS_SELECTOR);
+  $clones.remove();
 }

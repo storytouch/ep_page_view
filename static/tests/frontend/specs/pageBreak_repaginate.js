@@ -329,6 +329,54 @@ describe("ep_script_page_view - repaginate", function() {
     });
   });
 
+  context("when line after a page break has top margin", function() {
+    beforeEach(function(done) {
+      this.timeout(4000);
+
+      var lastLineText = "general";
+
+      // build script with 1st page almost full (leave two lines at the end) +
+      // one heading on top of 2nd page + another full page + a single line on 3rd page
+      var pageAlmostFullOfGenerals = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE-2);
+      var heading = utils.heading("heading");
+      var pageFullOfGenerals = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE);
+      var script = pageAlmostFullOfGenerals + heading + pageFullOfGenerals;
+
+      utils.createScriptWith(script, lastLineText, function() {
+        // wait for pagination to finish before start testing
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+          return $linesWithPageBreaks.length === 2;
+        }, 2000).done(done);
+      });
+    });
+
+    it("recalculates page breaks taking into account the future margin element will have if it isn't after page break", function(done) {
+      this.timeout(4000);
+
+      var inner$ = helper.padInner$;
+
+      // remove line after heading, so there will be one less page break
+      var $lineAfterHeading = inner$("div:has(heading)").first().next();
+      $lineAfterHeading.sendkeys("{selectall}");
+      $lineAfterHeading.get(0).outerHTML = "";
+
+      // wait for repagination to finish
+      helper.waitFor(function() {
+        var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+        return $linesWithPageBreaks.length === 1;
+      }, 2000).done(function() {
+        // although there are 2 empty lines on 1st page, the heading itself needs 3 lines
+        // (1 for text and 2 for top margin), so it should still be on top of 2nd page
+        var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().first();
+
+        expect($firstLineOfSecondPage.text()).to.be("heading");
+
+        done();
+      });
+    });
+  });
+
   context("when a non-split line with page break is repaginated and split", function() {
     var lines;
 

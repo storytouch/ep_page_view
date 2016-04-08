@@ -581,8 +581,8 @@ exports.lineHasPageBreak = function(lineNumber, attributeManager) {
          attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
 }
 
-exports.clonePaginatedLine = function($targetLine) {
-  var $clonedLine = $targetLine;
+exports.cloneLineIfSplitBetweenPages = function($targetLine) {
+  var $clonedLine;
 
   // only clone line if need to merge it with its second half of split
   var fullTextOfLine = fullTextOfSplitLine($targetLine);

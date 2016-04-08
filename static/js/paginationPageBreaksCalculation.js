@@ -6,8 +6,6 @@ var paginationSplit            = require('./paginationSplit');
 var paginationNonSplit         = require('./paginationNonSplit');
 var getMaxPageHeight           = require('./fixSmallZooms').getMaxPageHeight;
 
-var CLONED_ELEMENTS_SELECTOR = "." + utils.CLONED_ELEMENTS_CLASS;
-
 var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
 var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
 
@@ -95,7 +93,7 @@ exports.calculatePageBreaks = function(startLine, originalCaretPosition, attribu
       currentPageHeight += adjustedHeight;
     }
 
-    removeClonedLines();
+    utils.removeClonedLines();
 
     // if current line is a split line, it will be merged when cleaned, so we need to shift all lines
     // after it one position up. A merged line has text of both halves, so its text won't be the same
@@ -168,20 +166,30 @@ var lineAfterUnchangedPageBreak = function(startLine, rep) {
 }
 
 var cloneLine = function($targetLine, $lastLine) {
-  var $clonedLine = paginationSplit.clonePaginatedLine($targetLine);
-  var lineWasCloned = $clonedLine.hasClass(utils.CLONED_ELEMENTS_CLASS);
+  var $clonedLine = paginationSplit.cloneLineIfSplitBetweenPages($targetLine) ||
+                    cloneLineIfAfterAPageBreak($targetLine);
+  var lineWasCloned = !!$clonedLine;
 
   if (lineWasCloned) {
     // make sure cloned lines have all information needed by paginationBlocks
     paginationBlocks.adjustClonedBlock($clonedLine, $targetLine);
 
     $clonedLine.insertAfter($lastLine);
+  } else {
+    // it wasn't necessary to clone line, so we can use the original one
+    $clonedLine = $targetLine;
   }
 
   return $clonedLine;
 }
 
-var removeClonedLines = function() {
-  var $clones = utils.getPadInner().find(CLONED_ELEMENTS_SELECTOR);
-  $clones.remove();
+var cloneLineIfAfterAPageBreak = function($targetLine) {
+  var $clonedLine;
+
+  var lineIsAfterAPageBreak = $targetLine.prev().find(PAGE_BREAK).length > 0;
+  if (lineIsAfterAPageBreak) {
+    $clonedLine = utils.cloneLine($targetLine);
+  }
+
+  return $clonedLine;
 }
