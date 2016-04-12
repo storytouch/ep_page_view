@@ -73,7 +73,10 @@ exports.calculatePageBreaks = function(startLine, originalCaretPosition, attribu
         }
         // is it a block of lines? (A block can have only a single line too)
         else {
-          var blockInfo = paginationBlocks.getBlockInfo($currentLine, lineHeight, lineInnerHeight);
+          // make sure cloned lines have all information needed by paginationBlocks
+          prepareClonedLineForBlockCalculation($clonedLine, $currentLine);
+
+          var blockInfo = paginationBlocks.getBlockInfo($currentLine, $clonedLine, lineHeight, lineInnerHeight);
 
           currentPageHeight = blockInfo.blockHeight;
 
@@ -172,9 +175,6 @@ var cloneLine = function($targetLine, $lastLine) {
 
   if (lineWasCloned) {
     $clonedLine.insertAfter($lastLine);
-
-    // make sure cloned lines have all information needed by paginationBlocks
-    paginationBlocks.adjustClonedBlock($clonedLine, $targetLine);
   } else {
     // it wasn't necessary to clone line, so we can use the original one
     $clonedLine = $targetLine;
@@ -190,7 +190,13 @@ var cloneLineIfHasPageBreakOrIsAfterOne = function($targetLine) {
   var lineIsAfterPageBreak = $targetLine.prev().find(PAGE_BREAK).length > 0;
   if (lineHasPageBreak || lineIsAfterPageBreak) {
     $clonedLine = utils.cloneLine($targetLine);
- }
+  }
 
   return $clonedLine;
+}
+
+var prepareClonedLineForBlockCalculation = function($clonedLine, $targetLine) {
+  if (utils.lineIsAClone($clonedLine)) {
+    paginationBlocks.adjustClonedBlock($clonedLine, $targetLine);
+  }
 }

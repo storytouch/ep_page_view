@@ -250,6 +250,10 @@ exports.removeClonedLines = function() {
   $clones.remove();
 }
 
+exports.lineIsAClone = function($targetLine) {
+  return $targetLine.hasClass(CLONED_ELEMENTS_CLASS);
+}
+
 var pageBreakTags = new Set(["more", "contdLine", "pagenumber"]);
 var pageBreakTagsSelector;
 exports.registerPageBreakTag = function(tagName) {
