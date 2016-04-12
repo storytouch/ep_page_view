@@ -26,6 +26,7 @@ var ETHERPAD_AND_PAGE_BREAK_ATTRIBS = _.union(
 
 var PAGE_BREAK_TAG = "splitPageBreak";
 exports.PAGE_BREAK_TAG = PAGE_BREAK_TAG;
+utils.registerPageBreakTag(PAGE_BREAK_TAG);
 
 var FIRST_HALF_TAG                     = "split_first_half";
 var FIRST_HALF_WITH_MORE_AND_CONTD_TAG = "split_with_more_and_contd_first_half";
@@ -337,7 +338,7 @@ var calculateHeightToFitText = function(text, lineInfo) {
   // parentheticals need this to calculate line height without any "()"
   $theClone.addClass("clone");
 
-  var height = $theClone.insertAfter($originalLine).height();
+  var height = $theClone.insertAfter($originalLine).get(0).getBoundingClientRect().height;
   $theClone.remove();
 
   return height;

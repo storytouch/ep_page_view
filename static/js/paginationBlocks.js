@@ -108,7 +108,7 @@ exports.getBlockInfo = function($currentLine, currentLineHeight, currentLineInne
 }
 
 var getNumberOfInnerLinesOf = function($line) {
-  var totalHeight = $line.height();
+  var totalHeight = utils.getLineHeightWithoutMargins($line);
   var heightOfOneLine = utils.getRegularLineHeight();
   var numberOfInnerLines = parseInt(totalHeight / heightOfOneLine);
 

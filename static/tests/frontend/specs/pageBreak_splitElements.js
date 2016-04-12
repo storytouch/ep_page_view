@@ -1674,7 +1674,7 @@ describe("ep_script_page_view - page break on split elements", function() {
 
         // this test is for the CSS of CONT'D (see comments about ellipsis on CSS file and fixSmallZoom.js)
         it("only uses one line to display character name and CONT'D", function(done) {
-          this.timeout(6000);
+          var theTest = this;
           var inner$ = helper.padInner$;
 
           // wait for pagination to be finished
@@ -1685,7 +1685,7 @@ describe("ep_script_page_view - page break on split elements", function() {
             // verify CONT'D is one line high
             // (if it is not, line number and line position on editor will be different)
             var firstLineOfSecondPage = GENERALS_PER_PAGE-1;
-            utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
+            utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, theTest, done);
           });
         });
       });

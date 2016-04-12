@@ -167,14 +167,14 @@ var lineAfterUnchangedPageBreak = function(startLine, rep) {
 
 var cloneLine = function($targetLine, $lastLine) {
   var $clonedLine = paginationSplit.cloneLineIfSplitBetweenPages($targetLine) ||
-                    cloneLineIfAfterAPageBreak($targetLine);
+                    cloneLineIfHasPageBreakOrIsAfterOne($targetLine);
   var lineWasCloned = !!$clonedLine;
 
   if (lineWasCloned) {
+    $clonedLine.insertAfter($lastLine);
+
     // make sure cloned lines have all information needed by paginationBlocks
     paginationBlocks.adjustClonedBlock($clonedLine, $targetLine);
-
-    $clonedLine.insertAfter($lastLine);
   } else {
     // it wasn't necessary to clone line, so we can use the original one
     $clonedLine = $targetLine;
@@ -183,13 +183,14 @@ var cloneLine = function($targetLine, $lastLine) {
   return $clonedLine;
 }
 
-var cloneLineIfAfterAPageBreak = function($targetLine) {
+var cloneLineIfHasPageBreakOrIsAfterOne = function($targetLine) {
   var $clonedLine;
 
-  var lineIsAfterAPageBreak = $targetLine.prev().find(PAGE_BREAK).length > 0;
-  if (lineIsAfterAPageBreak) {
+  var lineHasPageBreak = $targetLine.find(PAGE_BREAK).length > 0;
+  var lineIsAfterPageBreak = $targetLine.prev().find(PAGE_BREAK).length > 0;
+  if (lineHasPageBreak || lineIsAfterPageBreak) {
     $clonedLine = utils.cloneLine($targetLine);
-  }
+ }
 
   return $clonedLine;
 }

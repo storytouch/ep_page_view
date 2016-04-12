@@ -90,10 +90,6 @@
     border-radius: 0px 5px 0 0;
   }
 
-  #innerdocbody.breakPages div.cloned {
-    display: hidden;
-  }
-
   /* Removes top margin for elements after page breaks */
   #innerdocbody.breakPages div.beforePageBreak + div heading,
   #innerdocbody.breakPages div.beforePageBreak + div action,
@@ -178,8 +174,10 @@
   /* leave room for page break on line at the end of the page */
   #innerdocbody.breakPages div.beforePageBreak {
     /* All values of calc are from page break */
-    /* 40px: height; 77px: margin-top and margin-bottom; 1px: border-top and border-bottom */
-    padding-bottom: calc(40px + 77px + 77px + 1px + 1px);
+    /* 40px: height; 77px: margin-top and margin-bottom; 1px: border-top and border-bottom;
+       2px: Bug fix: some zoom values mess up with border (they don't have 1px), so we
+       need an extra px to avoid messing up with pagination */
+    padding-bottom: calc(40px + 77px + 77px + 1px + 1px + 2px);
   }
 
   /* hide ")" from 1st half of split parenthetical: */

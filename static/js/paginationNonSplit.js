@@ -7,6 +7,7 @@ exports.PAGE_BREAK_ATTRIBS = [PAGE_BREAKS_ATTRIB, PAGE_BREAKS_WITH_MORE_AND_CONT
 
 var PAGE_BREAK_TAG = "nonSplitPageBreak";
 exports.PAGE_BREAK_TAG = PAGE_BREAK_TAG;
+utils.registerPageBreakTag(PAGE_BREAK_TAG);
 
 exports.atribsToClasses = function(context) {
   // simple page break, return only the flag as class

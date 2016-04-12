@@ -34,6 +34,38 @@ exports.getLineTypeOf = function(lineNumber, attributeManager) {
   return attributeManager.getAttributeOnLine(lineNumber, "script_element");
 }
 
+var bottomOf = function($targetLine) {
+  return $targetLine.get(0).getBoundingClientRect().bottom;
+}
+var heightOf = function($targetLine) {
+  return $targetLine.get(0).getBoundingClientRect().height;
+}
+var widthOf = function($targetLine) {
+  return $targetLine.get(0).getBoundingClientRect().width;
+}
+
+var totalHeightOf = function($targetLine, $innerElement) {
+  var totalLineHeight;
+
+  // Bug fix: when zoom !== 100%, lines might have a float height, so we cannot use jQuery
+  // (it only returns integer values for .height() and .outerHeight(true))
+  if (lineIsFirstOfScript($targetLine)) {
+    // line is first of script, it doesn't have margins nor paddings. Use line height instead
+    totalLineHeight = heightOf($innerElement);
+  } else {
+    var bottomOfTargetLine       = bottomOf($targetLine);
+    var bottomOfLineBeforeTarget = bottomOf($targetLine.prev());
+
+    totalLineHeight = bottomOfTargetLine - bottomOfLineBeforeTarget;
+  }
+
+  return totalLineHeight;
+}
+
+var lineIsFirstOfScript = function($targetLine) {
+  return $targetLine.prev().length === 0;
+}
+
 exports.getLineHeight = function($targetLine) {
   var lineHeight;
 
@@ -44,15 +76,15 @@ exports.getLineHeight = function($targetLine) {
   // general have no inner tag, so get height from targetLine
   var isGeneral = $innerElement.length === 0;
   if (isGeneral) {
-    lineHeight = $targetLine.height();
+    lineHeight = heightOf($targetLine);
   } else {
-    lineHeight = $innerElement.outerHeight(true);
+    lineHeight = totalHeightOf($targetLine, $innerElement);
   }
-  return Math.round(lineHeight);
+
+  return lineHeight;
 }
 exports.getLineHeightWithoutMargins = function($targetLine) {
-  // Bug fix: some cloned lines have a non-integer height, need to round it
-  return Math.round($targetLine.height());
+  return heightOf($targetLine);
 }
 
 // cache regularLineHeight
@@ -67,11 +99,11 @@ exports.updateRegularLineHeight = function() {
 }
 
 exports.getWidthOfOneChar = function() {
-  return getPadOuter().find("#linemetricsdiv").get(0).getBoundingClientRect().width;
+  return widthOf(getPadOuter().find("#linemetricsdiv"));
 }
 
 exports.getHeightOfOneLine = function() {
-  return getPadOuter().find("#linemetricsdiv").get(0).getBoundingClientRect().height;
+  return heightOf(getPadOuter().find("#linemetricsdiv"));
 }
 var getHeightOfOneLine = exports.getHeightOfOneLine;
 
@@ -167,13 +199,17 @@ exports.nodeHasMoreAndContd = function($node) {
 
 exports.setTextOfLine = function($targetLine, text) {
   var $innerTarget = $targetLine.find(SCRIPT_ELEMENTS_SELECTOR);
+  // Bug fix: sometimes there's a whitespace on text represented with &nbsp; (char code 160).
+  // We need to transform it to " " otherwise the line height will be higher than the correct value
+  // Solution based on http://stackoverflow.com/a/1496863
+  var cleanText = text.replace(/\u00a0/g, " ");
 
   var isGeneral = $innerTarget.length === 0;
   if (isGeneral) {
     // general has no inner tag, so use the whole div
-    $targetLine.text(text);
+    $targetLine.text(cleanText);
   } else {
-    $innerTarget.text(text);
+    $innerTarget.text(cleanText);
   }
 }
 
@@ -196,7 +232,15 @@ exports.createCleanCopyOf = function($targetLine, text) {
 exports.cloneLine = function($targetLine) {
   var $clonedLine = $targetLine.clone();
   $clonedLine.addClass(CLONED_ELEMENTS_CLASS);
+
+  // remove id to not mess up with existing lines
   $clonedLine.attr("id", "");
+
+  // remove possible page-break-related tags.
+  $clonedLine.find(getPageBreakTagsSelector()).remove();
+
+  // remove classes that impact element dimensions
+  $clonedLine.removeClass("firstHalf beforePageBreak withMoreAndContd");
 
   return $clonedLine;
 }
@@ -204,4 +248,17 @@ exports.cloneLine = function($targetLine) {
 exports.removeClonedLines = function() {
   var $clones = getPadInner().find(CLONED_ELEMENTS_SELECTOR);
   $clones.remove();
+}
+
+var pageBreakTags = new Set(["more", "contdLine", "pagenumber"]);
+var pageBreakTagsSelector;
+exports.registerPageBreakTag = function(tagName) {
+  pageBreakTags.add(tagName);
+
+  // cache selector for faster processing
+  pageBreakTagsSelector = Array.from(pageBreakTags).join(",");
+}
+
+var getPageBreakTagsSelector = function() {
+  return pageBreakTagsSelector;
 }
