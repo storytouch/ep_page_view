@@ -1413,17 +1413,15 @@ describe("ep_script_page_view - page break on split elements", function() {
           linesBeforeTargetElement = 1;
 
           // pagination will split last line, so we need to get only the part that will be on 2nd half
-          var sentencesOnLastPage = sentences.slice(GENERALS_PER_PAGE-1);
+          var sentencesOnLastPage = sentences.slice(GENERALS_PER_PAGE-3);
           targetElementText = sentencesOnLastPage.join("");
         });
 
-        it("moves the transition to second page and splits the transition between the two pages", function(done) {
-          var singleLineOnPage2 = sentences.slice(0, GENERALS_PER_PAGE-1).join("");
-          utils.testNonSplitPageBreakIsOn(singleLineOnPage2, function() {
-            var firstLineOnPage3 = sentences[GENERALS_PER_PAGE-1];
-            var pageNumber = 3;
-            utils.testSplitPageBreakIsOn(firstLineOnPage3, done, pageNumber);
-          });
+        it("splits transition between the two pages, and second page has the last three lines of the transition", function(done) {
+          this.timeout(4000);
+
+          var firstLineOnPage2 = sentences[GENERALS_PER_PAGE-2];
+          utils.testSplitPageBreakIsOn(firstLineOnPage2, done);
         });
       });
 

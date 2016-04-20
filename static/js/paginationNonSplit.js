@@ -82,6 +82,7 @@ exports.getNonSplitInfo = function($line, lineNumberShift, rep) {
   var moreAndContdInfo = getMoreAndContdInfo($targetLine);
 
   return {
+    lineNumberBeforeClean: utils.getLineNumberFromDOMLine($targetLine, rep),
     lineNumberAfterClean: lineNumberAfterClean,
     addMoreAndContd: moreAndContdInfo,
   };

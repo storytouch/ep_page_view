@@ -102,7 +102,7 @@ ep_script_page_view_test_helper.utils = {
 
   cleanPad: function(callback) {
     // make tests run faster, as the delay is only defined to improve usability
-    helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.paginationDelay = 0;
+    helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.paginationDelay = 1;
 
     var inner$ = helper.padInner$;
     var $padContent = inner$("#innerdocbody");
@@ -204,16 +204,19 @@ ep_script_page_view_test_helper.utils = {
     return ep_script_page_view_test_helper.utils.heightOf($more, ":before");
   },
 
-  placeCaretInTheBeginningOfLine: function(lineNum, cb) {
+  placeCaretInTheBeginningOfLine: function(lineNum, cb, waitFor) {
     var utils =  ep_script_page_view_test_helper.utils;
-    var $targetLine = utils.getLine(lineNum);
-    $targetLine.sendkeys("{selectall}{leftarrow}");
-    helper.waitFor(function() {
+
+    waitFor = waitFor || function() {
       var $targetLine = utils.getLine(lineNum);
       var $lineWhereCaretIs = utils.getLineWhereCaretIs();
 
       return $targetLine.get(0) === $lineWhereCaretIs.get(0);
-    }).done(cb);
+    };
+
+    var $targetLine = utils.getLine(lineNum);
+    $targetLine.sendkeys("{selectall}{leftarrow}");
+    helper.waitFor(waitFor).done(cb);
   },
 
   placeCaretAtTheEndOfLine: function(lineNum, cb) {

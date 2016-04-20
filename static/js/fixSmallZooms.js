@@ -93,7 +93,6 @@ var updateMoreContdStyles = function(newCharProportion) {
   var contdRightMargin     = newCharProportion * DEFAULT_CONTD_RIGHT_MARGIN;
   var contdWidth           = newCharProportion * DEFAULT_CONTD_WIDTH;
   var contdWidthPortuguese = newCharProportion * DEFAULT_CONTD_WIDTH_PTBR;
-  var moreContdLinesHeight = newCharProportion * utils.getHeightOfOneLine() * 2; // one line for MORE, another for CONT'D
 
   // align with character left margin
   styles.push("div more:before, div contdLine { margin-left: " + characterLeftMargin + "px; }");
@@ -131,10 +130,7 @@ var updateMoreContdStyles = function(newCharProportion) {
   styles.push("#innerdocbody[lang=pt-br] div contd:after { " + contdWidthPortuguese + " }");
 
   // leave room for page break on line at the end of the page
-  var pageBreakHeight =
-    "padding-bottom: calc(" +
-                     DEFAULT_PAGE_BREAK_TOTAL_HEIGHT + "px + " +
-                     moreContdLinesHeight            + "px) !important; "
+  var pageBreakHeight = "padding-bottom: " + calcutePageBreakHeight(newCharProportion) + "px !important;";
   styles.push("div.beforePageBreak.withMoreAndContd { " + pageBreakHeight + " }");
 
   // add all styles to editor
@@ -175,4 +171,17 @@ var updatePageHeight = function() {
 
   // update cached value for line height
   utils.updateRegularLineHeight();
+}
+
+// cache pageBreakHeight
+var pageBreakHeight;
+var getPageBreakHeight = function() {
+  return pageBreakHeight;
+}
+exports.getPageBreakHeight = getPageBreakHeight;
+
+var calcutePageBreakHeight = function(newCharProportion) {
+  var moreContdLinesHeight = newCharProportion * utils.getHeightOfOneLine() * 2; // one line for MORE, another for CONT'D
+  pageBreakHeight = DEFAULT_PAGE_BREAK_TOTAL_HEIGHT + moreContdLinesHeight;
+  return pageBreakHeight;
 }

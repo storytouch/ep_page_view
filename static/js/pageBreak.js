@@ -21,25 +21,31 @@ exports.aceRegisterNonScrollableEditEvents = function(hook, context) {
 }
 
 exports.aceRegisterBlockElements = function(hook, context) {
-  return _.union(paginationSplit.blockElements(), paginationNonSplit.blockElements());
+  return _.union(paginationSplit.blockElements(),
+                 paginationNonSplit.blockElements(),
+                 paginationScrollPosition.blockElements());
 }
 
 exports.aceAttribsToClasses = function(hook, context) {
   return _.union(
     paginationSplit.atribsToClasses(context),
     paginationNonSplit.atribsToClasses(context),
+    paginationScrollPosition.atribsToClasses(context),
     paginationPageNumber.atribsToClasses(context)
   );
 }
 
 exports.aceDomLineProcessLineAttributes = function(hook, context) {
-  var extraHTML = paginationNonSplit.buildHtmlWithPageBreaks(context.cls) ||
-                  paginationSplit.buildHtmlWithPageBreaks(context.cls);
+  var scrollTargetHtml = paginationScrollPosition.buildHtmlWithTargetScroll(context.cls) || "";
+  var pageBreak = paginationNonSplit.buildHtmlWithPageBreaks(context.cls) ||
+                  paginationSplit.buildHtmlWithPageBreaks(context.cls) ||
+                  // use a default object for clearer code bellow
+                  { preHtml: "", postHtml: "", default: true };
 
-  if (extraHTML) {
+  if (scrollTargetHtml || !pageBreak.default) {
     var modifier = {
-      preHtml: extraHTML.preHtml,
-      postHtml: extraHTML.postHtml,
+      preHtml: scrollTargetHtml + pageBreak.preHtml,
+      postHtml: pageBreak.postHtml,
       processedMarker: true
     };
     return [modifier];
@@ -199,16 +205,17 @@ var repaginate = function(context) {
   if (startAtLine >= padLines) {
     paginationLinesChanged.reset(rep);
   } else {
-    var paginationInfo = paginationCalculation.calculatePageBreaks(startAtLine, originalCaretPosition, attributeManager, rep);
-    var endAtLine = getLineNumberBeforePaginationOfLastPageBreak(paginationInfo, rep);
+    var paginationInfo;
+    utils.performNonUnduableEvent(callstack, function() {
+      // avoid editor to go up & down while pagination is not finished
+      paginationScrollPosition.keepViewportScrollPosition(function() {
+        paginationInfo = paginationCalculation.calculatePageBreaks(startAtLine, originalCaretPosition, attributeManager, rep);
+        var endAtLine = getLineNumberBeforePaginationOfLastPageBreak(paginationInfo, rep);
 
-    // avoid editor to go up & down while pagination is not finished
-    paginationScrollPosition.keepViewportScrollPosition(function() {
-      utils.performNonUnduableEvent(callstack, function() {
         cleanPageBreaks(startAtLine, endAtLine, attributeManager, rep, editorInfo);
         savePageBreaks(paginationInfo.pageBreaksInfo, attributeManager, rep, editorInfo);
-      });
-    }, paginationInfo, rep);
+      }, attributeManager, rep);
+    });
 
     // clean pending lines to paginate and mark next line as changed so pagination will start from
     // it on next cycle

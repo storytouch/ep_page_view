@@ -44,6 +44,13 @@ var widthOf = function($targetLine) {
   return $targetLine.get(0).getBoundingClientRect().width;
 }
 
+exports.getMarginOf = function($targetLine) {
+  var totalHeightOfLine = exports.getLineHeight($targetLine);
+  var innerHeightOfLine = exports.getLineHeightWithoutMargins($targetLine);
+
+  return totalHeightOfLine - innerHeightOfLine;
+}
+
 var totalHeightOf = function($targetLine, $innerElement) {
   var totalLineHeight;
 
@@ -229,29 +236,24 @@ exports.createCleanCopyOf = function($targetLine, text) {
   return $("<div>" + innerHtml + "</div>");
 }
 
-exports.cloneLine = function($targetLine) {
-  var $clonedLine = $targetLine.clone();
-  $clonedLine.addClass(CLONED_ELEMENTS_CLASS);
-
-  // remove id to not mess up with existing lines
-  $clonedLine.attr("id", "");
+exports.cleanHelperLines = function($helperLines) {
+  $helperLines.addClass(CLONED_ELEMENTS_CLASS);
 
   // remove possible page-break-related tags.
-  $clonedLine.find(getPageBreakTagsSelector()).remove();
+  $helperLines.find(getPageBreakTagsSelector()).remove();
 
   // remove classes that impact element dimensions
-  $clonedLine.removeClass("firstHalf beforePageBreak withMoreAndContd");
+  $helperLines.removeClass("firstHalf beforePageBreak withMoreAndContd");
 
-  return $clonedLine;
-}
+  // store original id on another attribute so it can be retrieved later
+  $helperLines.each(function(index, element) {
+    var $helperLine = $(element);
+    var originalId = $helperLine.attr("id");
+    $helperLine.attr("data-original-id", originalId);
 
-exports.removeClonedLines = function() {
-  var $clones = getPadInner().find(CLONED_ELEMENTS_SELECTOR);
-  $clones.remove();
-}
-
-exports.lineIsAClone = function($targetLine) {
-  return $targetLine.hasClass(CLONED_ELEMENTS_CLASS);
+    // remove id to not mess up with existing lines
+    $helperLine.attr("id", "");
+  });
 }
 
 var pageBreakTags = new Set(["more", "contdLine", "pagenumber"]);

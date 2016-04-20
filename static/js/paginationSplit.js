@@ -35,6 +35,9 @@ var SECOND_HALF_TAG                    = "split_second_half";
 var SENTENCE_MARKER_AND_WHITESPACE_REGEX = /^(.*[.?!;]\s+)[^.?!;]*$/;
 var WHITESPACE_REGEX                     = /^(.*\s+)[^\s]*$/;
 
+var MERGED_LINE = "merged";
+exports.MERGED_LINE = MERGED_LINE;
+
 // number of minimum lines each element needs before a page break so it can be split in two parts
 // (default is 1)
 // exception: if line is a dialogue or parenthetical, and previous line is a character,
@@ -81,29 +84,16 @@ var HAVE_MORE_AND_CONTD = {
   parenthetical: true,
 }
 
-exports.getForcedSplitInfo = function($dirtyLine, $cleanLine, lineNumberShift, totalOutterHeight, totalInnerHeight, availableHeightOnPage, originalCaretPosition, attributeManager, rep) {
-  // forced split places element on top of page, so there's no top margin displayed on editor
-  var noTopMarging = true;
-  var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage(totalOutterHeight, totalInnerHeight, availableHeightOnPage, noTopMarging);
-  var lineInfo = getLineInfo($dirtyLine, $cleanLine, originalCaretPosition, attributeManager, rep);
-
-  var splitPosition = calculateForcedSplitPosition(linesAvailableBeforePageBreak, lineInfo, lineNumberShift);
-  if (splitPosition) {
-    // ok, can split element
-    return splitPosition;
-  }
-}
-
-exports.getRegularSplitInfo = function($dirtyLine, $cleanLine, lineNumberShift, totalOutterHeight, totalInnerHeight, availableHeightOnPage, originalCaretPosition, attributeManager, rep) {
-  var lineInfo = getLineInfo($dirtyLine, $cleanLine, originalCaretPosition, attributeManager, rep);
+exports.getSplitInfo = function($helperLine, $originalLine, lineNumberShift, availableHeightOnPageWithoutMargins, originalCaretPosition, attributeManager, rep) {
+  var lineInfo = getLineInfo($helperLine, $originalLine, originalCaretPosition, attributeManager, rep);
 
   if (canSplit(lineInfo)) {
-    var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage(totalOutterHeight, totalInnerHeight, availableHeightOnPage);
+    var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($helperLine, availableHeightOnPageWithoutMargins);
     var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor(lineInfo);
 
     // only calculate the position where element should be split if there is enough space to do that
     if (linesAvailableBeforePageBreak >= minimumLinesBeforePageBreak) {
-      var splitPosition = calculateRegularSplitPosition(linesAvailableBeforePageBreak, lineInfo, lineNumberShift);
+      var splitPosition = calculateSplitPosition(linesAvailableBeforePageBreak, lineInfo, lineNumberShift);
       if (splitPosition) {
         // ok, can split element
         return splitPosition;
@@ -114,8 +104,8 @@ exports.getRegularSplitInfo = function($dirtyLine, $cleanLine, lineNumberShift, 
 
 // Put together information about the line. Use the returned value to move around line information
 // through the functions of this file
-var getLineInfo = function($dirtyLine, $cleanLine, originalCaretPosition, attributeManager, rep) {
-  var lineIdBeforeRepagination     = $dirtyLine.attr("id");
+var getLineInfo = function($helperLine, $originalLine, originalCaretPosition, attributeManager, rep) {
+  var lineIdBeforeRepagination     = $originalLine.attr("id");
   var lineNumberBeforeRepagination = rep.lines.indexOfKey(lineIdBeforeRepagination);
   var lineHasMarker                = lineHasMarkerExcludingSplitLineMarkers(lineNumberBeforeRepagination, attributeManager);
   // If line has no marker, it means it lost its "*", so we need to decrement column number
@@ -129,21 +119,33 @@ var getLineInfo = function($dirtyLine, $cleanLine, originalCaretPosition, attrib
   return {
     // properties always needed
     lineNumberBeforeRepagination: lineNumberBeforeRepagination,
-    lineText: $cleanLine.text(),
+    lineText: $helperLine.text(),
     lineHasMarker: lineHasMarker,
-    typeOfLine: utils.typeOf($dirtyLine),
-    $originalLine: $dirtyLine,
+    typeOfLine: utils.typeOf($helperLine),
+    $originalLine: $originalLine,
     caretIsAtLine: caretIsAtLine,
     caretAtColumn: caretAtColumn,
     // properties needed only on some scenarios. Use functions instead of calculated property to
     // postpone calculation until (and if) needed
     typeOfPreviousLine: function() {
-      return utils.typeOf($dirtyLine.prev());
+      return utils.typeOf($originalLine.prev());
     },
     findCharacterName: function() {
-      return utils.findCharacterNameOf($dirtyLine);
+      return utils.findCharacterNameOf($originalLine);
     },
   };
+}
+
+// based on code from AttributeManager.js (function removeAttributeOnLine)
+var lineHasMarkerExcludingSplitLineMarkers = function(lineNumber, attributeManager) {
+  var lineAttributes = attributeManager.getAttributesOnLine(lineNumber);
+  var countAttribsWithMarker = _.chain(lineAttributes).
+    filter(function(a){return !!a[1];}). // remove absent attributes
+    map(function(a){return a[0];}). // get only attribute names
+    difference(ETHERPAD_AND_PAGE_BREAK_ATTRIBS). // exclude Etherpad basic attributes + page break markers
+    size().value(); // get number of attributes
+
+  return countAttribsWithMarker > 0;
 }
 
 var canSplit = function(lineInfo) {
@@ -152,11 +154,9 @@ var canSplit = function(lineInfo) {
   return canBeSplit;
 }
 
-var getNumberOfInnerLinesThatFitOnPage = function(totalOutterHeight, totalInnerHeight, availableHeight, ignoreMargin) {
-  var singleInnerLineHeight        = utils.getRegularLineHeight();
-  var margin                       = ignoreMargin ? 0 : totalOutterHeight - totalInnerHeight;
-  var availableHeightForInnerLines = availableHeight - margin;
-  var numberOfLinesThatFit         = parseInt(availableHeightForInnerLines/singleInnerLineHeight);
+var getNumberOfInnerLinesThatFitOnPage = function($helperLine, availableHeightForInnerLines) {
+  var singleInnerLineHeight = utils.getRegularLineHeight();
+  var numberOfLinesThatFit  = parseInt(availableHeightForInnerLines/singleInnerLineHeight);
 
   return numberOfLinesThatFit;
 }
@@ -183,40 +183,32 @@ var getMinimumLinesAfterPageBreakFor = function(lineInfo) {
   return minimumLines;
 }
 
-// split lines on end-of-inner-line
-var calculateForcedSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift) {
-  var method = getFirstCharAfterEndOfInnerLine;
-  return calculateSplitPosition(innerLineNumber, lineInfo, lineNumberShift, method);
-}
-// split lines on end-of-sentence
-var calculateRegularSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift) {
-  var method = getSplitMethodForRegularSplit(lineInfo);
-  return calculateSplitPosition(innerLineNumber, lineInfo, lineNumberShift, method);
-}
-var getSplitMethodForRegularSplit = function(lineInfo) {
+var getSplitMethod = function(lineInfo) {
   var typeOfLine = lineInfo.typeOfLine;
   if (typeOfLine === "general" || typeOfLine === "transition") {
     return getFirstCharAfterLastSentenceMarkerAndWhitespacesOrFullInnerLine;
   }
   return getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine;
-
 }
-var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift, method) {
+
+var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift) {
+  var method = getSplitMethod(lineInfo);
   var lineNumberAfterClean = lineInfo.lineNumberBeforeRepagination + lineNumberShift;
 
   var position = findPositionWhereLineCanBeSplit(innerLineNumber, lineInfo, method);
   // if found position to split, return its split attributes
   if (position) {
-    var afterLastSentenceThatFits  = [lineNumberAfterClean, position.column];
+    var columnToSplit              = position.columnToSplit;
+    var afterLastSentenceThatFits  = [lineNumberAfterClean, columnToSplit];
     var moreAndContdInfo           = getMoreAndContdInfo(lineInfo);
-    var caretOriginallyOnFirstHalf = (lineInfo.caretIsAtLine && lineInfo.caretAtColumn <= position.column);
+    var caretOriginallyOnFirstHalf = (lineInfo.caretIsAtLine && lineInfo.caretAtColumn <= columnToSplit);
 
     return {
-      heightAfterPageBreak: position.heightAfterPageBreak,
       addMoreAndContd: moreAndContdInfo,
       lineNumberAfterClean: lineNumberAfterClean,
       start: afterLastSentenceThatFits,
       caretOriginallyOnFirstHalf: caretOriginallyOnFirstHalf,
+      innerLinesOnFirstHalf: position.innerLinesOnFirstHalf,
     };
   }
 }
@@ -226,7 +218,8 @@ var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift
 // - leave minimum lines after page break
 // - can be split on mark defined by findColumnAfterPageBreak() and fit the available space
 //
-// Return column where line should be split (char that should be 1st on next page)
+// Return column where line should be split (char that should be 1st on next page) and
+// number of inner lines of 1st half
 var findPositionWhereLineCanBeSplit = function(innerLineNumber, lineInfo, findColumnAfterPageBreak) {
   var regularLineHeight           = utils.getRegularLineHeight();
   var targetInnerLine             = innerLineNumber;
@@ -265,8 +258,8 @@ var findPositionWhereLineCanBeSplit = function(innerLineNumber, lineInfo, findCo
       }
 
       return {
-        column: columnAfterPageBreak,
-        heightAfterPageBreak: heightAfterPageBreak
+        columnToSplit: columnAfterPageBreak,
+        innerLinesOnFirstHalf: linesBeforePageBreak,
       };
     } else {
       // this inner line did not satisfy conditions; try previous one
@@ -284,10 +277,6 @@ var getMoreAndContdInfo = function(lineInfo) {
     };
   }
   return false;
-}
-
-var getFirstCharAfterEndOfInnerLine = function(innerLineNumber, lineInfo) {
-  return getFirstCharAfterSeparator(innerLineNumber, lineInfo, true);
 }
 
 var getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine = function(innerLineNumber, lineInfo) {
@@ -510,18 +499,6 @@ exports.mergeLinesWithExtraChars = function(lineNumber, rep, attributeManager, e
   }
 }
 
-// based on code from AttributeManager.js (function removeAttributeOnLine)
-var lineHasMarkerExcludingSplitLineMarkers = function(lineNumber, attributeManager) {
-  var lineAttributes = attributeManager.getAttributesOnLine(lineNumber);
-  var countAttribsWithMarker = _.chain(lineAttributes).
-    filter(function(a){return !!a[1];}). // remove absent attributes
-    map(function(a){return a[0];}). // get only attribute names
-    difference(ETHERPAD_AND_PAGE_BREAK_ATTRIBS). // exclude Etherpad basic attributes + page break markers
-    size().value(); // get number of attributes
-
-  return countAttribsWithMarker > 0;
-}
-
 exports.savePageBreak = function(splitPosition, pageNumber, attributeManager, editorInfo, rep) {
   splitLine(splitPosition, attributeManager, editorInfo, rep);
   addPageBreakBetweenLines(splitPosition, pageNumber, attributeManager);
@@ -582,26 +559,36 @@ exports.lineHasPageBreak = function(lineNumber, attributeManager) {
          attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
 }
 
-exports.cloneLineIfSplitBetweenPages = function($targetLine) {
-  var $clonedLine;
+exports.mergeHelperLines = function($helperLines) {
+  var $secondHalvesOfMergedLines = $();
 
-  // only clone line if need to merge it with its second half of split
-  var fullTextOfLine = fullTextOfSplitLine($targetLine);
-  var lineNeedsToBeCloned = (fullTextOfLine !== $targetLine.text());
-  if (lineNeedsToBeCloned) {
-    $clonedLine = utils.cloneLine($targetLine);
-    utils.setTextOfLine($clonedLine, fullTextOfLine);
+  for (var i = 0; i < $helperLines.length - 1; i++) { // -1: last line cannot be merged to next one
+    var $line = $($helperLines.get(i));
+    var $nextLine = $($helperLines.get(i+1));
+    var fullTextOfLine = fullTextOfSplitLine($line, $nextLine);
+    var lineNeedsToBeMerged = !!fullTextOfLine;
+    if (lineNeedsToBeMerged) {
+      // merge text to fist half
+      utils.setTextOfLine($line, fullTextOfLine);
+
+      // mark first half as merged (used later, of pagination calculation)
+      $line.addClass(MERGED_LINE);
+
+      // mark second half to be removed
+      $secondHalvesOfMergedLines = $secondHalvesOfMergedLines.add($nextLine);
+
+      // move to line after second half
+      i++;
+    }
   }
 
-  return $clonedLine;
+  // remove 2nd halves that were merged
+  return $helperLines.not($secondHalvesOfMergedLines);
 }
 
-var fullTextOfSplitLine = function($targetLine) {
-  var fullText = $targetLine.text();
-
+var fullTextOfSplitLine = function($targetLine, $nextLine) {
   var lineIsFirstHalfOfSplit = $targetLine.find(PAGE_BREAK_TAG).length > 0;
   if (lineIsFirstHalfOfSplit) {
-    var $nextLine = $targetLine.next();
     var firstHalfClass  = $targetLine.find(FIRST_HALF_TAG + "," + FIRST_HALF_WITH_MORE_AND_CONTD_TAG).attr("class");
     var secondHalfClass = $nextLine.find(SECOND_HALF_TAG).attr("class");
     var splitIdOfFirstHalf  = getSplitIdFromClass(firstHalfClass);
@@ -611,9 +598,7 @@ var fullTextOfSplitLine = function($targetLine) {
 
     if (linesAreHalvesOfSameSplit) {
       // if line is 1st half of split line, join it with next line
-      fullText += $nextLine.text();
+      return $targetLine.text() + $nextLine.text();
     }
   }
-
-  return fullText;
 }

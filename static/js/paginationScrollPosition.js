@@ -2,68 +2,99 @@ var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 
 var utils = require('./utils');
-var paginationSplit = require('./paginationSplit');
 
-exports.keepViewportScrollPosition = function(action, paginationInfo, rep) {
-  var $editor = utils.getPadOuter().find('#outerdocbody');
+var SCROLL_SHIFT_ATTRIB = "scroll_shift";
+var SORT_ORDER_ATTRIB   = "sort_order";
 
-  // get line info before performing any action that could change editor total height
-  var infoOfAnchorLineOnViewport = getInfoOfAnchorLineOnViewport(rep);
+var SCROLL_SHIFT_REGEXP = new RegExp("(?:^|)" + SCROLL_SHIFT_ATTRIB + ":(\\S+)");
+var SORT_ORDER_REGEXP   = new RegExp("(?:^|)" + SORT_ORDER_ATTRIB + ":([0-9]+)");
+
+var SCROLL_TARGET_TAG = "scroll_target";
+
+var MAIN_TARGET = "1";
+var NEXT_TARGET = "2";
+var PREV_TARGET = "3";
+
+exports.buildHtmlWithTargetScroll = function(cls) {
+  var scrollTarget = getShiftValueFromClass(cls) || "";
+
+  if(scrollTarget) {
+    var sortOrder = getSortOrderValueFromClass(cls) || "";
+
+    var shiftAttrib     = " " + SCROLL_SHIFT_ATTRIB + "='" + scrollTarget + "'";
+    var sortOrderAttrib = " " + SORT_ORDER_ATTRIB   + "='" + sortOrder    + "'";
+    return "<" + SCROLL_TARGET_TAG + shiftAttrib + sortOrderAttrib + "></" + SCROLL_TARGET_TAG + ">";
+  }
+}
+var getShiftValueFromClass = function(cls) {
+  var lineHasShift = SCROLL_SHIFT_REGEXP.exec(cls);
+  if(lineHasShift && lineHasShift[1]) {
+    return lineHasShift[1];
+  }
+}
+var getSortOrderValueFromClass = function(cls) {
+  var lineHasSortOrder = SORT_ORDER_REGEXP.exec(cls);
+  if(lineHasSortOrder && lineHasSortOrder[1]) {
+    return lineHasSortOrder[1];
+  }
+}
+
+exports.blockElements = function() {
+  return [SCROLL_TARGET_TAG];
+}
+
+exports.atribsToClasses = function(context) {
+  if (isScrollTarget(context.key) || isSortOrder(context.key)) {
+    return [context.key + ":" + context.value];
+  }
+}
+var isScrollTarget = function(contextKey) {
+  return contextKey === SCROLL_SHIFT_ATTRIB;
+}
+var isSortOrder = function(contextKey) {
+  return contextKey === SORT_ORDER_ATTRIB;
+}
+
+exports.keepViewportScrollPosition = function(action, attributeManager, rep) {
+  markScrollAnchorLine(attributeManager, rep);
 
   action();
 
-  // Set the top of viewport to be the same Y as the target line
-  var targetScroll = getNewTopPositionOf(infoOfAnchorLineOnViewport, paginationInfo, rep);
-  $editor.scrollTop(targetScroll); // Works in Chrome
-  $editor.parent().scrollTop(targetScroll); // Works in Firefox
+  adjustScrollToMatchAnchorLine(attributeManager, rep);
 }
 
-var getInfoOfAnchorLineOnViewport = function(rep) {
-  var targetScroll = utils.getPadOuter().find('#outerdocbody').scrollTop();
-  var $anchorLine = getAnchorLine(targetScroll, rep);
+var markScrollAnchorLine = function(attributeManager, rep) {
+  var $editor = utils.getPadOuter().find('#outerdocbody');
+  var targetScroll = $editor.scrollTop();
+  var $mainAnchorLine = getMainAnchorLine(targetScroll, rep);
 
-  // build object with info needed after pagination
-  var info = buildLineInfo($anchorLine, targetScroll);
-  info.lineNumber = utils.getLineNumberFromDOMLine(info.$line, rep);
+  // set attribute on next and previous lines to have fallbacks in case main anchor line is
+  // replaced (ex: split, merged, etc)
+  markLineAsAnchor($mainAnchorLine.next(), NEXT_TARGET, targetScroll, attributeManager, rep);
+  markLineAsAnchor($mainAnchorLine.prev(), PREV_TARGET, targetScroll, attributeManager, rep);
 
-  // line might be merged during pagination. Get information about its neighbors
-  var lineIsFirstHalfOfSplit = paginationSplit.nodeHasPageBreak(info.$line);
-  var lineIsSecondHalfOfSplit = paginationSplit.nodeHasPageBreak(info.$line.prev());
-  if (lineIsFirstHalfOfSplit) {
-    if (info.$line.prev().length > 0) {
-      info.previousLine = buildLineInfo(info.$line.prev(), targetScroll);
-    }
+  // need to mark main target line after marking its neighbors, otherwise reference to
+  // $mainAnchorLine will be lost when it gets the line attributes
+  markLineAsAnchor($mainAnchorLine, MAIN_TARGET, targetScroll, attributeManager, rep);
+}
 
-    // next line is the 2nd half of split, get the line after that
-    if (info.$line.next().next().length > 0) {
-      info.nextLine = buildLineInfo(info.$line.next().next(), targetScroll);
-      // when line on top has a page break between it and line used as reference, and it is merged
-      // on repagination, we need an extra adjustment to the scroll position.
-      // Here we get the space left by 1st half of split line for the page break, and move up (that's
-      // why it is <0)
-      info.nextLine.extraShift = - getPageBreakHeightOf(info.$line);
-    }
-  } else if (lineIsSecondHalfOfSplit) {
-    // previous line is the 1st half of split, get the line before that
-    if (info.$line.prev().prev().length > 0) {
-      info.previousLine = buildLineInfo(info.$line.prev().prev(), targetScroll);
-      // when line on top has a page break between it and line used as reference, and it is merged
-      // on repagination, we need an extra adjustment to the scroll position.
-      // Here we get the space left by 1st half of split line for the page break, and move down (that's
-      // why it is >0)
-      info.previousLine.extraShift = getPageBreakHeightOf(info.$line.prev());
-    }
-    if (info.$line.next().length > 0) {
-      info.nextLine = buildLineInfo(info.$line.next(), targetScroll);
-    }
+var markLineAsAnchor = function($line, sortOrder, targetScroll, attributeManager, rep) {
+  var lineExistis = $line.length > 0;
+  if (lineExistis) {
+    var lineNumber = utils.getLineNumberFromDOMLine($line, rep);
+
+    // need to store shift as a string, otherwise a shift 0 will be considered an empty attribute
+    // by Etherpad
+    var shift = $line.get(0).getBoundingClientRect().top - targetScroll;
+    var strShift = shift.toString();
+
+    attributeManager.setAttributeOnLine(lineNumber, SORT_ORDER_ATTRIB, sortOrder);
+    attributeManager.setAttributeOnLine(lineNumber, SCROLL_SHIFT_ATTRIB, strShift);
   }
-
-  return info;
 }
 
-var getAnchorLine = function(viewportScrollTop, rep) {
+var getMainAnchorLine = function(viewportScrollTop, rep) {
   var $caretLine = getCaretLineOnViewport(viewportScrollTop, rep);
-
   if ($caretLine) {
     return $caretLine;
   }
@@ -76,16 +107,17 @@ var getCaretLineOnViewport = function(viewportScrollTop, rep) {
   var caretLineNode = utils.getDOMLineFromLineNumber(caretLine, rep);
 
   if (lineIsOnViewport(caretLineNode, viewportScrollTop)) {
-    return $(caretLineNode);
+    return utils.getPadInner().find("#" + caretLineNode.id).first();
   }
 }
 
 var lineIsOnViewport = function(lineNode, viewportScrollTop) {
   var viewportHeight = $('#editorcontainer').height();
   var viewportScrollBottom = viewportScrollTop + viewportHeight;
+  var lineScrollTop = lineNode.getBoundingClientRect().top;
 
-  var lineIsAfterViewportTop = (lineNode.offsetTop >= viewportScrollTop);
-  var lineIsBeforeViewportBottom = (lineNode.offsetTop < viewportScrollBottom);
+  var lineIsAfterViewportTop = (lineScrollTop >= viewportScrollTop);
+  var lineIsBeforeViewportBottom = (lineScrollTop < viewportScrollBottom);
 
   return lineIsAfterViewportTop && lineIsBeforeViewportBottom;
 }
@@ -94,7 +126,7 @@ var getFirstLineVisibleOnViewport = function(viewportScrollTop) {
   var $lines = utils.getPadInner().find("div");
   var found = false;
   var $linesAfterViewportTop = $lines.filter(function() {
-    if (!found && this.offsetTop >= viewportScrollTop) {
+    if (!found && this.getBoundingClientRect().top >= viewportScrollTop) {
       // found first line that is visible, do not check if line is on viewport anymore
       found = true;
       return true;
@@ -110,55 +142,51 @@ var getFirstLineVisibleOnViewport = function(viewportScrollTop) {
   return $linesAfterViewportTop.first();
 }
 
-var buildLineInfo = function($line, targetScroll) {
-  var shift = $line.get(0).offsetTop - targetScroll;
+var adjustScrollToMatchAnchorLine = function(attributeManager, rep) {
+  var $allAnchorLines = getAnchorLines();
 
-  return {
-    $line: $line,
-    shiftBetweenLineAndContainer: shift,
-  };
-}
-
-var getPageBreakHeightOf = function($lineWithPageBreak) {
-  return parseInt($lineWithPageBreak.css("padding-bottom"));
-}
-
-var getNewTopPositionOf = function(originalLineInfo, paginationInfo, rep) {
-  var currentLine = originalLineInfo.$line[0];
-  var topPositionShift = originalLineInfo.shiftBetweenLineAndContainer;
-
-  var lineWasReplacedDuringPagination = !lineIsStillOnPad(originalLineInfo);
-  if (lineWasReplacedDuringPagination) {
-    // line is not on editor anymore, we need to find where it went during pagination
-    var pageBreaksInfo = paginationInfo.pageBreaksInfo;
-
-    // was the line split during pagination?
-    var originalLineWasSplit = _.find(pageBreaksInfo, function(pageBreakInfo) {
-      return pageBreakInfo.isSplit && pageBreakInfo.lineNumberBeforeClean === originalLineInfo.lineNumber;
-    });
-    if (originalLineWasSplit) {
-      var newLineNumber = originalLineWasSplit.lineNumberAfterClean;
-      currentLine = utils.getDOMLineFromLineNumber(newLineNumber, rep);
-    } else {
-      // original line was merged during clean, find a neighbor that is still on the pad
-      var neighbor;
-      if (originalLineInfo.previousLine && lineIsStillOnPad(originalLineInfo.previousLine)) {
-        neighbor = originalLineInfo.previousLine;
-      } else if (originalLineInfo.nextLine && lineIsStillOnPad(originalLineInfo.nextLine)) {
-        neighbor = originalLineInfo.nextLine;
-      }
-
-      if (neighbor) {
-        var extraShift = neighbor.extraShift || 0;
-        currentLine = neighbor.$line[0];
-        topPositionShift = neighbor.shiftBetweenLineAndContainer + extraShift;
-      }
-    }
+  var $anchorLine = $allAnchorLines.first();
+  var topPositionShift = parseFloat($anchorLine.find(SCROLL_TARGET_TAG).attr(SCROLL_SHIFT_ATTRIB));
+  var extraShift = 0;
+  if (sortOrderOf($anchorLine) === NEXT_TARGET) {
+    // extra shift here is the page break between anchor line found and original main anchor line
+    // We need this for the scenario where target line is merged and receives a non-split page
+    // break on repagination
+    var $originalMainAnchorLine = $anchorLine.prev();
+    extraShift = pageBreakHeightOf($originalMainAnchorLine);
   }
 
-  return currentLine.offsetTop - topPositionShift;
+  var targetScroll = $anchorLine.get(0).getBoundingClientRect().top - topPositionShift - extraShift;
+  var $editor = utils.getPadOuter().find('#outerdocbody');
+  $editor.scrollTop(targetScroll);
+
+  removeMarksFromAnchorLines($allAnchorLines, attributeManager, rep);
 }
 
-var lineIsStillOnPad = function(lineInfo) {
-  return $.contains(utils.getPadInner().get(0), lineInfo.$line.get(0));
+var getAnchorLines = function() {
+  var $anchorLines = utils.getPadInner().find("div:has(" + SCROLL_TARGET_TAG + ")");
+  // return line sorted, so we use the one with highest priority (lowest SORT_ORDER_ATTRIB value)
+  var $sortedAnchorLines = $anchorLines.sort(function(prev, next) {
+    var prevSortOrder = parseInt(sortOrderOf($(prev)));
+    var nextSortOrder = parseInt(sortOrderOf($(next)));
+    return prevSortOrder - nextSortOrder;
+  });
+
+  return $sortedAnchorLines;
+}
+
+var sortOrderOf = function($line) {
+  return $line.find(SCROLL_TARGET_TAG).attr(SORT_ORDER_ATTRIB);
+}
+
+var pageBreakHeightOf = function($line) {
+  return parseInt($line.css("padding-bottom"));
+}
+
+var removeMarksFromAnchorLines = function($lines, attributeManager, rep) {
+  $lines.each(function(index, line) {
+    var lineNumber = utils.getLineNumberFromDOMLine($(line), rep);
+    attributeManager.removeAttributeOnLine(lineNumber, SCROLL_SHIFT_ATTRIB);
+    attributeManager.removeAttributeOnLine(lineNumber, SORT_ORDER_ATTRIB);
+  });
 }

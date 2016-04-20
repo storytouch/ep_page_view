@@ -76,7 +76,7 @@ describe("ep_script_page_view - page break main tests", function() {
     });
   });
 
-  context("when lines have top and/or bottom margin", function() {
+  context("when lines have top or bottom margin", function() {
     context("and all lines are headings", function() {
       before(function() {
         scriptBuilder = pageBreak.pageFullOfElementsBuilder(HEADINGS_PER_PAGE, utils.heading);

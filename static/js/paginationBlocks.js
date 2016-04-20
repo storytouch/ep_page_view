@@ -1,63 +1,54 @@
 var utils = require('./utils');
 var paginationSplit = require('./paginationSplit');
 
-exports.getBlockInfo = function($dirtyLine, $cleanLine, currentLineHeight, currentLineInnerHeight) {
-  var blockInfo = {
-    // height of first line of the block should not consider margins, as margins are not displayed
-    // on first element of the page
-    blockHeight: currentLineInnerHeight,
-    $topOfBlock: $dirtyLine,
-    $bottomOfBlock: $dirtyLine,
-  };
+exports.getBlockInfo = function($helperLine) {
+  var $topOfBlock = $helperLine;
 
-  var $previousDirtyLine = $dirtyLine.prev();
-  var $previousCleanLine = $cleanLine.prev();
-  var $nextCleanLine     = $cleanLine.next();
+  var $previousLine = $helperLine.prev();
+  var $nextLine     = $helperLine.next();
 
-  var typeOfCurrentLine  = utils.typeOf($cleanLine);
-  var typeOfPreviousLine = utils.typeOf($previousCleanLine);
-  var typeOfNextLine     = utils.typeOf($nextCleanLine);
+  var typeOfCurrentLine  = utils.typeOf($helperLine);
+  var typeOfPreviousLine = utils.typeOf($previousLine);
+  var typeOfNextLine     = utils.typeOf($nextLine);
 
-  var innerLinesOfCurrentLine = getNumberOfInnerLinesOf($cleanLine);
+  var innerLinesOfCurrentLine = getNumberOfInnerLinesOf($helperLine);
 
   // block type:
   // (*) => transition (only one line of text)
   //        +--------- $currentLine ----------+
   if (typeOfCurrentLine === "transition" && innerLinesOfCurrentLine === 1) {
     if (typeOfPreviousLine !== "parenthetical" && typeOfPreviousLine !== "dialogue" ) {
-      buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousDirtyLine, $previousCleanLine);
+      $topOfBlock = $previousLine;
     }
     // block type:
     // (*) => (parenthetical || dialogue) (only one line of text) => transition (only one line of text)
     //                                                               +--------- $currentLine ----------+
-    else if (getNumberOfInnerLinesOf($previousDirtyLine) === 1) {
-      var $lineBeforePreviousDirtyLine = $previousDirtyLine.prev();
-      var $lineBeforePreviousCleanLine = $previousCleanLine.prev();
-      buildBlockWithTwoPreviousLines(blockInfo, currentLineHeight, $previousCleanLine, $lineBeforePreviousDirtyLine, $lineBeforePreviousCleanLine);
+    else if (getNumberOfInnerLinesOf($previousLine) === 1) {
+      var $lineBeforePrevious = $previousLine.prev();
+      $topOfBlock = $lineBeforePrevious;
     }
     // block type:
     // (parenthetical || dialogue) (more than one line of text) => transition (only one line of text)
     //                                                             +--------- $currentLine ----------+
     else {
-      buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousDirtyLine, $previousCleanLine);
+      $topOfBlock = $previousLine;
     }
   }
   else if (typeOfCurrentLine === "parenthetical" || typeOfCurrentLine === "dialogue") {
     if (typeOfPreviousLine === "character") {
-      var $lineBeforePreviousDirtyLine = $previousDirtyLine.prev();
-      var $lineBeforePreviousCleanLine = $previousCleanLine.prev();
-      var typeOfLineBeforePrevious = utils.typeOf($lineBeforePreviousCleanLine);
+      var $lineBeforePrevious = $previousLine.prev();
+      var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
       // block type:
       // heading => character => (parenthetical || dialogue)
       //                         +------ $currentLine -----+
       if (typeOfLineBeforePrevious === "heading") {
-        buildBlockWithTwoPreviousLines(blockInfo, currentLineHeight, $previousCleanLine, $lineBeforePreviousDirtyLine, $lineBeforePreviousCleanLine);
+        $topOfBlock = $lineBeforePrevious;
       }
       // block type:
       // !heading => character => (parenthetical || dialogue)
       //                          +------ $currentLine -----+
       else {
-        buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousDirtyLine, $previousCleanLine);
+        $topOfBlock = $previousLine;
       }
     }
     else if (typeOfPreviousLine === "parenthetical" || typeOfPreviousLine === "dialogue") {
@@ -65,21 +56,20 @@ exports.getBlockInfo = function($dirtyLine, $cleanLine, currentLineHeight, curre
       // !character => (parenthetical || dialogue) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
       //                                              +------------------ $currentLine -----------------+
       if (innerLinesOfCurrentLine === 1) {
-        var $lineBeforePreviousCleanLine = $previousCleanLine.prev();
-        var typeOfLineBeforePrevious = utils.typeOf($lineBeforePreviousCleanLine);
+        var $lineBeforePrevious = $previousLine.prev();
+        var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
         if (typeOfLineBeforePrevious !== "character" && typeOfNextLine !== "dialogue" && typeOfNextLine !== "parenthetical") {
-          buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousDirtyLine, $previousCleanLine);
+          $topOfBlock = $previousLine;
         }
       }
       // block type:
       // character => (parenthetical || dialogue) (only one line of text) => (parenthetical || dialogue)
       //                                                                     +------ $currentLine -----+
-      else if (getNumberOfInnerLinesOf($previousDirtyLine) === 1) {
-        var $lineBeforePreviousDirtyLine = $previousDirtyLine.prev();
-        var $lineBeforePreviousCleanLine = $previousCleanLine.prev();
-        var typeOfLineBeforePrevious = utils.typeOf($lineBeforePreviousCleanLine);
+      else if (getNumberOfInnerLinesOf($previousLine) === 1) {
+        var $lineBeforePrevious = $previousLine.prev();
+        var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
         if (typeOfLineBeforePrevious === "character") {
-          buildBlockWithTwoPreviousLines(blockInfo, currentLineHeight, $previousCleanLine, $lineBeforePreviousDirtyLine, $lineBeforePreviousCleanLine);
+          $topOfBlock = $lineBeforePrevious;
         }
       }
     }
@@ -89,7 +79,7 @@ exports.getBlockInfo = function($dirtyLine, $cleanLine, currentLineHeight, curre
     else if ((typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
       &&
       innerLinesOfCurrentLine === 1) {
-      buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousDirtyLine, $previousCleanLine);
+      $topOfBlock = $previousLine;
     }
   }
   else if ((typeOfCurrentLine === "parenthetical" || typeOfCurrentLine === "dialogue")
@@ -97,7 +87,7 @@ exports.getBlockInfo = function($dirtyLine, $cleanLine, currentLineHeight, curre
     (typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
     &&
     innerLinesOfCurrentLine === 1) {
-    buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousDirtyLine, $previousCleanLine);
+    $topOfBlock = $previousLine;
   }
   // block type:
   // (heading || shot) => (action || character || general)
@@ -105,10 +95,12 @@ exports.getBlockInfo = function($dirtyLine, $cleanLine, currentLineHeight, curre
   else if ((typeOfCurrentLine === "action" || typeOfCurrentLine === "character" || typeOfCurrentLine === "general")
     &&
     (typeOfPreviousLine === "heading" || typeOfPreviousLine === "shot")) {
-    buildBlockWithPreviousLine(blockInfo, currentLineHeight, $previousDirtyLine, $previousCleanLine);
+    $topOfBlock = $previousLine;
   }
 
-  return blockInfo;
+  return {
+    $topOfBlock: $topOfBlock,
+  };
 }
 
 var getNumberOfInnerLinesOf = function($line) {
@@ -117,32 +109,4 @@ var getNumberOfInnerLinesOf = function($line) {
   var numberOfInnerLines = parseInt(totalHeight / heightOfOneLine);
 
   return numberOfInnerLines;
-}
-
-var buildBlockWithPreviousLine = function(blockInfo, currentLineHeight, $previousDirtyLine, $previousCleanLine) {
-  var blockHeight = currentLineHeight +
-                    // ignore margins of element on top of the block
-                    utils.getLineHeightWithoutMargins($previousCleanLine);
-  blockInfo.blockHeight = blockHeight;
-  blockInfo.$topOfBlock = $previousDirtyLine;
-}
-
-var buildBlockWithTwoPreviousLines = function(blockInfo, currentLineHeight, $previousCleanLine, $lineBeforePreviousDirtyLine, $lineBeforePreviousCleanLine) {
-  var blockHeight = currentLineHeight +
-                    utils.getLineHeight($previousCleanLine) +
-                    // ignore margins of element on top of the block
-                    utils.getLineHeightWithoutMargins($lineBeforePreviousCleanLine);
-  blockInfo.blockHeight = blockHeight;
-  blockInfo.$topOfBlock = $lineBeforePreviousDirtyLine;
-}
-
-// copy 2 previous lines + next line to have all lines needed for getBlockInfo()
-exports.adjustClonedBlock = function($clonedLine, $targetLine) {
-  var $cloneOfNextLine           = utils.cloneLine($targetLine.next());
-  var $cloneOfPreviousLine       = utils.cloneLine($targetLine.prev());
-  var $cloneOfLineBeforePrevious = utils.cloneLine($targetLine.prev().prev());
-
-  $cloneOfNextLine.insertAfter($clonedLine);
-  $cloneOfPreviousLine.insertBefore($clonedLine);
-  $cloneOfLineBeforePrevious.insertBefore($cloneOfPreviousLine);
 }
