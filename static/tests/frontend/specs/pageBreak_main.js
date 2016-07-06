@@ -19,31 +19,29 @@ var TRANSITIONS_PER_PAGE    = 28;
 var SHOTS_PER_PAGE          = 20;
 
 describe("ep_script_page_view - page break main tests", function() {
-  var utils, pageBreak, scriptBuilder;
+  var utils, pageBreak;
 
-  before(function(){
+  var getPageBuilder = function(elementsPerPage, builder) {
+    return pageBreak.pageFullOfElementsBuilder(elementsPerPage, builder);
+  }
+
+  // create a single pad for all tests
+  before(function(done) {
     utils = ep_script_page_view_test_helper.utils;
     pageBreak = ep_script_page_view_test_helper.pageBreak;
-  });
-
-  beforeEach(function(cb){
-    helper.newPad(function() {
-      utils.cleanPad(function() {
-        var text = "1st page";
-        utils.createScriptWith(scriptBuilder(text), text, cb);
-      });
-    });
+    helper.newPad(done);
     this.timeout(60000);
   });
 
   context("when lines do not have any top or bottom margin", function() {
-    before(function() {
-      scriptBuilder = pageBreak.scriptWithPageFullOfGenerals;
+    before(function(done) {
+      var scriptBuilder = pageBreak.scriptWithPageFullOfGenerals;
+      pageBreak.createScript(scriptBuilder, done);
     });
 
     it("fits " + GENERALS_PER_PAGE + " lines in a page", function(done) {
       var elementBuilder = utils.general;
-      var pageBuilder    = pageBreak.pageFullOfElementsBuilder(GENERALS_PER_PAGE, utils.general);
+      var pageBuilder    = getPageBuilder(GENERALS_PER_PAGE, elementBuilder);
       pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
     });
 
@@ -51,40 +49,36 @@ describe("ep_script_page_view - page break main tests", function() {
       it("updates pagination", function(done) {
         var inner$ = helper.padInner$;
 
-        // create a script with 2 pages full of generals and a 3rd page with a single general
-        var elementBuilder = utils.general;
-        var pageBuilder    = pageBreak.pageFullOfElementsBuilder(GENERALS_PER_PAGE, utils.general);
-        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, function() {
-          // change second line to action, so all lines will be shifted down one position
-          var $secondLine = inner$("div").first().next();
-          $secondLine.sendkeys("{selectall}");
-          utils.changeToElement(utils.ACTION, function() {
-            // wait for pagination to be completed
-            helper.waitFor(function() {
-              var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-              var $firstPageBreak = $linesWithPageBreaks.first();
-              var $secondPageBreak = $linesWithPageBreaks.last();
-              var $lineAfterSecondPageBreak = $secondPageBreak.next();
+        // change second line to action, so all lines will be shifted down one position
+        var $secondLine = inner$("div").first().next();
+        $secondLine.sendkeys("{selectall}");
+        utils.changeToElement(utils.ACTION, function() {
+          // wait for pagination to be completed
+          helper.waitFor(function() {
+            var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+            var $firstPageBreak = $linesWithPageBreaks.first();
+            var $secondPageBreak = $linesWithPageBreaks.last();
+            var $lineAfterSecondPageBreak = $secondPageBreak.next();
 
-              return ($firstPageBreak.text() === "1st page") &&
-                     ($secondPageBreak.text() === "2nd page") &&
-                     ($lineAfterSecondPageBreak.text() === "1st of 3rd page");
-            }, 3000).done(done);
-          }, 1);
-        });
+            return ($firstPageBreak.text() === "1st page") &&
+                   ($secondPageBreak.text() === "2nd page") &&
+                   ($lineAfterSecondPageBreak.text() === "1st of 3rd page");
+          }, 3000).done(done);
+        }, 1);
       });
     });
   });
 
   context("when lines have top or bottom margin", function() {
     context("and all lines are headings", function() {
-      before(function() {
-        scriptBuilder = pageBreak.pageFullOfElementsBuilder(HEADINGS_PER_PAGE, utils.heading);
+      before(function(done) {
+        var scriptBuilder = getPageBuilder(HEADINGS_PER_PAGE, utils.heading);
+        pageBreak.createScript(scriptBuilder, done);
       });
 
       it("fits " + HEADINGS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.heading;
-        var pageBuilder    = scriptBuilder;
+        var pageBuilder    = getPageBuilder(HEADINGS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
 
@@ -92,7 +86,7 @@ describe("ep_script_page_view - page break main tests", function() {
       context("and last line is too long to fit entirely on the page", function() {
         var veryLongLineText;
 
-        beforeEach(function() {
+        before(function() {
           var inner$ = helper.padInner$;
 
           // "PAGE2.........(...). "
@@ -123,73 +117,79 @@ describe("ep_script_page_view - page break main tests", function() {
     });
 
     context("and all lines are actions", function() {
-      before(function() {
-        scriptBuilder = pageBreak.pageFullOfElementsBuilder(ACTIONS_PER_PAGE, utils.action);
+      before(function(done) {
+        var scriptBuilder = getPageBuilder(ACTIONS_PER_PAGE, utils.action);
+        pageBreak.createScript(scriptBuilder, done);
       });
 
       it("fits " + ACTIONS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.action;
-        var pageBuilder    = scriptBuilder;
+        var pageBuilder    = getPageBuilder(ACTIONS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
     context("and all lines are characters", function() {
-      before(function() {
-        scriptBuilder = pageBreak.pageFullOfElementsBuilder(CHARACTERS_PER_PAGE, utils.character);
+      before(function(done) {
+        var scriptBuilder = getPageBuilder(CHARACTERS_PER_PAGE, utils.character);
+        pageBreak.createScript(scriptBuilder, done);
       });
 
       it("fits " + CHARACTERS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.character;
-        var pageBuilder    = scriptBuilder;
+        var pageBuilder    = getPageBuilder(CHARACTERS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
     context("and all lines are parentheticals", function() {
-      before(function() {
-        scriptBuilder = pageBreak.pageFullOfElementsBuilder(PARENTHETICALS_PER_PAGE, utils.parenthetical);
+      before(function(done) {
+        var scriptBuilder = getPageBuilder(PARENTHETICALS_PER_PAGE, utils.parenthetical);
+        pageBreak.createScript(scriptBuilder, done);
       });
 
       it("fits " + PARENTHETICALS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.parenthetical;
-        var pageBuilder    = scriptBuilder;
+        var pageBuilder    = getPageBuilder(PARENTHETICALS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
     context("and all lines are dialogues", function() {
-      before(function() {
-        scriptBuilder = pageBreak.pageFullOfElementsBuilder(DIALOGUES_PER_PAGE, utils.dialogue);
+      before(function(done) {
+        var scriptBuilder = getPageBuilder(DIALOGUES_PER_PAGE, utils.dialogue);
+        pageBreak.createScript(scriptBuilder, done);
       });
 
       it("fits " + DIALOGUES_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.dialogue;
-        var pageBuilder    = scriptBuilder;
+        var pageBuilder    = getPageBuilder(DIALOGUES_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
     context("and all lines are transitions", function() {
-      before(function() {
-        scriptBuilder = pageBreak.pageFullOfElementsBuilder(TRANSITIONS_PER_PAGE, utils.transition);
+      before(function(done) {
+        var scriptBuilder = getPageBuilder(TRANSITIONS_PER_PAGE, utils.transition);
+        pageBreak.createScript(scriptBuilder, done);
       });
 
       it("fits " + TRANSITIONS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.transition;
-        var pageBuilder    = scriptBuilder;
+        var pageBuilder    = getPageBuilder(TRANSITIONS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
     context("and all lines are shots", function() {
-      before(function() {
-        scriptBuilder = pageBreak.pageFullOfElementsBuilder(SHOTS_PER_PAGE, utils.shot);
+      before(function(done) {
+        var scriptBuilder = getPageBuilder(SHOTS_PER_PAGE, utils.shot);
+        pageBreak.createScript(scriptBuilder, done);
       });
 
       it("fits " + SHOTS_PER_PAGE + " lines in a page", function(done) {
         var elementBuilder = utils.shot;
-        var pageBuilder    = scriptBuilder;
+        var pageBuilder    = getPageBuilder(SHOTS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
@@ -198,10 +198,17 @@ describe("ep_script_page_view - page break main tests", function() {
 
 var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
 ep_script_page_view_test_helper.pageBreak = {
+  createScript: function(builder, done) {
+    var utils = ep_script_page_view_test_helper.utils;
+    utils.cleanPad(function() {
+      utils.createScriptWith(builder('1st page'), '1st page', done);
+    });
+  },
+
   scriptWithPageFullOfGenerals: function(text) {
     var utils = ep_script_page_view_test_helper.utils;
 
-    var script = "";
+    var script = '';
     for (var i = 0; i < GENERALS_PER_PAGE; i++) {
       script += utils.general(text);
     }
@@ -212,7 +219,7 @@ ep_script_page_view_test_helper.pageBreak = {
   // returns a function that will build the HTML content of a page full of element
   pageFullOfElementsBuilder: function(elementsPerPage, elementBuilder) {
     return function(text) {
-      var script = "";
+      var script = '';
       for (var i = 0; i < elementsPerPage; i++) {
         script += elementBuilder(text);
       }
