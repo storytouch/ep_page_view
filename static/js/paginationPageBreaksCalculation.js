@@ -172,11 +172,16 @@ var getLineAt = function(offset) {
 }
 
 var createCleanClonesOf = function($lines) {
-  var $cleanCopies = $lines.clone();
+  var $linesWithoutSceneMarks = doNotConsiderSceneMarksOf($lines);
+  var $cleanCopies = $linesWithoutSceneMarks.clone();
   $cleanCopies = paginationSplit.mergeHelperLines($cleanCopies);
   utils.cleanHelperLines($cleanCopies);
 
   return $cleanCopies;
+}
+
+var doNotConsiderSceneMarksOf = function($lines) {
+  return $lines.not('.sceneMark');
 }
 
 var removeHelperLines = function($helperLines) {

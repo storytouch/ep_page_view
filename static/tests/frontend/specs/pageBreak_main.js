@@ -72,18 +72,49 @@ describe("ep_script_page_view - page break main tests", function() {
   context("when lines have top or bottom margin", function() {
     context("and all lines are headings", function() {
       before(function(done) {
+        var test = this;
         var scriptBuilder = getPageBuilder(HEADINGS_PER_PAGE, utils.heading);
-        pageBreak.createScript(scriptBuilder, done);
+        pageBreak.createScript(scriptBuilder, function() {
+          var elementBuilder = utils.heading;
+          var pageBuilder    = getPageBuilder(HEADINGS_PER_PAGE, elementBuilder);
+          pageBreak.prepareScriptToTestIfItFitsXLinesPerPage(elementBuilder, pageBuilder, test, done);
+        });
       });
 
       it("fits " + HEADINGS_PER_PAGE + " lines in a page", function(done) {
-        var elementBuilder = utils.heading;
-        var pageBuilder    = getPageBuilder(HEADINGS_PER_PAGE, elementBuilder);
-        pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
+        pageBreak.checkIfItFitsXLinesPerPage(done);
+      });
+
+      context('and act and sequence are visible', function() {
+        before(function() {
+          // click on SM icon to open them
+          helper.padInner$('sm_icon').first().click();
+        });
+        after(function() {
+          // click on SM icon to close them
+          helper.padInner$('sm_icon').first().click();
+        });
+
+        it("fits " + HEADINGS_PER_PAGE + " lines in a page", function(done) {
+          // wait until all SMs are visible before start testing
+          helper.waitFor(function() {
+            var allSMsAreVisible = helper.padInner$('div.hidden').length === 0;
+            return allSMsAreVisible;
+          }).done(function() {
+            var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+            var $firstPageBreak = $linesWithPageBreaks.first();
+            var $secondPageBreak = $linesWithPageBreaks.last();
+
+            expect($firstPageBreak.text()).to.be("2nd page");
+            expect($secondPageBreak.text()).to.be("1st of 3rd page");
+
+            done();
+          });
+        });
       });
 
       // this is valid for some other elements too (but not for generals)
-      context("and last line is too long to fit entirely on the page", function() {
+      context("and last line is of page too long to fit entirely on it", function() {
         var veryLongLineText;
 
         before(function() {
@@ -91,6 +122,11 @@ describe("ep_script_page_view - page break main tests", function() {
 
           // "PAGE2.........(...). "
           veryLongLineText = "PAGE2" + utils.buildStringWithLength(61 - "PAGE2".length, ".") + " ";
+
+          // removes all lines on last page, so we can easily access last line of last page
+          var $lastLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().last().prev();
+          var $linesOnLastPage = $lastLineOfSecondPage.nextAll();
+          $linesOnLastPage.remove();
 
           // replaces last line with a very long text (> 61 chars, so it is
           // displayed in 2 lines on the editor)
@@ -105,10 +141,11 @@ describe("ep_script_page_view - page break main tests", function() {
           // wait for new page to be created
           helper.waitFor(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            return $linesWithPageBreaks.length === 1;
+            return $linesWithPageBreaks.length === 2;
           }).done(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            expect(utils.cleanText($linesWithPageBreaks.text())).to.be(veryLongLineText);
+            var $firstLineOfThirdPage = $linesWithPageBreaks.last();
+            expect(utils.cleanText($firstLineOfThirdPage.text())).to.be(veryLongLineText);
 
             done();
           });
@@ -228,7 +265,7 @@ ep_script_page_view_test_helper.pageBreak = {
     }
   },
 
-  testItFitsXLinesPerPage: function(elementBuilder, pageBuilder, test, done) {
+  prepareScriptToTestIfItFitsXLinesPerPage: function(elementBuilder, pageBuilder, test, done) {
     test.timeout(5000);
 
     var inner$ = helper.padInner$;
@@ -251,15 +288,24 @@ ep_script_page_view_test_helper.pageBreak = {
     helper.waitFor(function() {
       var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
       return $linesWithPageBreaks.length === 2;
-    }, 3000).done(function() {
-      var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-      var $firstPageBreak = $linesWithPageBreaks.first();
-      var $secondPageBreak = $linesWithPageBreaks.last();
+    }, 3000).done(done);
+  },
+  checkIfItFitsXLinesPerPage: function(done) {
+    var utils = ep_script_page_view_test_helper.utils;
 
-      expect($firstPageBreak.text()).to.be("2nd page");
-      expect($secondPageBreak.text()).to.be("1st of 3rd page");
+    var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+    var $firstPageBreak = $linesWithPageBreaks.first();
+    var $secondPageBreak = $linesWithPageBreaks.last();
 
-      done();
+    expect($firstPageBreak.text()).to.be("2nd page");
+    expect($secondPageBreak.text()).to.be("1st of 3rd page");
+
+    done();
+  },
+  testItFitsXLinesPerPage: function(elementBuilder, pageBuilder, test, done) {
+    var self = this;
+    self.prepareScriptToTestIfItFitsXLinesPerPage(elementBuilder, pageBuilder, test, function() {
+      self.checkIfItFitsXLinesPerPage(done);
     });
   }
 }
