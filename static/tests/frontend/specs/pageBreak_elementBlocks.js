@@ -72,22 +72,20 @@ describe("ep_script_page_view - page break on element blocks", function() {
   before(function(done) {
     utils = ep_script_page_view_test_helper.utils;
 
-    helper.newPad(function() {
-      createBaseScript(done);
-    });
+    helper.newPad(done);
+
     this.timeout(60000);
   });
 
   //                             +--------- top of page --------+
-  describe('(heading || shot) => (action || character || general)', function() {
+  describe('(heading || shot) > (action || character || general)', function() {
     context("when first line of page is an action", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 3;
 
       before(function(done) {
-        changeLineTo(utils.ACTION, 'action', firstLineOfBlock, done);
-      });
-      after(function(done) {
-        createBaseScript(done);
+        createBaseScript(function() {
+          changeLineTo(utils.ACTION, 'action', firstLineOfBlock, done);
+        });
       });
 
       context("and last line of previous page is a heading", function() {
@@ -137,10 +135,9 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 3;
 
       before(function(done) {
-        changeLineTo(utils.CHARACTER, 'character', firstLineOfBlock, done);
-      });
-      after(function(done) {
-        createBaseScript(done);
+        createBaseScript(function() {
+          changeLineTo(utils.CHARACTER, 'character', firstLineOfBlock, done);
+        });
       });
 
       context("and last line of previous page is a heading", function() {
@@ -189,7 +186,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
     context("when first line of page is a general", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 2;
 
-      after(function(done) {
+      before(function(done) {
         createBaseScript(done);
       });
 
@@ -244,15 +241,14 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   //                                 +------ top of page ------+
-  describe('!heading => character => (parenthetical || dialogue)', function() {
+  describe('!heading > character > (parenthetical || dialogue)', function() {
     context("when first line of page is a parenthetical", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 1;
 
       before(function(done) {
-        changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, done);
-      });
-      after(function(done) {
-        createBaseScript(done);
+        createBaseScript(function() {
+          changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, done);
+        });
       });
 
       context("and previous line is a character and line before is not a heading", function() {
@@ -304,10 +300,9 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 1;
 
       before(function(done) {
-        changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, done);
-      });
-      after(function(done) {
-        createBaseScript(done);
+        createBaseScript(function() {
+          changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, done);
+        });
       });
 
       context("and previous line is a character and line before is not a heading", function() {
@@ -357,28 +352,27 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   //                                                                            +------ top of page ------+
-  describe('character => (parenthetical || dialogue) (only one line of text) => (parenthetical || dialogue)', function() {
+  describe('character > (parenthetical || dialogue) (only one line of text) > (parenthetical || dialogue)', function() {
     context("when first line of page is a parenthetical", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 1;
       var parentheticalText;
 
       before(function(done) {
-        changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
-          changeLineBeforeBlockIntoDialogue(firstLineOfBlock, function() {
-            changeLineBeforeBlockIntoCharacter(firstLineOfBlock-1, function() {
-              // 4-line parenthetical, so it is long enough to be split if necessary
-              var fullLine = utils.buildStringWithLength(22, "1") + ". ";
-              parentheticalText = fullLine + fullLine + fullLine + fullLine;
-              var $topOfBlock = utils.getLine(firstLineOfBlock).find('parenthetical');
-              $topOfBlock.sendkeys('{selectall}').sendkeys(parentheticalText);
+        createBaseScript(function() {
+          changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoDialogue(firstLineOfBlock, function() {
+              changeLineBeforeBlockIntoCharacter(firstLineOfBlock-1, function() {
+                // 4-line parenthetical, so it is long enough to be split if necessary
+                var fullLine = utils.buildStringWithLength(22, "1") + ". ";
+                parentheticalText = fullLine + fullLine + fullLine + fullLine;
+                var $topOfBlock = utils.getLine(firstLineOfBlock).find('parenthetical');
+                $topOfBlock.sendkeys('{selectall}').sendkeys(parentheticalText);
 
-              done();
+                done();
+              });
             });
           });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       context("and dialogue on previous line has one line", function() {
@@ -435,22 +429,21 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var parentheticalText;
 
       before(function(done) {
-        changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
-          changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, function() {
-            changeLineBeforeBlockIntoCharacter(firstLineOfBlock-1, function() {
-              // 4-line dialogue, so it is long enough to be split if necessary
-              var fullLine = utils.buildStringWithLength(32, "1") + ". ";
-              parentheticalText = fullLine + fullLine + fullLine + fullLine;
-              var $topOfBlock = utils.getLine(firstLineOfBlock).find('dialogue');
-              $topOfBlock.sendkeys('{selectall}').sendkeys(parentheticalText);
+        createBaseScript(function() {
+          changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, function() {
+              changeLineBeforeBlockIntoCharacter(firstLineOfBlock-1, function() {
+                // 4-line dialogue, so it is long enough to be split if necessary
+                var fullLine = utils.buildStringWithLength(32, "1") + ". ";
+                parentheticalText = fullLine + fullLine + fullLine + fullLine;
+                var $topOfBlock = utils.getLine(firstLineOfBlock).find('dialogue');
+                $topOfBlock.sendkeys('{selectall}').sendkeys(parentheticalText);
 
-              done();
+                done();
+              });
             });
           });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       context("and parenthetical on previous line has one line", function() {
@@ -504,18 +497,17 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   //                                                       +------------------ top of page ------------------+
-  describe('!(character) => (parenthetical || dialogue) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)', function() {
+  describe('!(character) > (parenthetical || dialogue) > (parenthetical || dialogue) (only one line of text) > !(parenthetical || dialogue)', function() {
     context("when first line of page is a parenthetical, previous line is a dialogue, and line before is not a character", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE;
       var parentheticalText;
 
       before(function(done) {
-        changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
-          changeLineBeforeBlockIntoDialogue(firstLineOfBlock, done);
+        createBaseScript(function() {
+          changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoDialogue(firstLineOfBlock, done);
+          });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       context("and next line is not a parenthetical nor a dialogue", function() {
@@ -594,12 +586,11 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var parentheticalText;
 
       before(function(done) {
-        changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
-          changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, done);
+        createBaseScript(function() {
+          changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, done);
+          });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       context("and next line is not a dialogue nor a parenthetical", function() {
@@ -675,21 +666,20 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   //                        +------------------ top of page ------------------+
-  describe('!(character) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)', function() {
+  describe('!(character) > (parenthetical || dialogue) (only one line of text) > !(parenthetical || dialogue)', function() {
     context("when first line of page is a parenthetical and previous line is not a character", function() {
       var LAST_LINE_OF_PREV_PAGE = 'last general of previous page';
 
       var firstLineOfBlock = GENERALS_PER_PAGE;
 
       before(function(done) {
-        changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
-          var $lastLineOfPreviousPage = utils.getLine(firstLineOfBlock-1);
-          $lastLineOfPreviousPage.sendkeys('{selectall}').sendkeys(LAST_LINE_OF_PREV_PAGE);
-          done();
+        createBaseScript(function() {
+          changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
+            var $lastLineOfPreviousPage = utils.getLine(firstLineOfBlock-1);
+            $lastLineOfPreviousPage.sendkeys('{selectall}').sendkeys(LAST_LINE_OF_PREV_PAGE);
+            done();
+          });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       context("and next line is not a parenthetical nor a dialogue", function() {
@@ -773,14 +763,13 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE;
 
       before(function(done) {
-        changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
-          var $lastLineOfPreviousPage = utils.getLine(firstLineOfBlock-1);
-          $lastLineOfPreviousPage.sendkeys('{selectall}').sendkeys(LAST_LINE_OF_PREV_PAGE);
-          done();
+        createBaseScript(function() {
+          changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
+            var $lastLineOfPreviousPage = utils.getLine(firstLineOfBlock-1);
+            $lastLineOfPreviousPage.sendkeys('{selectall}').sendkeys(LAST_LINE_OF_PREV_PAGE);
+            done();
+          });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       context("and next line is not a dialogue nor a parenthetical", function() {
@@ -860,17 +849,16 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   //                                                                      +--------- $currentLine ---------+
-  describe('(*) => (parenthetical || dialogue) (only one line of text) => transition (only one line of text)', function() {
+  describe('(*) > (parenthetical || dialogue) (only one line of text) > transition (only one line of text)', function() {
     context("when first line of page is a transition", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 1;
 
       before(function(done) {
-        changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
-          changeLineBeforeBlockIntoAction(firstLineOfBlock-1, done);
+        createBaseScript(function() {
+          changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoAction(firstLineOfBlock-1, done);
+          });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       context('and previous line is a parenthetical with one line', function() {
@@ -904,25 +892,24 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   //                                                                    +--------- $currentLine ---------+
-  describe('(parenthetical || dialogue) (more than one line of text) => transition (only one line of text)', function() {
+  describe('(parenthetical || dialogue) (more than one line of text) > transition (only one line of text)', function() {
     context("when first line of page is a transition", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 1;
 
       before(function(done) {
-        changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
-          changeLineBeforeBlockIntoAction(firstLineOfBlock-1, function() {
-            // remove a line above top of block, as last line of previous page will have
-            // more than one line
-            var $lines = helper.padInner$('div');
-            var $linesAboveBlock = $lines.slice(5,6);
-            $linesAboveBlock.remove();
+        createBaseScript(function() {
+          changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoAction(firstLineOfBlock-1, function() {
+              // remove a line above top of block, as last line of previous page will have
+              // more than one line
+              var $lines = helper.padInner$('div');
+              var $linesAboveBlock = $lines.slice(5,6);
+              $linesAboveBlock.remove();
 
-            done();
+              done();
+            });
           });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       context('and previous line is a parenthetical with more than one line', function() {
@@ -980,17 +967,16 @@ describe("ep_script_page_view - page break on element blocks", function() {
   });
 
   //               +--------- $currentLine ---------+
-  describe('(*) => transition (only one line of text)', function() {
+  describe('(*) > transition (only one line of text)', function() {
     context("when first line of page is a transition with one line", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 1;
 
       before(function(done) {
-        changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
-          changeLineBeforeBlockIntoAction(firstLineOfBlock, done);
+        createBaseScript(function() {
+          changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoAction(firstLineOfBlock, done);
+          });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       it("pulls last line of previous page to next page", function(done) {
@@ -1005,12 +991,11 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE - 1;
 
       before(function(done) {
-        changeLineTo(utils.TRANSITION, LONG_TEXT, firstLineOfBlock, function() {
-          changeLineBeforeBlockIntoAction(firstLineOfBlock, done);
+        createBaseScript(function() {
+          changeLineTo(utils.TRANSITION, LONG_TEXT, firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoAction(firstLineOfBlock, done);
+          });
         });
-      });
-      after(function(done) {
-        createBaseScript(done);
       });
 
       it("does not pull last line of previous page to next page", function(done) {
