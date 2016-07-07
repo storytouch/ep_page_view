@@ -4,34 +4,1026 @@
 var GENERALS_PER_PAGE = 58;
 
 describe("ep_script_page_view - page break on element blocks", function() {
-  // shortcuts for helper functions
   var utils;
-  // context-dependent values/functions
-  var linesBeforeBlock, buildBlock, targetLineText;
 
-  before(function(){
+  var undoLastChanges = function(done) {
+    // wait for changes to be saved as a revision before undoing, otherwise
+    // it won't have saved scene moving
+    setTimeout(function() {
+      utils.undo();
+      // wait some more to make sure undo is committed before performing next action
+      setTimeout(done, 0);
+    }, 1000);
+  }
+
+  var changeLineTo = function(type, text, lineNumber, done, extraLinesCreated) {
+    // default: no extra line created
+    extraLinesCreated = extraLinesCreated || 0;
+
+    var $targetLine = utils.getLine(lineNumber);
+    $targetLine.sendkeys('{selectall}').sendkeys(text);
+    utils.changeToElement(type, done, lineNumber + extraLinesCreated);
+  }
+
+  var changeLineBeforeBlockIntoHeading = function(firstLineOfBlock, done) {
+    // this is the first heading of script, creates an act and a seq before it
+    var createLinesWithActAndSeq = 4;
+    changeLineTo(utils.HEADING, 'heading', firstLineOfBlock-1, done, createLinesWithActAndSeq);
+  }
+  var changeLineBeforeBlockIntoShot = function(firstLineOfBlock, done) {
+    changeLineTo(utils.SHOT, 'shot', firstLineOfBlock-1, done);
+  }
+  var changeLineBeforeBlockIntoAction = function(firstLineOfBlock, done) {
+    changeLineTo(utils.ACTION, 'action', firstLineOfBlock-1, done);
+  }
+  var changeLineBeforeBlockIntoCharacter = function(firstLineOfBlock, done) {
+    changeLineTo(utils.CHARACTER, 'character', firstLineOfBlock-1, done);
+  }
+  var changeLineBeforeBlockIntoDialogue = function(firstLineOfBlock, done) {
+    changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock-1, done);
+  }
+  var changeLineBeforeBlockIntoParenthetical = function(firstLineOfBlock, done) {
+    changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock-1, done);
+  }
+  var changeLineBeforeBlockIntoSomethingElse = function(firstLineOfBlock, done) {
+    changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock-1, function() {
+      // transitions have lower top margin, so create one line above block to
+      // place block at right position
+      utils.getLine(0).sendkeys('{enter}new general');
+
+      // wait for lines to be split
+      helper.waitFor(function() {
+        var $newLine = utils.getLine(1);
+        return utils.cleanText($newLine.text()) === 'new general';
+      }).done(done);
+    });
+  }
+
+  var createBaseScript = function(done) {
+    utils.cleanPad(function() {
+      var generals    = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE+1);
+      var lastGeneral = utils.general("last general");
+      var script      = generals + lastGeneral;
+      utils.createScriptWith(script, "last general", done);
+    });
+  }
+
+  // create a single script for all tests
+  before(function(done) {
     utils = ep_script_page_view_test_helper.utils;
-  });
 
-  beforeEach(function(cb){
     helper.newPad(function() {
-      utils.cleanPad(function() {
-        var generals    = utils.buildScriptWithGenerals("general", linesBeforeBlock);
-        var block       = buildBlock();
-        var lastGeneral = utils.general("last general");
-        var script      = generals + block + lastGeneral;
-
-        utils.createScriptWith(script, "last general", cb);
-      });
+      createBaseScript(done);
     });
     this.timeout(60000);
+  });
+
+  //                             +--------- top of page --------+
+  describe('(heading || shot) => (action || character || general)', function() {
+    context("when first line of page is an action", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 3;
+
+      before(function(done) {
+        changeLineTo(utils.ACTION, 'action', firstLineOfBlock, done);
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and last line of previous page is a heading", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoHeading(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "heading";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and last line of previous page is a shot", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoShot(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "shot";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and last line of previous page is something else", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoSomethingElse(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "action";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+
+    context("when first line of page is a character", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 3;
+
+      before(function(done) {
+        changeLineTo(utils.CHARACTER, 'character', firstLineOfBlock, done);
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and last line of previous page is a heading", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoHeading(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "heading";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and last line of previous page is a shot", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoShot(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "shot";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and last line of previous page is something else", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoSomethingElse(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "character";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+
+    context("when first line of page is a general", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 2;
+
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and last line of previous page is a heading", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoHeading(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "heading";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and last line of previous page is a shot", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoShot(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "shot";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and last line of previous page is something else", function() {
+        before(function(done) {
+          // just change text of target line for clarity of test result on screen
+          utils.getLine(firstLineOfBlock).sendkeys('{selectall}').sendkeys('another general');
+          changeLineBeforeBlockIntoSomethingElse(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "another general";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+
+        it("does not add the MORE/CONT'D tags", function(done) {
+          utils.testPageBreakDoNotHaveMoreNorContd(done);
+        });
+      });
+    });
+  });
+
+  //                                 +------ top of page ------+
+  describe('!heading => character => (parenthetical || dialogue)', function() {
+    context("when first line of page is a parenthetical", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 1;
+
+      before(function(done) {
+        changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, done);
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and previous line is a character and line before is not a heading", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoCharacter(firstLineOfBlock, done);
+          // leave line before as general
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "character";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and previous line is a character and line before is a heading", function() {
+        before(function(done) {
+          // 4-line parenthetical, so it is long enough to be split if necessary
+          var fullLine = utils.buildStringWithLength(22, "1") + ". ";
+          var parentheticalText = fullLine + fullLine + fullLine + fullLine;
+          var $topOfBlock = utils.getLine(firstLineOfBlock).find('parenthetical');
+          $topOfBlock.sendkeys('{selectall}').sendkeys(parentheticalText);
+
+          changeLineBeforeBlockIntoCharacter(firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoHeading(firstLineOfBlock-1, function() {
+              // remove 4 lines above top of block
+              var $lines = helper.padInner$('div');
+              var $linesAboveBlock = $lines.slice(5,9);
+              $linesAboveBlock.remove();
+
+              done();
+            });
+          });
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls character and heading of previous page to next page", function(done) {
+          var firstLineOfNextPage = "heading";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+
+    context("when first line of page is a dialogue", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 1;
+
+      before(function(done) {
+        changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, done);
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and previous line is a character and line before is not a heading", function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoCharacter(firstLineOfBlock, done);
+          // leave line before as general
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "character";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and previous line is a character and line before is a heading", function() {
+        before(function(done) {
+          // 4-line dialogue, so it is long enough to be split if necessary
+          var fullLine = utils.buildStringWithLength(32, "1") + ". ";
+          var parentheticalText = fullLine + fullLine + fullLine + fullLine;
+          var $topOfBlock = utils.getLine(firstLineOfBlock).find('dialogue');
+          $topOfBlock.sendkeys('{selectall}').sendkeys(parentheticalText);
+
+          changeLineBeforeBlockIntoCharacter(firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoHeading(firstLineOfBlock-1, function() {
+              // remove 4 lines above top of block
+              var $lines = helper.padInner$('div');
+              var $linesAboveBlock = $lines.slice(5,9);
+              $linesAboveBlock.remove();
+
+              done();
+            });
+          });
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls character and heading of previous page to next page", function(done) {
+          var firstLineOfNextPage = "heading";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+  });
+
+  //                                                                            +------ top of page ------+
+  describe('character => (parenthetical || dialogue) (only one line of text) => (parenthetical || dialogue)', function() {
+    context("when first line of page is a parenthetical", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 1;
+      var parentheticalText;
+
+      before(function(done) {
+        changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
+          changeLineBeforeBlockIntoDialogue(firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoCharacter(firstLineOfBlock-1, function() {
+              // 4-line parenthetical, so it is long enough to be split if necessary
+              var fullLine = utils.buildStringWithLength(22, "1") + ". ";
+              parentheticalText = fullLine + fullLine + fullLine + fullLine;
+              var $topOfBlock = utils.getLine(firstLineOfBlock).find('parenthetical');
+              $topOfBlock.sendkeys('{selectall}').sendkeys(parentheticalText);
+
+              done();
+            });
+          });
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and dialogue on previous line has one line", function() {
+        it("pulls character and dialogue of previous page to next page", function(done) {
+          // wait for pagination to finish
+          helper.waitFor(function() {
+            var $firstLineOfNextPage = utils.linesAfterNonSplitPageBreaks().last();
+            var parentheticalIsNotOnTopOfPageAnymore = $firstLineOfNextPage.find('parenthetical').length === 0;
+
+            return parentheticalIsNotOnTopOfPageAnymore;
+          }).done(function() {
+            var firstLineOfNextPage = "character";
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+          });
+        });
+      });
+
+      context("and dialogue on previous line has more one line", function() {
+        before(function(done) {
+          var $dialogue = utils.getLine(firstLineOfBlock-1).find('dialogue');
+          $dialogue.sendkeys('{selectall}').sendkeys('a very very very very very long dialogue');
+
+          // remove a line above top of block, now that dialogue has more than one line
+          var $lines = helper.padInner$('div');
+          var $linesAboveBlock = $lines.slice(5,6);
+          $linesAboveBlock.remove();
+
+          done();
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
+          // wait for pagination to finish
+          helper.waitFor(function() {
+            var hasMoreTag = helper.padInner$('.withMoreAndContd').length > 0;
+            return hasMoreTag;
+          }).done(function() {
+            var characterName = "CHARACTER";
+            utils.testPageBreakHasMoreAndContd(characterName, done);
+          });
+        });
+
+        it("does not pull any line of previous page to next page", function(done) {
+          var firstLineOfNextPage = parentheticalText;
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+
+    context("when first line of page is a dialogue", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 1;
+      var parentheticalText;
+
+      before(function(done) {
+        changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
+          changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, function() {
+            changeLineBeforeBlockIntoCharacter(firstLineOfBlock-1, function() {
+              // 4-line dialogue, so it is long enough to be split if necessary
+              var fullLine = utils.buildStringWithLength(32, "1") + ". ";
+              parentheticalText = fullLine + fullLine + fullLine + fullLine;
+              var $topOfBlock = utils.getLine(firstLineOfBlock).find('dialogue');
+              $topOfBlock.sendkeys('{selectall}').sendkeys(parentheticalText);
+
+              done();
+            });
+          });
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and parenthetical on previous line has one line", function() {
+        it("pulls character and parenthetical of previous page to next page", function(done) {
+          // wait for pagination to finish
+          helper.waitFor(function() {
+            var $firstLineOfNextPage = utils.linesAfterNonSplitPageBreaks().last();
+            var dialogueIsNotOnTopOfPageAnymore = $firstLineOfNextPage.find('dialogue').length === 0;
+
+            return dialogueIsNotOnTopOfPageAnymore;
+          }).done(function() {
+            var firstLineOfNextPage = "character";
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+          });
+        });
+      });
+
+      context("and parenthetical on previous line has more one line", function() {
+        before(function(done) {
+          var $parenthetical = utils.getLine(firstLineOfBlock-1).find('parenthetical');
+          $parenthetical.sendkeys('{selectall}').sendkeys('a very very very very very long parenthetical');
+
+          // remove a line above top of block, now that parenthetical has more than one line
+          var $lines = helper.padInner$('div');
+          var $linesAboveBlock = $lines.slice(5,6);
+          $linesAboveBlock.remove();
+
+          done();
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
+          // wait for pagination to finish
+          helper.waitFor(function() {
+            var hasMoreTag = helper.padInner$('.withMoreAndContd').length > 0;
+            return hasMoreTag;
+          }).done(function() {
+            var characterName = "CHARACTER";
+            utils.testPageBreakHasMoreAndContd(characterName, done);
+          });
+        });
+
+        it("does not pull any line of previous page to next page", function(done) {
+          var firstLineOfNextPage = parentheticalText;
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+  });
+
+  //                                                       +------------------ top of page ------------------+
+  describe('!(character) => (parenthetical || dialogue) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)', function() {
+    context("when first line of page is a parenthetical, previous line is a dialogue, and line before is not a character", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE;
+      var parentheticalText;
+
+      before(function(done) {
+        changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
+          changeLineBeforeBlockIntoDialogue(firstLineOfBlock, done);
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and next line is not a parenthetical nor a dialogue", function() {
+        context("and first line of page has one line", function() {
+          it("pulls last line of previous page to next page", function(done) {
+            // wait for pagination to finish
+            helper.waitFor(function() {
+              var $firstLineOfNextPage = utils.linesAfterNonSplitPageBreaks().last();
+              var parentheticalIsNotOnTopOfPageAnymore = $firstLineOfNextPage.find('parenthetical').length === 0;
+
+              return parentheticalIsNotOnTopOfPageAnymore;
+            }).done(function() {
+              var firstLineOfNextPage = "dialogue";
+              utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+            });
+          });
+        });
+
+        context("and first line of page has more one line", function() {
+          var LONG_TEXT = 'a very very very very very long parenthetical';
+
+          before(function(done) {
+            var $parenthetical = utils.getLine(firstLineOfBlock).find('parenthetical');
+            $parenthetical.sendkeys('{selectall}').sendkeys(LONG_TEXT);
+
+            done();
+          });
+          after(function(done) {
+            undoLastChanges(done);
+          });
+
+          it("does not pull last line of previous page to next page", function(done) {
+            // wait for pagination to finish
+            helper.waitFor(function() {
+              var hasMoreTag = helper.padInner$('.withMoreAndContd').length > 0;
+              return hasMoreTag;
+            }).done(function() {
+              var firstLineOfNextPage = LONG_TEXT;
+              utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+            });
+          });
+        });
+      });
+
+      context("and next line is a parenthetical", function() {
+        before(function(done) {
+          changeLineTo(utils.PARENTHETICAL, 'another parenthetical', firstLineOfBlock+1, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "parenthetical";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and next line is a dialogue", function() {
+        before(function(done) {
+          changeLineTo(utils.DIALOGUE, 'another dialogue', firstLineOfBlock+1, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "parenthetical";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+
+    context("when first line of page is a dialogue, previous line is a parenthetical, and line before is not a character", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE;
+      var parentheticalText;
+
+      before(function(done) {
+        changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
+          changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, done);
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and next line is not a dialogue nor a parenthetical", function() {
+        context("and first line of page has one line", function() {
+          it("pulls last line of previous page to next page", function(done) {
+            // wait for pagination to finish
+            helper.waitFor(function() {
+              var $firstLineOfNextPage = utils.linesAfterNonSplitPageBreaks().last();
+              var dialogueIsNotOnTopOfPageAnymore = $firstLineOfNextPage.find('dialogue').length === 0;
+
+              return dialogueIsNotOnTopOfPageAnymore;
+            }).done(function() {
+              var firstLineOfNextPage = "parenthetical";
+              utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+            });
+          });
+        });
+
+        context("and first line of page has more one line", function() {
+          var LONG_TEXT = 'a very very very very very long dialogue';
+
+          before(function(done) {
+            var $dialogue = utils.getLine(firstLineOfBlock).find('dialogue');
+            $dialogue.sendkeys('{selectall}').sendkeys(LONG_TEXT);
+
+            done();
+          });
+          after(function(done) {
+            undoLastChanges(done);
+          });
+
+          it("does not pull last line of previous page to next page", function(done) {
+            // wait for pagination to finish
+            helper.waitFor(function() {
+              var hasMoreTag = helper.padInner$('.withMoreAndContd').length > 0;
+              return hasMoreTag;
+            }).done(function() {
+              var firstLineOfNextPage = LONG_TEXT;
+              utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+            });
+          });
+        });
+      });
+
+      context("and next line is a dialogue", function() {
+        before(function(done) {
+          changeLineTo(utils.DIALOGUE, 'another dialogue', firstLineOfBlock+1, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "dialogue";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and next line is a parenthetical", function() {
+        before(function(done) {
+          changeLineTo(utils.PARENTHETICAL, 'another parenthetical', firstLineOfBlock+1, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "dialogue";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+  });
+
+  //                        +------------------ top of page ------------------+
+  describe('!(character) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)', function() {
+    context("when first line of page is a parenthetical and previous line is not a character", function() {
+      var LAST_LINE_OF_PREV_PAGE = 'last general of previous page';
+
+      var firstLineOfBlock = GENERALS_PER_PAGE;
+
+      before(function(done) {
+        changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
+          var $lastLineOfPreviousPage = utils.getLine(firstLineOfBlock-1);
+          $lastLineOfPreviousPage.sendkeys('{selectall}').sendkeys(LAST_LINE_OF_PREV_PAGE);
+          done();
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and next line is not a parenthetical nor a dialogue", function() {
+        context("and first line of page has one line", function() {
+          it("pulls last line of previous page to next page", function(done) {
+            // wait for pagination to finish
+            helper.waitFor(function() {
+              var $firstLineOfNextPage = utils.linesAfterNonSplitPageBreaks().last();
+              var parentheticalIsNotOnTopOfPageAnymore = $firstLineOfNextPage.find('parenthetical').length === 0;
+
+              return parentheticalIsNotOnTopOfPageAnymore;
+            }).done(function() {
+              var firstLineOfNextPage = LAST_LINE_OF_PREV_PAGE;
+              utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+            });
+          });
+        });
+
+        context("and first line of page has more one line", function() {
+          var LONG_TEXT = 'a very very very very very long parenthetical';
+
+          before(function(done) {
+            var $parenthetical = utils.getLine(firstLineOfBlock).find('parenthetical');
+            $parenthetical.sendkeys('{selectall}').sendkeys(LONG_TEXT);
+
+            done();
+          });
+          after(function(done) {
+            undoLastChanges(done);
+          });
+
+          it("does not add the MORE/CONT'D tags", function(done) {
+            // wait for pagination to finish
+            helper.waitFor(function() {
+              var hasMoreTag = helper.padInner$('.withMoreAndContd').length > 0;
+              return hasMoreTag;
+            }).fail(function() {
+              utils.testPageBreakDoNotHaveMoreNorContd(done);
+            });
+          });
+
+          it("does not pull last line of previous page to next page", function(done) {
+            var firstLineOfNextPage = LONG_TEXT;
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+          });
+        });
+      });
+
+      context("and next line is a parenthetical", function() {
+        before(function(done) {
+          changeLineTo(utils.PARENTHETICAL, 'another parenthetical', firstLineOfBlock+1, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "parenthetical";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and next line is a dialogue", function() {
+        before(function(done) {
+          changeLineTo(utils.DIALOGUE, 'another dialogue', firstLineOfBlock+1, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "parenthetical";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+
+    context("when first line of page is a dialogue and previous line is not a character", function() {
+      var LAST_LINE_OF_PREV_PAGE = 'last general of previous page';
+
+      var firstLineOfBlock = GENERALS_PER_PAGE;
+
+      before(function(done) {
+        changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
+          var $lastLineOfPreviousPage = utils.getLine(firstLineOfBlock-1);
+          $lastLineOfPreviousPage.sendkeys('{selectall}').sendkeys(LAST_LINE_OF_PREV_PAGE);
+          done();
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context("and next line is not a dialogue nor a parenthetical", function() {
+        context("and first line of page has one line", function() {
+          it("pulls last line of previous page to next page", function(done) {
+            // wait for pagination to finish
+            helper.waitFor(function() {
+              var $firstLineOfNextPage = utils.linesAfterNonSplitPageBreaks().last();
+              var parentheticalIsNotOnTopOfPageAnymore = $firstLineOfNextPage.find('dialogue').length === 0;
+
+              return parentheticalIsNotOnTopOfPageAnymore;
+            }).done(function() {
+              var firstLineOfNextPage = LAST_LINE_OF_PREV_PAGE;
+              utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+            });
+          });
+        });
+
+        context("and first line of page has more one line", function() {
+          var LONG_TEXT = 'a very very very very very long dialogue';
+
+          before(function(done) {
+            var $dialogue = utils.getLine(firstLineOfBlock).find('dialogue');
+            $dialogue.sendkeys('{selectall}').sendkeys(LONG_TEXT);
+
+            done();
+          });
+          after(function(done) {
+            undoLastChanges(done);
+          });
+
+          it("does not add the MORE/CONT'D tags", function(done) {
+            // wait for pagination to finish
+            helper.waitFor(function() {
+              var hasMoreTag = helper.padInner$('.withMoreAndContd').length > 0;
+              return hasMoreTag;
+            }).fail(function() {
+              utils.testPageBreakDoNotHaveMoreNorContd(done);
+            });
+          });
+
+          it("does not pull last line of previous page to next page", function(done) {
+            var firstLineOfNextPage = LONG_TEXT;
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+          });
+        });
+      });
+
+      context("and next line is a dialogue", function() {
+        before(function(done) {
+          changeLineTo(utils.DIALOGUE, 'another dialogue', firstLineOfBlock+1, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "dialogue";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context("and next line is a parenthetical", function() {
+        before(function(done) {
+          changeLineTo(utils.PARENTHETICAL, 'another parenthetical', firstLineOfBlock+1, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("does not pull last line of previous page to next page", function(done) {
+          var firstLineOfNextPage = "dialogue";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+  });
+
+  //                                                                      +--------- $currentLine ---------+
+  describe('(*) => (parenthetical || dialogue) (only one line of text) => transition (only one line of text)', function() {
+    context("when first line of page is a transition", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 1;
+
+      before(function(done) {
+        changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
+          changeLineBeforeBlockIntoAction(firstLineOfBlock-1, done);
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context('and previous line is a parenthetical with one line', function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last two lines of previous page to next page", function(done) {
+          var firstLineOfNextPage = "action";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+
+      context('and previous line is a dialogue with one line', function() {
+        before(function(done) {
+          changeLineBeforeBlockIntoDialogue(firstLineOfBlock, done);
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last two lines of previous page to next page", function(done) {
+          var firstLineOfNextPage = "action";
+          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+        });
+      });
+    });
+  });
+
+  //                                                                    +--------- $currentLine ---------+
+  describe('(parenthetical || dialogue) (more than one line of text) => transition (only one line of text)', function() {
+    context("when first line of page is a transition", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 1;
+
+      before(function(done) {
+        changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
+          changeLineBeforeBlockIntoAction(firstLineOfBlock-1, function() {
+            // remove a line above top of block, as last line of previous page will have
+            // more than one line
+            var $lines = helper.padInner$('div');
+            var $linesAboveBlock = $lines.slice(5,6);
+            $linesAboveBlock.remove();
+
+            done();
+          });
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      context('and previous line is a parenthetical with more than one line', function() {
+        var LONG_TEXT = 'a very very very very very long parenthetical';
+
+        before(function(done) {
+          changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, function() {
+            var $parenthetical = utils.getLine(firstLineOfBlock-1).find('parenthetical');
+            $parenthetical.sendkeys('{selectall}').sendkeys(LONG_TEXT);
+            done();
+          });
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          // wait for pagination to finish
+          helper.waitFor(function() {
+            var hasMoreTag = helper.padInner$('.withMoreAndContd').length > 0;
+            return hasMoreTag;
+          }).fail(function() {
+            var firstLineOfNextPage = LONG_TEXT;
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+          });
+        });
+      });
+
+      context('and previous line is a dialogue with more than one line', function() {
+        var LONG_TEXT = 'a very very very very very long dialogue';
+
+        before(function(done) {
+          changeLineBeforeBlockIntoDialogue(firstLineOfBlock, function() {
+            var $dialogue = utils.getLine(firstLineOfBlock-1).find('dialogue');
+            $dialogue.sendkeys('{selectall}').sendkeys(LONG_TEXT);
+            done();
+          });
+        });
+        after(function(done) {
+          undoLastChanges(done);
+        });
+
+        it("pulls last line of previous page to next page", function(done) {
+          // wait for pagination to finish
+          helper.waitFor(function() {
+            var hasMoreTag = helper.padInner$('.withMoreAndContd').length > 0;
+            return hasMoreTag;
+          }).fail(function() {
+            var firstLineOfNextPage = LONG_TEXT;
+            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+          });
+        });
+      });
+    });
+  });
+
+  //               +--------- $currentLine ---------+
+  describe('(*) => transition (only one line of text)', function() {
+    context("when first line of page is a transition with one line", function() {
+      var firstLineOfBlock = GENERALS_PER_PAGE - 1;
+
+      before(function(done) {
+        changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
+          changeLineBeforeBlockIntoAction(firstLineOfBlock, done);
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      it("pulls last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "action";
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
+
+    context("when first line of page is a transition with more than one line", function() {
+      var LONG_TEXT = 'very long transition';
+
+      var firstLineOfBlock = GENERALS_PER_PAGE - 1;
+
+      before(function(done) {
+        changeLineTo(utils.TRANSITION, LONG_TEXT, firstLineOfBlock, function() {
+          changeLineBeforeBlockIntoAction(firstLineOfBlock, done);
+        });
+      });
+      after(function(done) {
+        createBaseScript(done);
+      });
+
+      it("does not pull last line of previous page to next page", function(done) {
+        var firstLineOfNextPage = "very long transition";
+        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
+      });
+    });
   });
 
   context("when script has multiple pages and one of them has a block", function() {
     var sentences;
 
-    before(function() {
-      linesBeforeBlock = GENERALS_PER_PAGE - 4;
+    before(function(done) {
       var line1 = utils.buildStringWithLength(59, "1") + ". ";
       var line2 = utils.buildStringWithLength(59, "2") + ". ";
       var line3 = utils.buildStringWithLength(59, "3") + ". ";
@@ -39,18 +1031,30 @@ describe("ep_script_page_view - page break on element blocks", function() {
       sentences = [line1, line2, line3, line4];
       targetLineText = line1 + line2 + line3 + line4;
 
-      buildBlock = function() {
+      utils.cleanPad(function() {
+        var firstPageAlmostFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE - 1);
+        var secondPageAlmostFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE - 5);
+
         // block of 1st page to be moved to 2nd page (5 lines high, including 2 lines for top margin)
         var lastLineOfPreviousPage = utils.heading("heading");
         var firstLineOfNextPage = utils.transition("transition");
 
-        var pageAlmostFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE - 5);
-
         // element of 2nd page to be split between pages
-        var lastLine = utils.general(targetLineText);
+        var lastBlock = utils.general(targetLineText);
+        var lastGeneral = utils.general("last general");
 
-        return lastLineOfPreviousPage + firstLineOfNextPage + pageAlmostFullOfGenerals + lastLine;
-      };
+        var script = firstPageAlmostFullOfGenerals +
+                     lastLineOfPreviousPage +
+                     firstLineOfNextPage +
+                     secondPageAlmostFullOfGenerals +
+                     lastBlock +
+                     lastGeneral;
+
+        utils.createScriptWith(script, "last general", done);
+      });
+    });
+    after(function(done) {
+      createBaseScript(done);
     });
 
     it("considers the height of the resulting block without top margin", function(done) {
@@ -63,808 +1067,5 @@ describe("ep_script_page_view - page break on element blocks", function() {
         utils.testSplitPageBreakIsOn(firstLineOfThirdPage, done, pageNumber);
       });
     })
-  });
-
-  // contexts for block type:
-  // (heading || shot) => (action || character || general)
-  context("when first line of page is an action", function() {
-    var buildLastLineOfPreviousPage;
-
-    before(function() {
-      linesBeforeBlock = GENERALS_PER_PAGE - 4;
-      targetLineText = "action";
-      buildBlock = function() {
-        var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
-        var firstLineOfNextPage = utils.action("action");
-
-        return lastLineOfPreviousPage + firstLineOfNextPage;
-      };
-    });
-
-    context("and last line of previous page is a heading", function() {
-      before(function() {
-        buildLastLineOfPreviousPage = function() {
-          return utils.heading("heading");
-        };
-      });
-
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "heading";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    context("and last line of previous page is a shot", function() {
-      before(function() {
-        buildLastLineOfPreviousPage = function() {
-          return utils.shot("shot");
-        };
-      });
-
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "shot";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    context("and last line of previous page is something else", function() {
-      before(function() {
-        // need to increase line number, as transitions have lower margin
-        linesBeforeBlock = GENERALS_PER_PAGE - 3;
-        buildLastLineOfPreviousPage = function() {
-          return utils.transition("transition");
-        };
-      });
-
-      it("does not pull last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "action";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-  });
-
-  context("when first line of page is a character", function() {
-    var buildLastLineOfPreviousPage;
-
-    before(function() {
-      linesBeforeBlock = GENERALS_PER_PAGE - 4;
-      targetLineText = "character";
-      buildBlock = function() {
-        var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
-        var firstLineOfNextPage = utils.character("character");
-
-        return lastLineOfPreviousPage + firstLineOfNextPage;
-      };
-    });
-
-    context("and last line of previous page is a heading", function() {
-      before(function() {
-        buildLastLineOfPreviousPage = function() {
-          return utils.heading("heading");
-        };
-      });
-
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "heading";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    context("and last line of previous page is a shot", function() {
-      before(function() {
-        buildLastLineOfPreviousPage = function() {
-          return utils.shot("shot");
-        };
-      });
-
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "shot";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    context("and last line of previous page is something else", function() {
-      before(function() {
-        // need to increase line number, as transitions have lower margin
-        linesBeforeBlock = GENERALS_PER_PAGE - 3;
-        buildLastLineOfPreviousPage = function() {
-          return utils.transition("transition");
-        };
-      });
-
-      it("does not pull last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "character";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-  });
-
-  context("when first line of page is a general", function() {
-    var buildLastLineOfPreviousPage;
-
-    before(function() {
-      linesBeforeBlock = GENERALS_PER_PAGE - 3;
-      targetLineText = "another general";
-      buildBlock = function() {
-        var lastLineOfPreviousPage = buildLastLineOfPreviousPage();
-        var firstLineOfNextPage = utils.general("another general");
-
-        return lastLineOfPreviousPage + firstLineOfNextPage;
-      };
-    });
-
-    context("and last line of previous page is a heading", function() {
-      before(function() {
-        buildLastLineOfPreviousPage = function() {
-          return utils.heading("heading");
-        };
-      });
-
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "heading";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    context("and last line of previous page is a shot", function() {
-      before(function() {
-        buildLastLineOfPreviousPage = function() {
-          return utils.shot("shot");
-        };
-      });
-
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "shot";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    context("and last line of previous page is something else", function() {
-      before(function() {
-        // need to increase line number, as dialogues have lower margin
-        linesBeforeBlock = GENERALS_PER_PAGE - 1;
-        buildLastLineOfPreviousPage = function() {
-          return utils.dialogue("dialogue");
-        };
-      });
-
-      it("does not pull last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "another general";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-
-      it("does not add the MORE/CONT'D tags", function(done) {
-        utils.testPageBreakDoNotHaveMoreNorContd(done);
-      });
-    });
-  });
-
-  context("when first line of page is a parenthetical", function() {
-    // contexts for block type:
-    // !heading => character => (parenthetical || dialogue)
-    context("and previous line is a character and line before is not a heading", function() {
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 2;
-        targetLineText = "last element";
-        buildBlock = function() {
-          var lastLineOfPreviousPage = utils.character("character");
-          var firstLineOfNextPage = utils.parenthetical("parenthetical");
-          var secondLineOfNextPage = utils.dialogue(targetLineText);
-
-          return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "character";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    // contexts for block type:
-    // heading => character => (parenthetical || dialogue)
-    context("and previous line is a character and line before is a heading", function() {
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 5;
-        targetLineText = "last element";
-        buildBlock = function() {
-          // 4-line parenthetical, so it is long enough to be split if necessary
-          var fullLine = utils.buildStringWithLength(23, "1") + ". ";
-          var parentheticalText = fullLine + fullLine + fullLine + fullLine;
-
-          var lineBeforeLastOfPreviousPage = utils.heading("heading");
-          var lastLineOfPreviousPage = utils.character("character");
-          var firstLineOfNextPage = utils.parenthetical(parentheticalText);
-          var secondLineOfNextPage = utils.dialogue(targetLineText);
-
-          return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      it("pulls character and heading of previous page to next page", function(done) {
-        var firstLineOfNextPage = "heading";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    // contexts for block type:
-    // character => (parenthetical || dialogue) (only one line of text) => (parenthetical || dialogue)
-    context("and previous line is a dialogue and line before is a character", function() {
-      var parentheticalText, dialogueText;
-
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 3;
-        targetLineText = "last element";
-        buildBlock = function() {
-          // 4-line parenthetical, so it is long enough to be split if necessary
-          var fullLine = utils.buildStringWithLength(23, "1") + ". ";
-          parentheticalText = fullLine + fullLine + fullLine + fullLine;
-
-          var lineBeforeLastOfPreviousPage = utils.character("character");
-          var lastLineOfPreviousPage = utils.dialogue(dialogueText);
-          var firstLineOfNextPage = utils.parenthetical(parentheticalText);
-          var secondLineOfNextPage = utils.dialogue(targetLineText);
-
-          return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      context("and dialogue has only one line", function() {
-        before(function() {
-          dialogueText = "a short dialogue";
-        });
-
-        it("pulls character and dialogue of previous page to next page", function(done) {
-          var firstLineOfNextPage = "character";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-
-      context("and dialogue has more than one line", function() {
-        before(function() {
-          linesBeforeBlock = GENERALS_PER_PAGE - 4;
-          dialogueText = "a very very very very very long dialogue";
-        });
-
-        it("does not pull any line of previous page to next page", function(done) {
-          var firstLineOfNextPage = parentheticalText;
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-
-        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
-          var characterName = "CHARACTER";
-          utils.testPageBreakHasMoreAndContd(characterName, done);
-        });
-      });
-    });
-
-    // contexts for block type:
-    // !(character) => (parenthetical || dialogue) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
-    context("and previous line is a dialogue and line before is not a character", function() {
-      var buildNextLine, parentheticalText;
-
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 1;
-        targetLineText = "last element";
-        buildBlock = function() {
-          var lastLineOfPreviousPage = utils.dialogue("dialogue");
-          var firstLineOfNextPage = utils.parenthetical(parentheticalText);
-          var secondLineOfNextPage = buildNextLine();
-
-          return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      context("and next line is not parenthetical nor dialogue", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.general(targetLineText);
-          };
-        });
-
-        context("and parenthetical has a long text (displayed in 2 lines)", function() {
-          before(function() {
-            parentheticalText = "a very very very very very long parenthetical";
-          });
-
-          it("does not pull last line of previous page to next page", function(done) {
-            var firstLineOfNextPage = parentheticalText;
-            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-          });
-        });
-
-        context("and parenthetical has a short text (displayed in a single line)", function() {
-          before(function() {
-            parentheticalText = "parenthetical";
-          });
-
-          it("pulls last line of previous page to next page", function(done) {
-            var firstLineOfNextPage = "dialogue";
-            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-          });
-        });
-      });
-
-      context("and next line is a parenthetical", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.parenthetical(targetLineText);
-          };
-        });
-
-        it("does not pull last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "parenthetical";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-
-      context("and next line is a dialogue", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.dialogue(targetLineText);
-          };
-        });
-
-        it("does not pull last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "parenthetical";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-    });
-
-    // contexts for block type:
-    // !(character) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
-    context("and previous line is not a character nor a parenthetical nor a dialogue", function() {
-      var buildNextLine, parentheticalText;
-
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 1;
-        targetLineText = "last element";
-        buildBlock = function() {
-          var lastLineOfPreviousPage = utils.general("general");
-          var firstLineOfNextPage = utils.parenthetical(parentheticalText);
-          var secondLineOfNextPage = buildNextLine();
-
-          return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      context("and next line is not parenthetical nor dialogue", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.general(targetLineText);
-          };
-        });
-
-        context("and parenthetical has a long text (displayed in 2 lines)", function() {
-          before(function() {
-            parentheticalText = "a very very very very very long parenthetical";
-          });
-
-          it("does not pull last line of previous page to next page", function(done) {
-            var firstLineOfNextPage = parentheticalText;
-            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-          });
-
-          it("does not add the MORE/CONT'D tags", function(done) {
-            utils.testPageBreakDoNotHaveMoreNorContd(done);
-          });
-        });
-
-        context("and parenthetical has a short text (displayed in a single line)", function() {
-          before(function() {
-            parentheticalText = "parenthetical";
-          });
-
-          it("pulls last line of previous page to next page", function(done) {
-            var firstLineOfNextPage = "general";
-            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-          });
-        });
-      });
-
-      context("and next line is a parenthetical", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.parenthetical(targetLineText);
-          };
-        });
-
-        it("does not pull last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "parenthetical";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-
-      context("and next line is a dialogue", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.dialogue(targetLineText);
-          };
-        });
-
-        it("does not pull last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "parenthetical";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-    });
-  });
-
-  context("when first line of page is a dialogue", function() {
-    // contexts for block type:
-    // !heading => character => (parenthetical || dialogue)
-    context("and previous line is a character and line before is not a heading", function() {
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 2;
-        targetLineText = "last element";
-        buildBlock = function() {
-          var lastLineOfPreviousPage = utils.character("character");
-          var firstLineOfNextPage = utils.dialogue("dialogue");
-          var secondLineOfNextPage = utils.dialogue(targetLineText);
-
-          return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "character";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    // contexts for block type:
-    // heading => character => (parenthetical || dialogue)
-    context("and previous line is a character and line before is a heading", function() {
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 6;
-        targetLineText = "last element";
-        buildBlock = function() {
-          // 4-line dialogue, so it is long enough to be split if necessary
-          var fullLine = utils.buildStringWithLength(33, "1") + ". ";
-          var dialogueText = fullLine + fullLine + fullLine + fullLine;
-
-          var lineBeforeLastOfPreviousPage = utils.heading("heading");
-          var lastLineOfPreviousPage = utils.character("character");
-          var firstLineOfNextPage = utils.dialogue(dialogueText);
-          var secondLineOfNextPage = utils.dialogue(targetLineText);
-
-          return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      it("pulls character and heading of previous page to next page", function(done) {
-        var firstLineOfNextPage = "heading";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
-
-    // contexts for block type:
-    // character => (parenthetical || dialogue) (only one line of text) => (parenthetical || dialogue)
-    context("and previous line is a parenthetical and line before is a character", function() {
-      var dialogueText, parentheticalText;
-
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 3;
-        targetLineText = "last element";
-        buildBlock = function() {
-          // 4-line dialogue, so it is long enough to be split if necessary
-          var fullLine = utils.buildStringWithLength(33, "1") + ". ";
-          dialogueText = fullLine + fullLine + fullLine + fullLine;
-
-          var lineBeforeLastOfPreviousPage = utils.character("character");
-          var lastLineOfPreviousPage = utils.parenthetical(parentheticalText);
-          var firstLineOfNextPage = utils.parenthetical(dialogueText);
-          var secondLineOfNextPage = utils.dialogue(targetLineText);
-
-          return lineBeforeLastOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      context("and parenthetical has only one line", function() {
-        before(function() {
-          parentheticalText = "a short parenthetical";
-        });
-
-        it("pulls character and parenthetical of previous page to next page", function(done) {
-          var firstLineOfNextPage = "character";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-
-      context("and parenthetical has more than one line", function() {
-        before(function() {
-          linesBeforeBlock = GENERALS_PER_PAGE - 4;
-          parentheticalText = "a very very very very very long parenthetical";
-        });
-
-        it("does not pull any line of previous page to next page", function(done) {
-          var firstLineOfNextPage = dialogueText;
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-
-        it("adds the MORE/CONT'D tags with character name upper cased", function(done) {
-          var characterName = "CHARACTER";
-          utils.testPageBreakHasMoreAndContd(characterName, done);
-        });
-      });
-    });
-
-    // contexts for block type:
-    // !(character) => (parenthetical || dialogue) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
-    context("and previous line is a parenthetical and line before is not a character", function() {
-      var buildNextLine, dialogueText;
-
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 1;
-        targetLineText = "last element";
-        buildBlock = function() {
-          var lastLineOfPreviousPage = utils.parenthetical("parenthetical");
-          var firstLineOfNextPage = utils.dialogue(dialogueText);
-          var secondLineOfNextPage = buildNextLine();
-
-          return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      context("and next line is not dialogue nor parenthetical", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.general(targetLineText);
-          };
-        });
-
-        context("and dialogue has a long text (displayed in 2 lines)", function() {
-          before(function() {
-            dialogueText = "a very very very very very long dialogue";
-          });
-
-          it("does not pull last line of previous page to next page", function(done) {
-            var firstLineOfNextPage = dialogueText;
-            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-          });
-        });
-
-        context("and dialogue has a short text (displayed in a single line)", function() {
-          before(function() {
-            dialogueText = "dialogue";
-          });
-
-          it("pulls last line of previous page to next page", function(done) {
-            var firstLineOfNextPage = "parenthetical";
-            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-          });
-        });
-      });
-
-      context("and next line is a dialogue", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.dialogue(targetLineText);
-          };
-        });
-
-        it("does not pull last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "dialogue";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-
-      context("and next line is a parenthetical", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.parenthetical(targetLineText);
-          };
-        });
-
-        it("does not pull last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "dialogue";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-    });
-
-    // contexts for block type:
-    // !(character) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
-    context("and previous line is not a character nor a parenthetical nor a dialogue", function() {
-      var buildNextLine, dialogueText;
-
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 1;
-        targetLineText = "last element";
-        buildBlock = function() {
-          var lastLineOfPreviousPage = utils.general("general");
-          var firstLineOfNextPage = utils.dialogue(dialogueText);
-          var secondLineOfNextPage = buildNextLine();
-
-          return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-        };
-      });
-
-      context("and next line is not dialogue nor parenthetical", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.general(targetLineText);
-          };
-        });
-
-        context("and dialogue has a long text (displayed in 2 lines)", function() {
-          before(function() {
-            dialogueText = "a very very very very very long dialogue";
-          });
-
-          it("does not pull last line of previous page to next page", function(done) {
-            var firstLineOfNextPage = dialogueText;
-            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-          });
-        });
-
-        context("and dialogue has a short text (displayed in a single line)", function() {
-          before(function() {
-            dialogueText = "dialogue";
-          });
-
-          it("pulls last line of previous page to next page", function(done) {
-            var firstLineOfNextPage = "general";
-            utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-          });
-        });
-      });
-
-      context("and next line is a dialogue", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.dialogue(targetLineText);
-          };
-        });
-
-        it("does not pull last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "dialogue";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-
-      context("and next line is a parenthetical", function() {
-        before(function() {
-          buildNextLine = function() {
-            return utils.parenthetical(targetLineText);
-          };
-        });
-
-        it("does not pull last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "dialogue";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-    });
-  });
-
-  // context for block type:
-  // (*) => transition (only one line of text)
-  context("when first line of page is a transition", function() {
-    var transitionText;
-
-    before(function() {
-      targetLineText = "last element";
-      buildBlock = function() {
-        var lastLineOfPreviousPage = utils.action("action");
-        var firstLineOfNextPage = utils.transition(transitionText);
-        var secondLineOfNextPage = utils.general(targetLineText);
-
-        return lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-      };
-    });
-
-    context("and transition has a short text (displayed in a single line)", function() {
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 3;
-        transitionText = "transition";
-      });
-
-      it("pulls last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "action";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-
-      // contexts for block type:
-      // (*) => (parenthetical || dialogue) (only one line of text) => transition (only one line of text)
-      context("and last line of previous page is a parenthetical with a short text (displayed in a single line)", function() {
-        before(function() {
-          // we need to create the last 2 elements of previous page, so there will be
-          // less generals before block
-          linesBeforeBlock = GENERALS_PER_PAGE - 4;
-          buildBlock = function() {
-            var lineBeforeLastLineOfPreviousPage = utils.action("action");
-            var lastLineOfPreviousPage           = utils.parenthetical("parenthetical");
-            var firstLineOfNextPage              = utils.transition(transitionText);
-            var secondLineOfNextPage             = utils.general(targetLineText);
-
-            return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-          };
-        });
-
-        it("pulls last two lines of previous page to next page", function(done) {
-          var firstLineOfNextPage = "action";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-
-      context("and last line of previous page is a dialogue with a short text (displayed in a single line)", function() {
-        before(function() {
-          // we need to create the last 2 elements of previous page, so there will be
-          // less generals before block
-          linesBeforeBlock = GENERALS_PER_PAGE - 4;
-          buildBlock = function() {
-            var lineBeforeLastLineOfPreviousPage = utils.action("action");
-            var lastLineOfPreviousPage           = utils.dialogue("dialogue");
-            var firstLineOfNextPage              = utils.transition(transitionText);
-            var secondLineOfNextPage             = utils.general(targetLineText);
-
-            return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-          };
-        });
-
-        it("pulls last two lines of previous page to next page", function(done) {
-          var firstLineOfNextPage = "action";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-
-      // contexts for block type:
-      // (parenthetical || dialogue) (more than one line of text) => transition (only one line of text)
-      context("and last line of previous page is a parenthetical with a long text (displayed in 2 lines)", function() {
-        before(function() {
-          // we need to create the last 2 elements of previous page, so there will be
-          // less generals before block
-          linesBeforeBlock = GENERALS_PER_PAGE - 4;
-          buildBlock = function() {
-            var lineBeforeLastLineOfPreviousPage = utils.action("action");
-            var lastLineOfPreviousPage           = utils.parenthetical("a very very very very very long parenthetical");
-            var firstLineOfNextPage              = utils.transition(transitionText);
-            var secondLineOfNextPage             = utils.general(targetLineText);
-
-            return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-          };
-        });
-
-        it("pulls last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "a very very very very very long parenthetical";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-
-      context("and last line of previous page is a dialogue with a long text (displayed in 2 lines)", function() {
-        before(function() {
-          // we need to create the last 2 elements of previous page, so there will be
-          // less generals before block
-          linesBeforeBlock = GENERALS_PER_PAGE - 4;
-          buildBlock = function() {
-            var lineBeforeLastLineOfPreviousPage = utils.action("action");
-            var lastLineOfPreviousPage           = utils.dialogue("a very very very very very long dialogue");
-            var firstLineOfNextPage              = utils.transition(transitionText);
-            var secondLineOfNextPage             = utils.general(targetLineText);
-
-            return lineBeforeLastLineOfPreviousPage + lastLineOfPreviousPage + firstLineOfNextPage + secondLineOfNextPage;
-          };
-        });
-
-        it("pulls last line of previous page to next page", function(done) {
-          var firstLineOfNextPage = "a very very very very very long dialogue";
-          utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-        });
-      });
-    });
-
-    context("and transition has a long text (displayed in 2 lines)", function() {
-      before(function() {
-        linesBeforeBlock = GENERALS_PER_PAGE - 4;
-        transitionText = "very long transition";
-      });
-
-      it("does not pull last line of previous page to next page", function(done) {
-        var firstLineOfNextPage = "very long transition";
-        utils.testNonSplitPageBreakIsOn(firstLineOfNextPage, done);
-      });
-    });
   });
 });
