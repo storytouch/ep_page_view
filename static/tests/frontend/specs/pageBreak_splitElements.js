@@ -489,23 +489,22 @@ describe("ep_script_page_view - page break on split elements", function() {
         var line4 = utils.buildStringWithLength(59, "4") + ". ";
         var multiLineText = line1 + line2 + line3 + line4;
 
-        // Add a part in bold to be able to select part of the text later
         var $targetLine = inner$("div").last().prev().prev();
-        $targetLine.html("not<b> bold</b>" + veryLongLine);
-
-        // Replace single-line general by a multi-line general;
-        // Select part of 1st and 2nd halves of same split to be able to remove them at the same time.
-        var $partOfTargetLine = inner$("div b").last();
-        $partOfTargetLine.sendkeys("{selectall}");
-        $partOfTargetLine.sendkeys(multiLineText);
-        $partOfTargetLine.sendkeys("{selectall}");
+        $targetLine.sendkeys('{selectall}').sendkeys('not ' + multiLineText + veryLongLine);
 
         // wait for pagination to finish
         helper.waitFor(function() {
           var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
           return $splitElementsWithPageBreaks.length === 1;
         }, 2000).done(function() {
+          // Select part of 1st and 2nd halves of same split to be able to remove them at the same time.
+          var $firstHalfOfSplitLine  = inner$("div:has(splitPageBreak)");
+          var $secondHalfOfSplitLine = $firstHalfOfSplitLine.next();
+          var startOffset            = "not ".length - 1;
+          var endOffset              = line2.length + line3.length + line4.length;
+
           // remove all selected content (part of 1st half + entire 2nd half of same split)
+          helper.selectLines($firstHalfOfSplitLine, $secondHalfOfSplitLine, startOffset, endOffset)
           utils.pressBackspace();
 
           // wait for pagination to finish (content is removed, lines merged, etc.)
@@ -713,18 +712,18 @@ describe("ep_script_page_view - page break on split elements", function() {
           // write something on target line
           var $targetLine = inner$("div").last().prev();
           $targetLine.sendkeys("{selectall}{leftarrow}");
-          $targetLine.sendkeys("AAAAAAAAA{enter}BBBBBBBBBBBB");
+          $targetLine.sendkeys("AAAAAAAAA");
 
           // wait for changes to be processed and pagination to finish
-          helper.waitFor(function() {
-            var $targetLine = inner$("div").last().prev();
-            return $targetLine.text() === "BBBBBBBBBBBB" + targetElementText;
-          }, 3000).done(done);
+          // Note: as {enter} cannot be used on sendkeys between chars (for some reason we don't
+          // know yet), we cannot type a split line and wait for it to be processed into two
+          // lines. The only workaround for now is to have a timeout
+          setTimeout(done, 2000);
         });
 
         it("keeps caret at the end of inserted text", function(done) {
           var targetLine = function() { return helper.padInner$("div").last().prev() };
-          var textAfterInsertedText = "BBBBBBBBBBBB".length;
+          var textAfterInsertedText = "AAAAAAAAA".length;
 
           splitElements.testCaretIsOn(targetLine, textAfterInsertedText, true, done);
         });
@@ -1911,12 +1910,15 @@ describe("ep_script_page_view - page break on split elements", function() {
 
   context("when first line of page is a very long heading", function() {
     before(function() {
-      linesBeforeTargetElement = GENERALS_PER_PAGE - 3;
+      linesBeforeTargetElement = GENERALS_PER_PAGE - 7;
       var line1 = utils.buildStringWithLength(59, "1") + ". ";
       var line2 = utils.buildStringWithLength(59, "2") + ". ";
       targetElementText = line1 + line2;
       buildTargetElement = function() {
-        return utils.heading(targetElementText);
+        var firstHeadingWithActAndSeq = utils.heading('First Heading');
+        var generalInTheMiddle = utils.general("general between headings");
+        var targetHeading = utils.heading(targetElementText);
+        return firstHeadingWithActAndSeq + generalInTheMiddle + targetHeading;
       };
     });
 

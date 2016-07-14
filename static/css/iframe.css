@@ -99,6 +99,14 @@
     margin-top: 0px;
   }
 
+  /* Bug fix: remove margin between last line of script and first helper line used to re-calculate
+     page breaks.
+     This is necessary because first line is originally on top of a page (so without any margin),
+     but when it is cloned it is added after a regular line (so it would have a margin) */
+  #innerdocbody.breakPages div.cloned.cloned__first heading {
+    margin-top: 0;
+  }
+
   #innerdocbody.breakPages div splitPageBreak,
   #innerdocbody.breakPages div nonSplitPageBreak,
   #innerdocbody.breakPages div contdLine,

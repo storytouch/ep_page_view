@@ -35,8 +35,9 @@ describe("ep_script_page_view - repaginate", function() {
       // insert text on line before page break to make it be 2 inner lines long
       var fullLine = utils.buildStringWithLength(59, "1") + ". ";
       var $lineBeforePageBreak = utils.linesAfterNonSplitPageBreaks().last().prev();
-      $lineBeforePageBreak.sendkeys("{selectall}{rightarrow}. "); // first page will have "general. "
-      $lineBeforePageBreak.sendkeys(fullLine); // second page will have fullLine
+      $lineBeforePageBreak.sendkeys("{selectall}{rightarrow}");
+      // first page will have "general. ", second page will have fullLine
+      $lineBeforePageBreak.sendkeys('. ' + fullLine);
 
       // wait for pagination to be re-run
       helper.waitFor(function() {
@@ -174,13 +175,23 @@ describe("ep_script_page_view - repaginate", function() {
       var lastLineText = "last general";
 
       // build script full of generals + a heading + a character + the line to be changed + another general
-      var pageFullOfGenerals = utils.buildScriptWithGenerals("general", numberOfGeneralsBeforeHeading);
+      var act                = utils.act('first act', 'summary of act');
+      var seq                = utils.sequence('first sequence', 'summary of sequence');
+      var firstHeading       = utils.heading('first heading');
+      // to make tests easier, replace the first general by a heading with act+seq, so the next
+      // heading doesn't need to have any scene mark without any scene mark
+      var pageFullOfGenerals = utils.buildScriptWithGenerals("general", numberOfGeneralsBeforeHeading - 1);
       var heading            = utils.heading("heading");
       var character          = utils.character("character");
       var lineToBeChanged    = buildLineToBeChanged("I'll be changed");
       var lastGeneral        = utils.general(lastLineText);
 
-      var script = pageFullOfGenerals + heading + character + lineToBeChanged + lastGeneral;
+      var script = act + seq + firstHeading
+                 + pageFullOfGenerals
+                 + heading
+                 + character
+                 + lineToBeChanged
+                 + lastGeneral;
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
         helper.waitFor(function() {
@@ -214,7 +225,7 @@ describe("ep_script_page_view - repaginate", function() {
             var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks();
             return $firstLineOfSecondPage.first().text() === "heading";
           }, 2000).done(done);
-        }, GENERALS_PER_PAGE-3);
+        }, GENERALS_PER_PAGE+1);
       });
     });
 
@@ -245,7 +256,7 @@ describe("ep_script_page_view - repaginate", function() {
             var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().first();
             return $firstLineOfSecondPage.text() === textOfChangedLine;
           }, 2000).done(done);
-        }, GENERALS_PER_PAGE-3);
+        }, GENERALS_PER_PAGE+1);
       });
     });
 
@@ -265,7 +276,7 @@ describe("ep_script_page_view - repaginate", function() {
         var inner$ = helper.padInner$;
 
         var lastLineText = "last general";
-        var changedLine = GENERALS_PER_PAGE+3;
+        var changedLine = GENERALS_PER_PAGE+7;
 
         // we need another page break for this scenario, so add another page full of generals
         var pageFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE);
@@ -335,12 +346,17 @@ describe("ep_script_page_view - repaginate", function() {
 
       var lastLineText = "general";
 
-      // build script with 1st page almost full (leave two lines at the end) +
-      // one heading on top of 2nd page + another full page + a single line on 3rd page
-      var pageAlmostFullOfGenerals = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE-2);
+      // build script with a heading on top of script + 1st page almost full (leave two lines at
+      // the end) + one heading on top of 2nd page + another full page + a single line on 3rd page
+      var act                = utils.act('first act', 'summary of act');
+      var seq                = utils.sequence('first sequence', 'summary of sequence');
+      var firstHeading       = utils.heading('first heading');
+      // to make tests easier, replace the first general by a heading with act+seq, so the next
+      // heading doesn't need to have any scene mark without any scene mark
+      var pageAlmostFullOfGenerals = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE-3);
       var heading = utils.heading("heading");
       var pageFullOfGenerals = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE);
-      var script = pageAlmostFullOfGenerals + heading + pageFullOfGenerals;
+      var script = act + seq + firstHeading + pageAlmostFullOfGenerals + heading + pageFullOfGenerals;
 
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
@@ -357,7 +373,7 @@ describe("ep_script_page_view - repaginate", function() {
       var inner$ = helper.padInner$;
 
       // remove line after heading, so there will be one less page break
-      var $lineAfterHeading = inner$("div:has(heading)").first().next();
+      var $lineAfterHeading = inner$("div:has(heading)").last().next();
       $lineAfterHeading.sendkeys("{selectall}");
       $lineAfterHeading.get(0).outerHTML = "";
 

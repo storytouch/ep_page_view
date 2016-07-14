@@ -16,6 +16,17 @@ var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
 
 var REPAGINATION_LINE_SHIFT = 3;
 
+// initialize listeners and be ready to receive from other plugins
+var listenersOfClear = [
+  paginationNonSplit.cleanPageBreaks,
+  paginationSplit.cleanPageBreaks,
+  paginationPageNumber.cleanPageBreaks
+];
+
+exports.addListenerOfClearPagination = function(cleanFn) {
+  listenersOfClear.push(cleanFn);
+}
+
 exports.aceRegisterNonScrollableEditEvents = function(hook, context) {
   return [myPaginationEventType()];
 }
@@ -282,9 +293,10 @@ var makeNextCyclePaginateLinesAfter = function(lineNumber) {
 }
 
 var cleanPageBreaks = function(startAtLine, endAtLine, attributeManager, rep, editorInfo) {
-  paginationNonSplit.cleanPageBreaks(startAtLine, endAtLine, attributeManager);
-  paginationSplit.cleanPageBreaks(startAtLine, endAtLine, attributeManager, rep, editorInfo);
-  paginationPageNumber.cleanPageBreaks(startAtLine, endAtLine, attributeManager);
+  for (var i = 0; i < listenersOfClear.length; i++) {
+    var cleanFn = listenersOfClear[i];
+    cleanFn(startAtLine, endAtLine, attributeManager, rep, editorInfo);
+  }
 }
 
 var savePageBreaks = function(pageBreaksInfo, attributeManager, rep, editorInfo) {

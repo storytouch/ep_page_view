@@ -139,6 +139,12 @@ var createHelperLines = function($firstLine, $linesOfScript) {
 
   $helperLines.insertAfter($lastLineOfScript);
 
+  // Bug fix: mark first visible helper line to have no margin top.
+  // This is necessary because first line is originally on top of a page
+  // (so without any margin), but when it is cloned it is added after a
+  // regular line (so it would have a margin)
+  adjustFirstVisibleHelperLine($helperLines);
+
   return $helperLines;
 }
 
@@ -172,16 +178,26 @@ var getLineAt = function(offset) {
 }
 
 var createCleanClonesOf = function($lines) {
-  var $linesWithoutSceneMarks = doNotConsiderSceneMarksOf($lines);
-  var $cleanCopies = $linesWithoutSceneMarks.clone();
+  var $cleanCopies = $lines.clone();
+  $cleanCopies = doNotConsiderSceneMarksOf($cleanCopies);
   $cleanCopies = paginationSplit.mergeHelperLines($cleanCopies);
   utils.cleanHelperLines($cleanCopies);
 
   return $cleanCopies;
 }
 
+var adjustFirstVisibleHelperLine = function($helperLines) {
+  var $visibleHelperLines = $helperLines.filter(':not(.sceneMark)');
+  var $firstVisibleLine = $visibleHelperLines.first();
+  $firstVisibleLine.addClass('cloned__first');
+}
+
 var doNotConsiderSceneMarksOf = function($lines) {
-  return $lines.not('.sceneMark');
+  // we cannot remove scene marks because they are used later to calculate page break.
+  // but we can hide them, as they should not be counted on page height calculation
+  $lines.filter('.sceneMark').height(0);
+
+  return $lines;
 }
 
 var removeHelperLines = function($helperLines) {
@@ -217,6 +233,7 @@ var nonSplitPageBreak = function($helperLine, $linesOfScript, lineNumberShift, r
     lineNumberAfterClean: nonSplitInfo.lineNumberAfterClean,
     save: function(data, pageNumber, attributeManager, rep, editorInfo) {
       paginationNonSplit.savePageBreak(data, pageNumber, attributeManager);
+      nonSplitInfo.callbackAfterSave(attributeManager);
     }
   };
 }

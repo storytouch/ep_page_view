@@ -9,6 +9,11 @@ var PAGE_BREAK_TAG = "nonSplitPageBreak";
 exports.PAGE_BREAK_TAG = PAGE_BREAK_TAG;
 utils.registerPageBreakTag(PAGE_BREAK_TAG);
 
+var listenersOfHeadingOnTopOfPage = [];
+exports.addListenerOfHeadingOnTopOfPage = function(listenerFn) {
+  listenersOfHeadingOnTopOfPage.push(listenerFn);
+}
+
 exports.atribsToClasses = function(context) {
   // simple page break, return only the flag as class
   if(isRegularPageBreakAttrib(context.key)) {
@@ -76,6 +81,17 @@ exports.getNonSplitInfo = function($line, lineNumberShift, rep) {
   // when placed on an element immediately after page break; to avoid that, we place page
   // break after the last element of previous page, instead of first element of next page
   var $targetLine = $line.prev();
+  var callbackAfterSave = function doNothing(){};
+
+  var topOfPageHasAHeadingWithSceneMark = $targetLine.next().hasClass('sceneMark');
+  if (topOfPageHasAHeadingWithSceneMark) {
+    var $headingOriginallyOnTop = $targetLine.nextAll('.withHeading').first();
+    var headingLineNumberAfterClean = utils.getLineNumberFromDOMLine($headingOriginallyOnTop, rep) + lineNumberShift;
+    callbackAfterSave = function(attributeManager) {
+      callAllListenersOfHeadingOnTopOfPage(headingLineNumberAfterClean, attributeManager);
+    };
+  }
+
   // some lines before $targetLine might be split lines that would be merged on pagination,
   // so we need to shift line number to address that
   var lineNumberAfterClean = utils.getLineNumberFromDOMLine($targetLine, rep) + lineNumberShift;
@@ -85,7 +101,15 @@ exports.getNonSplitInfo = function($line, lineNumberShift, rep) {
     lineNumberBeforeClean: utils.getLineNumberFromDOMLine($targetLine, rep),
     lineNumberAfterClean: lineNumberAfterClean,
     addMoreAndContd: moreAndContdInfo,
+    callbackAfterSave: callbackAfterSave,
   };
+}
+
+var callAllListenersOfHeadingOnTopOfPage = function(headingLineNumber, attributeManager) {
+  for (var i = 0; i < listenersOfHeadingOnTopOfPage.length; i++) {
+    var listenerFn = listenersOfHeadingOnTopOfPage[i];
+    listenerFn(headingLineNumber, attributeManager);
+  }
 }
 
 var getMoreAndContdInfo = function($line) {

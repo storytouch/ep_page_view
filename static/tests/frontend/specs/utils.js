@@ -1,5 +1,13 @@
 var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
 ep_script_page_view_test_helper.utils = {
+  act: function(name, summary) {
+    return "<act_name>" + name + "</act_name><br/>" +
+           "<act_summary>" + summary + "</act_summary><br/>";
+  },
+  sequence: function(name, summary) {
+    return "<sequence_name>" + name + "</sequence_name><br/>" +
+           "<sequence_summary>" + summary + "</sequence_summary><br/>";
+  },
   heading: function(text) {
     return "<heading>" + text + "</heading><br/>";
   },
@@ -37,6 +45,26 @@ ep_script_page_view_test_helper.utils = {
       var $lastLine = inner$("div").last();
       return utils.cleanText($lastLine.text()) === lastLineText;
     }, 3000).done(cb);
+  },
+
+  addActToLine: function(line, done) {
+    var self = this;
+    self.placeCaretInTheBeginningOfLine(line, function() {
+      ep_mouse_shortcuts_test_helper.utils.rightClick(function() {
+        self.clickOnAddAct(done);
+      });
+    });
+  },
+  clickOnAddAct: function(done) {
+    var outer$ = helper.padOuter$;
+    helper.waitFor(function() {
+      var mouseWindowIsVisible = outer$(".mouseWindow").length != 0;
+      return mouseWindowIsVisible;
+    }, 2000).done(function() {
+      var $addActMenuOption = outer$("#addAct");
+      $addActMenuOption.click();
+      done();
+    });
   },
 
   /**** vars and functions to change element type of a line: ****/
@@ -472,5 +500,25 @@ ep_script_page_view_test_helper.utils = {
         return heightsDifference >= 0 && heightsDifference <= 2;
       }, 3000).done(done);
     });
+  },
+
+  testLineAfterPageBreakIsAHeadingWithActAndSeq: function(done) {
+    var $lineAfterPageBreak = this.linesAfterNonSplitPageBreaks().first();
+
+    // check if first 5 lines after page break are the heading and its act/seq
+    var line0IsActName    = $lineAfterPageBreak.find('act_name').length > 0;
+    var line1IsActSummary = $lineAfterPageBreak.next().find('act_summary').length > 0;
+    var line2IsSeqName    = $lineAfterPageBreak.next().next().find('sequence_name').length > 0;
+    var line3IsSeqSummary = $lineAfterPageBreak.next().next().next().find('sequence_summary').length > 0;
+    var line4IsHeading    = $lineAfterPageBreak.next().next().next().next().find('heading').length > 0;
+
+    // use if + fail() for a clearer failure message when test does not pass
+    if (!line0IsActName)    expect().fail(function() { return 'line 0 after page break is not act name' });
+    if (!line1IsActSummary) expect().fail(function() { return 'line 1 after page break is not act summary' });
+    if (!line2IsSeqName)    expect().fail(function() { return 'line 2 after page break is not sequence name' });
+    if (!line3IsSeqSummary) expect().fail(function() { return 'line 3 after page break is not sequence summary' });
+    if (!line4IsHeading)    expect().fail(function() { return 'line 4 after page break is not heading' });
+
+    done();
   },
 }

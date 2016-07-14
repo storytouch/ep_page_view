@@ -297,7 +297,10 @@ ep_script_page_view_test_helper.pageBreak = {
     var $firstPageBreak = $linesWithPageBreaks.first();
     var $secondPageBreak = $linesWithPageBreaks.last();
 
+    expect($firstPageBreak.prev().text()).to.be("1st page");
     expect($firstPageBreak.text()).to.be("2nd page");
+
+    expect($secondPageBreak.prev().text()).to.be("2nd page");
     expect($secondPageBreak.text()).to.be("1st of 3rd page");
 
     done();
