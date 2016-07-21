@@ -6,6 +6,8 @@ var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var utils = require('./utils');
 var DEFAULT_MARGINS = require('ep_script_elements/static/js/fixSmallZooms').DEFAULT_MARGINS;
 
+exports.STYLES_UPDATED = 'STYLES_UPDATED.ep_script_page_view';
+
 // Letter
 // var REGULAR_LINES_PER_PAGE = 54;
 // A4
@@ -43,12 +45,10 @@ var DEFAULT_PAGE_BREAK_TOTAL_HEIGHT =
 
 exports.init = function() {
   waitForResizeToFinishThenCall(function() {
-    updateWidthsAndMargins();
-    updatePageHeight();
+    updateStyles();
   });
 
-  updateWidthsAndMargins();
-  updatePageHeight();
+  updateStyles();
 }
 
 // Copied form ep_comments_page
@@ -59,6 +59,13 @@ var waitForResizeToFinishThenCall = function(callback) {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(callback, timeout);
   });
+}
+
+var updateStyles = function() {
+  updateWidthsAndMargins();
+  updatePageHeight();
+
+  utils.getPadOuter().trigger(exports.STYLES_UPDATED);
 }
 
 var updateWidthsAndMargins = function() {
