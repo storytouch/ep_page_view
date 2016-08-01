@@ -445,4 +445,92 @@ describe("ep_script_page_view - repaginate", function() {
       });
     });
   });
+
+  context("when user expands the scene marks of a scene", function() {
+    var originalIdOfLineWithPageBreak;
+
+    var HEADING_LINE = 4;
+
+    var getIdOfLineWithPageBreak = function() {
+      var $lineWithPageBreak = utils.linesAfterNonSplitPageBreaks().first().prev();
+      var currentIdOfLineWithPageBreak = $lineWithPageBreak.attr("id");
+
+      return currentIdOfLineWithPageBreak;
+    }
+
+    var clickToShowSceneMarks = function(done) {
+      clickToShowOrHideSceneMarks(true, done);
+    }
+    var clickToHideSceneMarks = function(done) {
+      clickToShowOrHideSceneMarks(false, done);
+    }
+    var clickToShowOrHideSceneMarks = function(isShowing, done) {
+      // store value for tests
+      originalIdOfLineWithPageBreak = getIdOfLineWithPageBreak();
+
+      // show/hide scene marks
+      ep_script_scene_marks_test_helper.utils.clickOnSceneMarkButtonOfLine(HEADING_LINE);
+
+      var sceneMarkSelector = isShowing ? 'div.sceneMark.hidden' : 'div.sceneMark:not(.hidden)';
+
+      helper.waitFor(function() {
+        var sceneMarksAreVisible = helper.padInner$(sceneMarkSelector).length === 0;
+        return sceneMarksAreVisible;
+      }).done(done);
+    }
+
+    beforeEach(function(done) {
+      this.timeout(4000);
+
+      var lastLineText = "general";
+
+      // build script with a heading on top of script + 1st page full of generals + 1 line on 2nd page
+      var act                = utils.act('first act', 'summary of act');
+      var seq                = utils.sequence('first sequence', 'summary of sequence');
+      var heading            = utils.heading('first heading');
+      var pageFullOfGenerals = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE);
+
+      var script = act + seq + heading + pageFullOfGenerals;
+
+      utils.createScriptWith(script, lastLineText, function() {
+        // wait for pagination to finish
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+          return $linesWithPageBreaks.length === 1;
+        }, 2000).done(function() {
+          // show/hide once first, then show again (to force char to move from
+          // act to heading to act again)
+          clickToShowSceneMarks(function() {
+            clickToHideSceneMarks(function() {
+              clickToShowSceneMarks(done);
+            });
+          });
+        });
+      });
+    });
+
+    it("does not repaginate any part of the script", function(done) {
+      // id of line with first page break should be the same
+      var currentIdOfLineWithPageBreak = getIdOfLineWithPageBreak();
+
+      expect(currentIdOfLineWithPageBreak).to.be(originalIdOfLineWithPageBreak);
+
+      done();
+    });
+
+    context('then minimize scene marks again', function() {
+      beforeEach(function(done) {
+        clickToHideSceneMarks(done);
+      });
+
+      it("does not repaginate any part of the script", function(done) {
+        // id of line with first page break should be the same
+        var currentIdOfLineWithPageBreak = getIdOfLineWithPageBreak();;
+
+        expect(currentIdOfLineWithPageBreak).to.be(originalIdOfLineWithPageBreak);
+
+        done();
+      });
+    });
+  });
 });

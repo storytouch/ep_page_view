@@ -1,3 +1,4 @@
+var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var Security = require('ep_etherpad-lite/static/js/security');
 
 var EMPTY_CHARACTER_NAME = "empty";

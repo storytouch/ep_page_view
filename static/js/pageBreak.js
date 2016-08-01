@@ -1,6 +1,8 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 
+var sceneMarkUtils = require("ep_script_scene_marks/static/js/utils");
+
 var utils                      = require('./utils');
 var paginationSplit            = require('./paginationSplit');
 var paginationNonSplit         = require('./paginationNonSplit');
@@ -10,6 +12,8 @@ var paginationScrollPosition   = require('./paginationScrollPosition');
 var undoElementType            = require('./undoElementType');
 var calculatingPageNumberIcons = require('./calculatingPageNumberIcons');
 var paginationCalculation      = require('./paginationPageBreaksCalculation');
+
+var isInTheMiddleOfASceneMarkVisibilityToggle = require("ep_script_scene_marks/static/js/sceneMarkVisibility").isInTheMiddleOfASceneMarkVisibilityToggle;
 
 var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
 var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
@@ -67,7 +71,7 @@ exports.aceDomLineProcessLineAttributes = function(hook, context) {
 exports.acePostWriteDomLineHTML = function(hook, context) {
   var $node = $(context.node);
 
-  paginationLinesChanged.markNodeAsChanged($node);
+  markNodeAsChangedIfIsNotASceneMark($node);
 
   var nodeHasSplitPageBreak    = paginationSplit.nodeHasPageBreak($node);
   var nodeHasNonSplitPageBreak = paginationNonSplit.nodeHasPageBreak($node);
@@ -84,6 +88,12 @@ exports.acePostWriteDomLineHTML = function(hook, context) {
   }
   if (nodeHasMoreAndContd) {
     $node.addClass("withMoreAndContd");
+  }
+}
+var markNodeAsChangedIfIsNotASceneMark = function($line) {
+  var lineIsASceneMark = sceneMarkUtils.checkIfHasSceneMark($line);
+  if (!lineIsASceneMark) {
+    paginationLinesChanged.markNodeAsChanged($line);
   }
 }
 
@@ -115,12 +125,14 @@ exports.aceEditEvent = function(hook, context) {
   }
   // any other edition on the pad
   else {
-    // don't do anything if text did not change or if user was not the one who made the text change
-    if (!context.callstack.docTextChanged || !isEditedByMe(eventType)) return;
-
-    markCurrentLineAsChanged(context);
-
-    resetTimerToRestartPagination(context);
+    // only consider an edition if user is not changing the visibility of scene marks and
+    // pad text was changed by this user
+    if (context.callstack.docTextChanged &&
+        isEditedByMe(eventType) &&
+        !isInTheMiddleOfASceneMarkVisibilityToggle(eventType)) {
+      markCurrentLineAsChangedIfNotASceneMark(context);
+      resetTimerToRestartPagination(context);
+    }
   }
 }
 
@@ -152,9 +164,13 @@ var myPaginationEventType = function() {
   return "pagination-" + clientVars.userId;
 }
 
-var markCurrentLineAsChanged = function(context) {
+var markCurrentLineAsChangedIfNotASceneMark = function(context) {
   var currentLine = context.rep.selStart[0];
-  paginationLinesChanged.markLineAsChanged(currentLine);
+  var currentLineIsASceneMark = sceneMarkUtils.lineNumberContainsSceneMark(currentLine);
+
+  if (!currentLineIsASceneMark) {
+    paginationLinesChanged.markLineAsChanged(currentLine);
+  }
 }
 
 var paginationTimer;

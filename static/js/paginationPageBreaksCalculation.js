@@ -102,9 +102,7 @@ var getNextPageBreakInfo = function(pageBreakInfo, $helperLines) {
 }
 
 var getOffsetOfNextPage = function(currentOffset) {
-  // use a small shift to make sure we don't get last element of current page
-  var shift = 0;
-  var topShift = fullPage() + shift;
+  var topShift = fullPage();
   return increaseOffsetTop(currentOffset, topShift);
 }
 
