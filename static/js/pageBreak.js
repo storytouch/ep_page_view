@@ -19,6 +19,7 @@ var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_
 var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
 
 var REPAGINATION_LINE_SHIFT = 3;
+var REACHED_END_OF_PAD = -1;
 
 // initialize listeners and be ready to receive from other plugins
 var listenersOfClear = [
@@ -30,6 +31,10 @@ var listenersOfClear = [
 exports.addListenerOfClearPagination = function(cleanFn) {
   listenersOfClear.push(cleanFn);
 }
+
+// Façade for methods on other modules of pagination
+exports.addListenerOfHeadingOnTopOfPage = paginationNonSplit.addListenerOfHeadingOnTopOfPage;
+exports.setMethodToCleanMarksOnHeadingsOnTopOfPages = paginationCalculation.setMethodToCleanMarksOnHeadingsOnTopOfPages;
 
 exports.aceRegisterNonScrollableEditEvents = function(hook, context) {
   return [myPaginationEventType()];
@@ -220,16 +225,11 @@ var repaginate = function(context) {
   // need to keep caret original position so we don't mess up with it on pagination
   var originalCaretPosition = rep.selStart.slice();
 
-  // we need to check some lines before first line changed since last pagination because
-  // last changes might had affected a block of elements or split lines
-  var firstLineToPaginate = paginationLinesChanged.minLineChanged() - REPAGINATION_LINE_SHIFT;
-  // if changed one of the first REPAGINATION_LINE_SHIFT lines of pad, start at first line (0)
-  var startAtLine = Math.max(0, firstLineToPaginate);
+  var startAtLine = getLineWherePaginationShouldStart(rep);
 
   // if repagination should start at a line after end of the pad, we simply clean lines marked as
   // changed and do nothing else
-  var padLines = rep.lines.length();
-  if (startAtLine >= padLines) {
+  if (startAtLine === REACHED_END_OF_PAD) {
     paginationLinesChanged.reset(rep);
   } else {
     var paginationInfo;
@@ -252,7 +252,7 @@ var repaginate = function(context) {
     } else {
       var endAtLineAfterClean = getLineNumberAfterPaginationOfLastPageBreak(paginationInfo, rep);
 
-      makeNextCyclePaginateLinesAfter(endAtLineAfterClean);
+      makeNextCyclePaginateLinesAfter(endAtLineAfterClean, rep);
 
       calculatingPageNumberIcons.displayAllAfterLine(endAtLineAfterClean, rep);
 
@@ -264,6 +264,45 @@ var repaginate = function(context) {
 
 var synchronizeEditorWithUserChanges = function(editorInfo) {
   editorInfo.ace_fastIncorp();
+}
+
+var getLineWherePaginationShouldStart = function(rep) {
+  var originalLineNumberOfFirstLineChanged = paginationLinesChanged.minLineChanged();
+
+  // check the edges first -- to be faster and avoid issues with rep.lines
+  if (paginationReachedEndOfPad(originalLineNumberOfFirstLineChanged, rep)) {
+    return REACHED_END_OF_PAD;
+  } else if (paginationShouldStartFromTopOfPad(originalLineNumberOfFirstLineChanged, rep)) {
+    return 0;
+  } else {
+    var $lineToStartPagination = $(utils.getDOMLineFromLineNumber(originalLineNumberOfFirstLineChanged, rep));
+
+    // we need to check some lines before first line changed since last pagination because
+    // last changes might had affected a block of elements or split lines. So besides moving
+    // REPAGINATION_LINE_SHIFT up, we also need to ignore lines with scene marks on this
+    // interval
+    for (var i = 0; i < REPAGINATION_LINE_SHIFT; i++) {
+      $lineToStartPagination = getPreviousLineIgnoringSceneMarks($lineToStartPagination);
+    }
+
+    // if changed one of the first REPAGINATION_LINE_SHIFT lines of pad, start at first line (0)
+    var shouldStartFromTopOfPad = $lineToStartPagination.length === 0;
+    var startAtLine = shouldStartFromTopOfPad ? 0 : utils.getLineNumberFromDOMLine($lineToStartPagination, rep);
+
+    return startAtLine;
+  }
+}
+
+var paginationReachedEndOfPad = function(lineNumber, rep) {
+  return lineNumber >= rep.lines.length();
+}
+var paginationShouldStartFromTopOfPad = function(lineNumber, rep) {
+  return lineNumber < REPAGINATION_LINE_SHIFT;
+}
+
+var getPreviousLineIgnoringSceneMarks = function($targetLine) {
+  // ignore scene marks (if any) right above $targetLine
+  return utils.getTopSceneMarkOrTargetLine($targetLine.prev());
 }
 
 // returns line number of last line that will receive a page break, or last number of pad
@@ -299,11 +338,20 @@ var getLineNumberAfterPaginationOfLastPageBreak = function(paginationInfo, rep) 
   return lastLineWithPageBreak;
 }
 
-var makeNextCyclePaginateLinesAfter = function(lineNumber) {
-  var continuePaginationFromLine = lineNumber + 1;
-  // this avoids an infinite loop when next pagination cycle starts (we always look
-  // REPAGINATION_LINE_SHIFT lines back to start paginating)
-  continuePaginationFromLine += REPAGINATION_LINE_SHIFT;
+var makeNextCyclePaginateLinesAfter = function(lineNumber, rep) {
+  var $lineToStartNextPagination = $(utils.getDOMLineFromLineNumber(lineNumber, rep));
+
+  // we need to check some lines after last paginated line on this cycle because
+  // when we start next cycle we look back REPAGINATION_LINE_SHIFT lines (see
+  // getLineWherePaginationShouldStart()). So besides moving REPAGINATION_LINE_SHIFT down,
+  // we also need to ignore lines with scene marks on this interval. This avoids infinite loop
+  // if we choose to paginate one page/cycle
+  for (var i = 0; i < REPAGINATION_LINE_SHIFT; i++) {
+    $lineToStartNextPagination = utils.getNextLineIgnoringSceneMarks($lineToStartNextPagination);
+  }
+
+  var reachedEndOfPad = $lineToStartNextPagination.length === 0;
+  var continuePaginationFromLine = reachedEndOfPad ? rep.lines.length() + 1 : utils.getLineNumberFromDOMLine($lineToStartNextPagination, rep);
 
   paginationLinesChanged.markLineAsChanged(continuePaginationFromLine);
 }

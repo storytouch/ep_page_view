@@ -98,10 +98,6 @@ exports.getBlockInfo = function($helperLine) {
     $topOfBlock = $previousLine;
   }
 
-  // we cannot have a page break between a heading and its act/seq.
-  // Move $topOfBlock up if this happens, otherwise just use original $topOfBlock
-  $topOfBlock = $topOfBlock.prevUntil(':not(.sceneMark)').andSelf().first();
-
   return {
     $topOfBlock: $topOfBlock,
   };

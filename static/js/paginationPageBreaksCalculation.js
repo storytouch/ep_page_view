@@ -11,6 +11,12 @@ var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
 
 var MAX_PAGE_BREAKS_PER_CYCLE = 5;
 
+// initialize with a function that does nothing
+var cleanMarksOnHeadingsOnTopOfPage = function() {};
+exports.setMethodToCleanMarksOnHeadingsOnTopOfPages = function(filterFn) {
+  cleanMarksOnHeadingsOnTopOfPage = filterFn;
+}
+
 exports.calculatePageBreaks = function(startLine, originalCaretPosition, attributeManager, rep, performFullPagination) {
   var pageBreaks = [];
 
@@ -54,13 +60,15 @@ exports.calculatePageBreaks = function(startLine, originalCaretPosition, attribu
       // it is a block of lines (a block can have only a single line too)
       var blockInfo = paginationBlocks.getBlockInfo(pageBreakInfo.$firstLineOfNextPage);
 
-      pageBreakInfo.$firstLineOfNextPage = blockInfo.$topOfBlock;
-
-      // move offset of next page to first element of it
+      // move offset of next page to first script element of it (ignore scene marks)
       pageBreakInfo.offsetAtBeginningOfNextPage = blockInfo.$topOfBlock.offset();
 
+      // we cannot have a page break between a heading and its act/seq.
+      // Move $topOfBlock up if this happens, otherwise just use original $topOfBlock
+      pageBreakInfo.$firstLineOfNextPage = utils.getTopSceneMarkOrTargetLine(blockInfo.$topOfBlock);
+
       // mark line to be on top of page
-      pageBreaks.push(nonSplitPageBreak(blockInfo.$topOfBlock, $linesOfScript, lineNumberShift, rep));
+      pageBreaks.push(nonSplitPageBreak(pageBreakInfo.$firstLineOfNextPage, $linesOfScript, lineNumberShift, rep));
     }
 
     pageBreakInfo = getNextPageBreakInfo(pageBreakInfo, $helperLines);
@@ -191,9 +199,14 @@ var adjustFirstVisibleHelperLine = function($helperLines) {
 }
 
 var doNotConsiderSceneMarksOf = function($lines) {
-  // we cannot remove scene marks because they are used later to calculate page break.
+  // we cannot remove scene marks because they are used later to calculate page break,
   // but we can hide them, as they should not be counted on page height calculation
   $lines.filter('.sceneMark').height(0);
+
+  // headings with scene marks on top of page are manually marked with a class to
+  // not have top margins, but when we're paginating this mark should be ignored, as those
+  // headings might be in the middle of a page after re-pagination finishes
+  cleanMarksOnHeadingsOnTopOfPage($lines);
 
   return $lines;
 }

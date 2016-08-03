@@ -29,7 +29,7 @@ describe("ep_script_page_view - repaginate", function() {
       });
     });
 
-    it("repaginates pad from that line", function(done) {
+    it("repaginates pad from 3 lines above changed line", function(done) {
       this.timeout(4000);
 
       // insert text on line before page break to make it be 2 inner lines long
@@ -83,7 +83,7 @@ describe("ep_script_page_view - repaginate", function() {
       });
     });
 
-    it("repaginates pad from that line", function(done) {
+    it("repaginates pad from 3 lines above changed line", function(done) {
       this.timeout(4000);
 
       var inner$ = helper.padInner$;
@@ -138,7 +138,7 @@ describe("ep_script_page_view - repaginate", function() {
       });
     });
 
-    it("repaginates pad from that line", function(done) {
+    it("repaginates pad from 3 lines above changed line", function(done) {
       this.timeout(4000);
 
       var inner$ = helper.padInner$;
@@ -528,6 +528,193 @@ describe("ep_script_page_view - repaginate", function() {
         var currentIdOfLineWithPageBreak = getIdOfLineWithPageBreak();;
 
         expect(currentIdOfLineWithPageBreak).to.be(originalIdOfLineWithPageBreak);
+
+        done();
+      });
+    });
+  });
+
+  context('when heading with act is not on top of page, then is repaginated and moves to the top of page', function() {
+    var TEXT_OF_LAST_LINE = 'first line of 3rd page';
+
+    beforeEach(function(done) {
+      this.timeout(4000);
+
+      // build script with 1st page almost full of generals + one heading with act and seq on
+      // bottom of 1st page (to be moved to 2nd page) + a page almost full of generals +
+      // one last general (to be moved to top of 3rd page)
+
+      // leave room for heading + top margin + a general (so heading is not moved down as a top of block)
+      var firstPageFullOfGenerals  = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-4);
+      var act                      = utils.act('first act', 'summary of act');
+      var seq                      = utils.sequence('first sequence', 'summary of sequence');
+      var firstHeading             = utils.heading('first heading');
+      var lineToBeOnTopOf3rdPage   = utils.general(TEXT_OF_LAST_LINE);
+      // leave room for future moving of heading (without top margin)
+      var secondPageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-1);
+
+      var script = firstPageFullOfGenerals + act + seq + firstHeading + secondPageFullOfGenerals + lineToBeOnTopOf3rdPage;
+
+      utils.createScriptWith(script, TEXT_OF_LAST_LINE, function() {
+        // wait for pagination to finish before start testing
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+          return $linesWithPageBreaks.length > 0;
+        }, 2000).done(done);
+      });
+    });
+
+    it('recalculates page breaks taking into account the future margin element will (NOT) have when it is moved to top of page', function(done) {
+      this.timeout(4000);
+
+      // edit a line on first page to make it have 2 lines, so heading will be moved
+      // to next page and last line to the 3rd page
+      var oneLineLong = utils.buildStringWithLength(61, '.');
+      var $lineOn1stPage = utils.getLine(GENERALS_PER_PAGE/2);
+      $lineOn1stPage.sendkeys(oneLineLong);
+
+      // wait for repagination to finish
+      helper.waitFor(function() {
+        var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+        return $linesWithPageBreaks.length === 2;
+      }, 2000).done(function() {
+        var $topOfPages = utils.linesAfterNonSplitPageBreaks();
+        var $topOf2ndPage = $topOfPages.first();
+        var $topOfLastPage = $topOfPages.last();
+
+        expect($topOf2ndPage.text()).to.be('first act');
+        expect($topOfLastPage.text()).to.be(TEXT_OF_LAST_LINE);
+
+        done();
+      });
+    });
+  });
+
+  context('when line after a page break is a heading with act forming a top of block, then is repaginated and moves to the top of page', function() {
+    var TEXT_OF_LAST_LINE = 'first line of 3rd page';
+
+    beforeEach(function(done) {
+      this.timeout(4000);
+
+      // build script with 1st page almost full of generals + one heading with act and seq on
+      // bottom of 1st page (to be moved to 2nd page) + a page almost full of generals +
+      // one last general (to be moved to top of 3rd page)
+
+      // leave room for heading + top margin + a general (so heading is not moved down as a top of block)
+      var firstPageFullOfGenerals  = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-4);
+      var act                      = utils.act('first act', 'summary of act');
+      var seq                      = utils.sequence('first sequence', 'summary of sequence');
+      var firstHeading             = utils.heading('first heading');
+      var lineToBeOnTopOf3rdPage   = utils.general(TEXT_OF_LAST_LINE);
+      // leave room for future moving of heading (without top margin)
+      var secondPageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-1);
+
+      var script = firstPageFullOfGenerals + act + seq + firstHeading + secondPageFullOfGenerals + lineToBeOnTopOf3rdPage;
+
+      utils.createScriptWith(script, TEXT_OF_LAST_LINE, function() {
+        // wait for pagination to finish before start testing
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+          return $linesWithPageBreaks.length > 0;
+        }, 2000).done(done);
+      });
+    });
+
+    it('recalculates page breaks taking into account the future margin element will (NOT) have when it is moved to top of page', function(done) {
+      this.timeout(4000);
+
+      // edit a line on first page to make it have 2 lines, so heading will be moved
+      // to next page and last line to the 3rd page
+      var oneLineLong = utils.buildStringWithLength(61, '.');
+      var $lineOn1stPage = utils.getLine(GENERALS_PER_PAGE/2);
+      $lineOn1stPage.sendkeys(oneLineLong);
+
+      // wait for repagination to finish
+      helper.waitFor(function() {
+        var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+        return $linesWithPageBreaks.length === 2;
+      }, 2000).done(function() {
+        var $topOfPages = utils.linesAfterNonSplitPageBreaks();
+        var $topOf2ndPage = $topOfPages.first();
+        var $topOfLastPage = $topOfPages.last();
+
+        expect($topOf2ndPage.text()).to.be('first act');
+        expect($topOfLastPage.text()).to.be(TEXT_OF_LAST_LINE);
+
+        done();
+      });
+    });
+  });
+
+  context('when line after a page break is a heading with act forming a top of block', function() {
+    var TEXT_OF_FUTURE_TOP_OF_PAGE = 'this is going to be a heading';
+
+    beforeEach(function(done) {
+      this.timeout(4000);
+
+      // build script with 1st page full of generals + one heading with act and seq on
+      // top of 2nd page + some generals
+      var pageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-3);
+      var act                = utils.act('first act', 'summary of act');
+      var seq                = utils.sequence('first sequence', 'summary of sequence');
+      var firstHeading       = utils.heading('first heading');
+      var futureHeading      = utils.general(TEXT_OF_FUTURE_TOP_OF_PAGE);
+      var someGenerals       = utils.buildScriptWithGenerals('general', 3);
+
+      var script = pageFullOfGenerals + act + seq + firstHeading + futureHeading + someGenerals;
+
+      utils.createScriptWith(script, 'general', function() {
+        // wait for pagination to finish before start testing
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+          return $linesWithPageBreaks.length > 0;
+        }, 2000).done(done);
+      });
+    });
+
+    context('and user changes the type of next line to break that block', function() {
+      var LINE_TO_BE_MOVED_TO_TOP_OF_PAGE = GENERALS_PER_PAGE + 2;
+
+      beforeEach(function(done) {
+        // change line on bottom of block (heading => general) to destroy the block and
+        // pull heading (and its scene marks) from second page to first page
+        utils.placeCaretInTheBeginningOfLine(LINE_TO_BE_MOVED_TO_TOP_OF_PAGE, function() {
+          utils.changeToElement(utils.HEADING, done, LINE_TO_BE_MOVED_TO_TOP_OF_PAGE);
+        });
+      });
+
+      it('repaginates pad from 3 lines above changed line', function(done) {
+        this.timeout(4000);
+
+        // wait for pagination to be re-run
+        helper.waitFor(function() {
+          // now we have the changed line on top of second page
+          var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().first();
+          return $firstLineOfSecondPage.text() === TEXT_OF_FUTURE_TOP_OF_PAGE;
+        }, 2000).done(done);
+      });
+    });
+
+    context('and user edits a line on first page without changing its height', function() {
+      beforeEach(function(done) {
+        var originalIdOfLineWithPageBreak = utils.linesAfterNonSplitPageBreaks().first().prev().attr('id');
+
+        // edit a line on first page
+        var $lineOn1stPage = utils.getLine(GENERALS_PER_PAGE/2);
+        $lineOn1stPage.sendkeys(' [edited] ');
+
+        // wait for repagination to finish
+        helper.waitFor(function() {
+          var newIdOfLineWithPageBreak = utils.linesAfterNonSplitPageBreaks().first().prev().attr('id');
+          return originalIdOfLineWithPageBreak !== newIdOfLineWithPageBreak;
+        }, 2000).done(done);
+      });
+
+      it('recalculates page breaks taking into account the future margin heading would have if it was moved to bottom of previous page (i.e.: "keeps heading on top of page")', function(done) {
+        this.timeout(4000);
+
+        var $topOf2ndPage = utils.linesAfterNonSplitPageBreaks().first();
+        expect($topOf2ndPage.text()).to.be('first act');
 
         done();
       });

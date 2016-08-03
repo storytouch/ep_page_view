@@ -201,6 +201,14 @@ exports.getDOMLineFromLineNumber = function(lineNumber, rep) {
   return rep.lines.atIndex(lineNumber).lineNode;
 }
 
+exports.getTopSceneMarkOrTargetLine = function($targetLine) {
+  return $targetLine.prevUntil(':not(.sceneMark)').andSelf().first();
+}
+
+exports.getNextLineIgnoringSceneMarks = function($targetLine) {
+  return $targetLine.nextUntil(':not(.sceneMark)').andSelf().last().next();
+}
+
 exports.nodeHasMoreAndContd = function($node) {
   return $node.find("more").length > 0;
 }

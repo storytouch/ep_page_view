@@ -90,7 +90,9 @@ describe("ep_script_page_view - page break on element blocks", function() {
     });
   }
 
-  var createBaseScript = function(done) {
+  var createBaseScript = function(test, done) {
+    test.timeout(5000);
+
     utils.cleanPad(function() {
       var act         = utils.act('first act', 'summary of act');
       var seq         = utils.sequence('first sequence', 'summary of sequence');
@@ -113,12 +115,10 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
   context('when first line of page is a heading with act and sequence', function() {
     before(function(done) {
-      createBaseScript(function() {
+      createBaseScript(this, function() {
         var firstLineOfNextPage = GENERALS_PER_PAGE + 4; // 1st act/seq are hidden on top of page
         changeLineToHeadingWithActAndSeq(firstLineOfNextPage, done);
       });
-
-      this.timeout(5000);
     });
     after(function(done) {
       // don't need to wait, changes were already saved
@@ -145,7 +145,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE + 2;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.ACTION, 'action', firstLineOfBlock, done);
         });
       });
@@ -214,7 +214,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE + 2;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.CHARACTER, 'character', firstLineOfBlock, done);
         });
       });
@@ -266,7 +266,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE + 2;
 
       before(function(done) {
-        createBaseScript(done);
+        createBaseScript(this, done);
       });
 
       context("and last line of previous page is a heading", function() {
@@ -325,7 +325,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE + 3;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, done);
         });
       });
@@ -380,8 +380,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE + 3;
 
       before(function(done) {
-        this.timeout(3000);
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, done);
         });
       });
@@ -440,7 +439,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var parentheticalText;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
             changeLineBeforeBlockIntoDialogue(firstLineOfBlock, function() {
               changeLineBeforeBlockIntoCharacter(firstLineOfBlock-1, function() {
@@ -511,7 +510,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var parentheticalText;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
             changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, function() {
               changeLineBeforeBlockIntoCharacter(firstLineOfBlock-1, function() {
@@ -585,7 +584,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var parentheticalText;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
             changeLineBeforeBlockIntoDialogue(firstLineOfBlock, done);
           });
@@ -668,7 +667,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var parentheticalText;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
             changeLineBeforeBlockIntoParenthetical(firstLineOfBlock, done);
           });
@@ -755,7 +754,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE + 4;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.PARENTHETICAL, 'parenthetical', firstLineOfBlock, function() {
             var $lastLineOfPreviousPage = utils.getLine(firstLineOfBlock-1);
             $lastLineOfPreviousPage.sendkeys('{selectall}').sendkeys(LAST_LINE_OF_PREV_PAGE);
@@ -845,7 +844,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE + 4;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.DIALOGUE, 'dialogue', firstLineOfBlock, function() {
             var $lastLineOfPreviousPage = utils.getLine(firstLineOfBlock-1);
             $lastLineOfPreviousPage.sendkeys('{selectall}').sendkeys(LAST_LINE_OF_PREV_PAGE);
@@ -936,7 +935,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE + 3;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
             changeLineBeforeBlockIntoAction(firstLineOfBlock-1, done);
           });
@@ -979,7 +978,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var firstLineOfBlock = GENERALS_PER_PAGE + 3;
 
       before(function(done) {
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
             changeLineBeforeBlockIntoAction(firstLineOfBlock-1, function() {
               // remove a line above top of block, as last line of previous page will have
@@ -1054,8 +1053,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
 
     context("when first line of page is a transition with one line", function() {
       before(function(done) {
-        this.timeout(3000);
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.TRANSITION, 'transition', firstLineOfBlock, function() {
             changeLineBeforeBlockIntoAction(firstLineOfBlock, done);
           });
@@ -1072,8 +1070,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       var LONG_TEXT = 'very long transition';
 
       before(function(done) {
-        this.timeout(3000);
-        createBaseScript(function() {
+        createBaseScript(this, function() {
           changeLineTo(utils.TRANSITION, LONG_TEXT, firstLineOfBlock, function() {
             changeLineBeforeBlockIntoAction(firstLineOfBlock, done);
           });
@@ -1125,7 +1122,7 @@ describe("ep_script_page_view - page break on element blocks", function() {
       });
     });
     after(function(done) {
-      createBaseScript(done);
+      createBaseScript(this, done);
     });
 
     it("considers the height of the resulting block without top margin", function(done) {
