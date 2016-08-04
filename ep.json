@@ -3,14 +3,15 @@
     {
       "name": "page_view",
       "client_hooks": {
-        "postAceInit": "ep_script_page_view/static/js/page_view",
-        "aceEditorCSS": "ep_script_page_view/static/js/page_view",
-        "aceAttribsToClasses": "ep_script_page_view/static/js/pageBreak",
-        "acePostWriteDomLineHTML": "ep_script_page_view/static/js/pageBreak",
-        "aceRegisterBlockElements": "ep_script_page_view/static/js/pageBreak",
-        "aceRegisterNonScrollableEditEvents": "ep_script_page_view/static/js/pageBreak",
+        "postAceInit": "ep_script_page_view/static/js/index",
+        "aceEditorCSS": "ep_script_page_view/static/js/index",
+        "aceInitialized": "ep_script_page_view/static/js/pagination",
+        "aceAttribsToClasses": "ep_script_page_view/static/js/pagination",
+        "acePostWriteDomLineHTML": "ep_script_page_view/static/js/pagination",
+        "aceRegisterBlockElements": "ep_script_page_view/static/js/pagination",
+        "aceRegisterNonScrollableEditEvents": "ep_script_page_view/static/js/pagination",
         "collectContentPre": "ep_script_page_view/static/js/paginationSplit",
-        "aceEditEvent": "ep_script_page_view/static/js/pageBreak"
+        "aceEditEvent": "ep_script_page_view/static/js/pagination"
       },
       "hooks": {
         "eejsBlock_mySettings": "ep_script_page_view/page_view",
@@ -30,7 +31,7 @@
       "name": "aceDomLineProcessLineAttributes",
       "pre": ["ep_script_elements/aceDomLineProcessLineAttributes"],
       "client_hooks": {
-        "aceDomLineProcessLineAttributes": "ep_script_page_view/static/js/pageBreak"
+        "aceDomLineProcessLineAttributes": "ep_script_page_view/static/js/pagination"
       }
     }
   ]

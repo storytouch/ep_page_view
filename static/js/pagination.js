@@ -32,9 +32,35 @@ exports.addListenerOfClearPagination = function(cleanFn) {
   listenersOfClear.push(cleanFn);
 }
 
+
 // Façade for methods on other modules of pagination
 exports.addListenerOfHeadingOnTopOfPage = paginationNonSplit.addListenerOfHeadingOnTopOfPage;
 exports.setMethodToCleanMarksOnHeadingsOnTopOfPages = paginationCalculation.setMethodToCleanMarksOnHeadingsOnTopOfPages;
+
+var enable = function() {
+  var context = this;
+  resetTimerToRestartPagination(context);
+}
+var disable = function() {
+  var context = this;
+
+  var attributeManager = context.documentAttributeManager;
+  var rep              = context.rep;
+  var editorInfo       = context.editorInfo;
+
+  var firstLineOfPad = 0;
+  var lastLineOfPad = rep.lines.length();
+
+  editorInfo.ace_callWithAce(function() {
+    cleanPageBreaks(firstLineOfPad, lastLineOfPad, attributeManager, rep, editorInfo);
+  }, 'disablePagination');
+}
+exports.aceInitialized = function(hook, context) {
+  var editorInfo = context.editorInfo;
+
+  exports.enable = _(enable).bind(context);
+  exports.disable = _(disable).bind(context);
+}
 
 exports.aceRegisterNonScrollableEditEvents = function(hook, context) {
   return [myPaginationEventType()];
