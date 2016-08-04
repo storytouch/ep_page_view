@@ -1,4 +1,4 @@
-describe("ep_script_page_view - page break on split elements", function() {
+describe("ep_script_page_view - pagination of split elements", function() {
   // shortcuts for helper functions
   var utils, splitElements;
   // context-dependent values/functions

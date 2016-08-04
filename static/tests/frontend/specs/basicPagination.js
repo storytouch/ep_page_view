@@ -18,7 +18,7 @@ var DIALOGUES_PER_PAGE      = 58;
 var TRANSITIONS_PER_PAGE    = 28;
 var SHOTS_PER_PAGE          = 20;
 
-describe("ep_script_page_view - page break main tests", function() {
+describe("ep_script_page_view - pagination basic tests", function() {
   var utils, pageBreak;
 
   var getPageBuilder = function(elementsPerPage, builder) {

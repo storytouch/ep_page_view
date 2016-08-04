@@ -3,7 +3,7 @@
 // A4
 var GENERALS_PER_PAGE = 58;
 
-describe("ep_script_page_view - page break on element blocks", function() {
+describe("ep_script_page_view - pagination of element blocks", function() {
   var utils;
 
   var undoLastChanges = function(done) {
