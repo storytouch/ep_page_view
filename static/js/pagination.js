@@ -2,6 +2,7 @@ var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 
 var sceneMarkUtils = require("ep_script_scene_marks/static/js/utils");
+var scriptElementUtils = require("ep_script_elements/static/js/utils");
 
 var utils                      = require('./utils');
 var paginationSplit            = require('./paginationSplit');
@@ -185,7 +186,7 @@ var paginationDidNotFinish = function() {
   return paginationLinesChanged.hasLinesChanged();
 }
 var isAChangeOnElementType = function(eventType) {
-  return eventType === 'insertscriptelement';
+  return eventType === scriptElementUtils.CHANGE_ELEMENT_EVENT;
 }
 var isAPaginationScheduledByMe = function(eventType) {
   return eventType === "pagination-" + clientVars.userId;
