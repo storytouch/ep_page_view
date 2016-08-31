@@ -13,6 +13,8 @@ exports.STYLES_UPDATED = 'STYLES_UPDATED.ep_script_page_view';
 // A4
 var REGULAR_LINES_PER_PAGE = 58;
 
+var LARGE_SCREEN_MIN_WIDTH = 636;
+
 var DEFAULT_MARGIN_LEFT  = 117;
 var DEFAULT_MARGIN_RIGHT = 78;
 var DEFAULT_MARGIN       = DEFAULT_MARGIN_LEFT + DEFAULT_MARGIN_RIGHT;
@@ -87,8 +89,12 @@ var updatePageWidth = function(newCharProportion) {
   // Note: we cannot change .outerPV width using jQuery.css() because Etherpad already overwrites this
   // CSS property on every window resize. Instead, we need to force style to be applied using a dynamic
   // CSS code on pad outer head
-  utils.getPadOuter().find("head").append("<style>" + pageStyle + "</style>");
-  utils.getPadInner().find("head").append("<style>" + pageBreakStyle + "</style>");
+  utils.getPadOuter().find("head").append("<style>" + getStyleOnlyForLargeScreens(pageStyle) + "</style>");
+  utils.getPadInner().find("head").append("<style>" + getStyleOnlyForLargeScreens(pageBreakStyle) + "</style>");
+}
+
+var getStyleOnlyForLargeScreens = function(style) {
+  return '@media (min-width : ' + LARGE_SCREEN_MIN_WIDTH + 'px) { ' + style + ' }';
 }
 
 var updateMoreContdStyles = function(newCharProportion) {
