@@ -1,0 +1,151 @@
+/* Etherpad does not set #linemetricsdiv with the same line-height as the editor, and we need
+   this in order to calculate page breaks when zoom is not 100% */
+#linemetricsdiv {
+  line-height: 16px;
+}
+
+@media (min-width : 636px) {
+  /* Removes top margin for elements after page breaks */
+  #innerdocbody.breakPages div.beforePageBreak + div heading,
+  #innerdocbody.breakPages div.beforePageBreak + div action,
+  #innerdocbody.breakPages div.beforePageBreak + div character,
+  #innerdocbody.breakPages div.beforePageBreak + div transition,
+  #innerdocbody.breakPages div.beforePageBreak + div shot {
+    margin-top: 0px;
+  }
+
+  /* Bug fix: remove margin between last line of script and first helper line used to re-calculate
+     page breaks.
+     This is necessary because first line is originally on top of a page (so without any margin),
+     but when it is cloned it is added after a regular line (so it would have a margin) */
+  #innerdocbody.breakPages div.cloned.cloned__first heading {
+    margin-top: 0;
+  }
+
+  #innerdocbody.breakPages div splitPageBreak,
+  #innerdocbody.breakPages div nonSplitPageBreak,
+  #innerdocbody.breakPages div contdLine,
+  #innerdocbody.breakPages div more,
+  #innerdocbody.breakPages div contd {
+    display: block;
+  }
+
+  #innerdocbody.breakPages div more:before,
+  #innerdocbody.breakPages div contd:before,
+  #innerdocbody.breakPages div contd:after {
+    float: left; /* need this to not allow caret to be placed on element */
+    cursor: default;
+  }
+
+  /* WARNING there are other styles for MORE and CONT'D dynamically set on fixSmallZooms.js */
+  #innerdocbody.breakPages div more:before {
+    content: "(MORE)";
+  }
+  #innerdocbody.breakPages[lang=pt-br] div more:before {
+    content: "(MAIS)";
+  }
+
+  #innerdocbody.breakPages div contd:before {
+    content: attr(data-character);
+    text-transform: uppercase;
+
+    /* the following attributes are necessary to display ellipsis when character name is too long */
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    /* WARNING this is set on fixSmallZooms.js
+    max-width: calc(100% - 64px - 222px); */ /*64px: CONT'D width; 222px: CONT'D right margin */
+  }
+  #innerdocbody.breakPages div contd:after {
+    content: "(CONT'D)";
+
+    /* the following attributes are necessary to display ellipsis when character name is too long */
+    text-align: right;
+    /* WARNING this is set on fixSmallZooms.js
+    width: 64px;*/
+  }
+  #innerdocbody.breakPages[lang=pt-br] div contd:after {
+    content: "(CONT.)";
+  }
+
+  #innerdocbody.breakPages div splitPageBreak:before,
+  #innerdocbody.breakPages div nonSplitPageBreak:before {
+    content: "";
+    margin-right:-85px;
+    background-color:#f7f7f7;
+    float: right;
+    cursor: default;
+    /* WARNING if any of these values is changed, you need to change div.beforePageBreak style and
+       fixSmallZooms.js too */
+    height:40px;
+    margin-top:77px;
+    margin-bottom:77px;
+    border-bottom:1px dotted #aaa;
+    border-top:1px dotted #aaa;
+
+    /* WARNING page break width is not defined on CSS anymore due to an issue with small zooms.
+               See fixSmallZooms.js for more details.
+    width:641px;
+    */
+
+    /* might be useful for printing: */
+  /*  page-break-after: always;
+    -webkit-region-break-inside: avoid;
+  */
+  }
+
+  /* leave room for page break on line at the end of the page */
+  #innerdocbody.breakPages div.beforePageBreak {
+    /* All values of calc are from page break */
+    /* 40px: height; 77px: margin-top and margin-bottom; 1px: border-top and border-bottom;
+       2px: Bug fix: some zoom values mess up with border (they don't have 1px), so we
+       need an extra px to avoid messing up with pagination */
+    padding-bottom: calc(40px + 77px + 77px + 1px + 1px + 2px);
+  }
+
+  /* hide ")" from 1st half of split parenthetical: */
+  #innerdocbody.breakPages div.firstHalf parenthetical:after {
+    content: ' ';
+    margin-right: 0;
+  }
+  /* hide "(" from 2nd half of split parenthetical: */
+  #innerdocbody.breakPages div.firstHalf + div parenthetical:before {
+    content: ' ';
+    margin-left: 0;
+  }
+
+  /* special style used on the calculation of split lines: hide both "()" of cloned parenthetical */
+  #innerdocbody.breakPages div.clone parenthetical:after,
+  #innerdocbody.breakPages div.clone parenthetical:before {
+    content: ' ';
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  /* page number: */
+  #innerdocbody.breakPages div pagenumber {
+    margin-top: -38px;
+    margin-right: 4px;
+    float: right;
+  }
+  #innerdocbody.breakPages div pagenumber:before {
+    margin-right: 5px;
+    content: attr(data-page-number) ".";
+  }
+  #innerdocbody.breakPages div calculating {
+    float: right;
+  }
+
+  /* Animation for page number calculation. Based on .loadingAnimation from pad.css of Etherpad. */
+  /* Selects all lines after line marked with lastPaginated class */
+  div.lastPaginated ~ div calculating {
+    -webkit-animation: loadingAnimation 2s infinite linear;
+    animation: loadingAnimation 2s infinite linear;
+    font-family: "fontawesome-etherpad";
+    z-index:150;
+  }
+
+  div.lastPaginated ~ div calculating:before {
+    content: "\e80e";
+  }
+}
