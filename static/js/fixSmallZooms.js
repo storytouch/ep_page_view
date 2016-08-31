@@ -15,13 +15,13 @@ var REGULAR_LINES_PER_PAGE = 58;
 
 var LARGE_SCREEN_MIN_WIDTH = 636;
 
-var DEFAULT_MARGIN_LEFT  = 117;
-var DEFAULT_MARGIN_RIGHT = 78;
-var DEFAULT_MARGIN       = DEFAULT_MARGIN_LEFT + DEFAULT_MARGIN_RIGHT;
+var DEFAULT_PADDING_LEFT  = 117;
+var DEFAULT_PADDING_RIGHT = 78;
+var DEFAULT_PADDING       = DEFAULT_PADDING_LEFT + DEFAULT_PADDING_RIGHT;
 
 var DEFAULT_PAGE_WIDTH = 641;
 var DEFAULT_CHAR_WIDTH = 7.2; // this was calculated using 100% zoom on Chrome
-var DEFAULT_TEXT_WIDTH = DEFAULT_PAGE_WIDTH - DEFAULT_MARGIN;
+var DEFAULT_TEXT_WIDTH = DEFAULT_PAGE_WIDTH - DEFAULT_PADDING;
 
 // values needed for MORE/CONT'D update
 var DEFAULT_MORE_RIGHT_MARGIN = 242;
@@ -161,7 +161,7 @@ var getCharProportion = function() {
 var calculatePageWidth = function(charProportion) {
   var widthNeededToFit61CharsWithCurrentZoom = charProportion * DEFAULT_TEXT_WIDTH;
 
-  return DEFAULT_MARGIN + widthNeededToFit61CharsWithCurrentZoom;
+  return DEFAULT_PADDING + widthNeededToFit61CharsWithCurrentZoom;
 }
 
 // Use line proportion to find height needed so we always have REGULAR_LINES_PER_PAGE generals/page

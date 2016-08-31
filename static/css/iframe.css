@@ -15,7 +15,6 @@
   padding-right:12px !important;
 }
 
-
 /* For LESS THAN 641px wide */
 @media (max-width : 640px) {
   #innerdocbody{
@@ -32,16 +31,16 @@
 /* If it is not possible to have any margin: */
 @media (max-width : 463px) {
   #innerdocbody > div {
-    margin-left: 0px !important;
-    margin-right: 0px;
+    padding-left: 0px;
+    padding-right: 0px;
   }
 }
 
 /* This is the point where we hide page outline: */
 @media (max-width : 691px) {
   #innerdocbody > div {
-    margin-left:0px !important;
-    margin-right:0px;
+    padding-left: 0px;
+    padding-right: 0px;
     max-width: 444px;
   }
   .outerBackground{
@@ -58,8 +57,8 @@
    enough for a left margin or to draw page outline: */
 @media (min-width: 464px) and (max-width : 541px) {
   #innerdocbody > div {
-    margin-left: 0px !important; /* right margin gets all available space */
-    margin-right: calc(100% - 444px) !important;
+    padding-left: 0px; /* right margin gets all available space */
+    padding-right: calc(100% - 444px);
   }
 }
 
@@ -67,8 +66,8 @@
    enough to draw page outline: */
 @media (min-width: 542px) and (max-width : 691px) {
   #innerdocbody > div {
-    margin-left: 67px !important; /* left margin gets only enough to display scene number */
-    margin-right: calc(100% - 511px) !important;
+    padding-left: 67px; /* left margin gets only enough to display scene number */
+    padding-right: calc(100% - 511px);
   }
 }
 
@@ -109,13 +108,8 @@
   }
 
   #innerdocbody > div {
-    margin-left:117px !important; /* WARNING if you change this here, you need to change on fixSmallZooms.js too */
-    margin-right:78px !important; /* WARNING if you change this here, you need to change on fixSmallZooms.js too */
-  }
-
-  .pageBreakFullScreen{
-    width:100%;
-    height:1px;
+    padding-left: 117px; /* WARNING if you change this here, you need to change on fixSmallZooms.js too */
+    padding-right: 78px; /* WARNING if you change this here, you need to change on fixSmallZooms.js too */
   }
 
   .lineNumbersAndPageView{
