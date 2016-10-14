@@ -277,3 +277,4 @@ exports.registerPageBreakTag = function(tagName) {
 var getPageBreakTagsSelector = function() {
   return pageBreakTagsSelector;
 }
+exports.getPageBreakTagsSelector = getPageBreakTagsSelector;

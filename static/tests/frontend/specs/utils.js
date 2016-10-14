@@ -129,8 +129,9 @@ ep_script_page_view_test_helper.utils = {
   },
 
   cleanPad: function(callback) {
-    // make tests run faster, as the delay is only defined to improve usability
-    helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.paginationDelay = 1;
+    // make tests run faster, as the delay is only defined to improve usability.
+    // Cannot be too low, otherwise the orchestration of plugin event handlers will be messed up
+    helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.paginationDelay = 100;
 
     var inner$ = helper.padInner$;
     var $padContent = inner$("#innerdocbody");
