@@ -50,7 +50,7 @@ ep_script_page_view_test_helper.utils = {
   addActToLine: function(line, done) {
     var self = this;
     self.placeCaretInTheBeginningOfLine(line, function() {
-      ep_mouse_shortcuts_test_helper.utils.rightClick(function() {
+      ep_mouse_shortcuts_test_helper.utils.rightClickOnLine(line, function() {
         self.clickOnAddAct(done);
       });
     });
@@ -400,17 +400,15 @@ ep_script_page_view_test_helper.utils = {
 
     var utils = ep_script_page_view_test_helper.utils;
 
-    // wait for pagination to be finished
+    // wait for page break to be above targetElement
     helper.waitFor(function() {
       var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
-      return $elementsWithPageBreaksOnTop.length > 0;
+      var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
+      return $firstPageBreak.text().trim() === textAfterPageBreak.trim();
     }, 2000).done(function() {
-      // verify page break is above targetElement
+      // verify page number is correct
       var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
       var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
-      expect($firstPageBreak.text().trim()).to.be(textAfterPageBreak.trim());
-
-      // verify page number is correct
       var $lineWithPageBreak = utils.pageBreakOfLine($firstPageBreak).closest("div");
       var actualPageNumber = $lineWithPageBreak.find("pagenumber").attr("data-page-number");
       expect(actualPageNumber.toString()).to.be(expectedPageNumber.toString());

@@ -13,6 +13,7 @@ var paginationScrollPosition   = require('./paginationScrollPosition');
 var undoElementType            = require('./undoElementType');
 var calculatingPageNumberIcons = require('./calculatingPageNumberIcons');
 var paginationCalculation      = require('./paginationPageBreaksCalculation');
+var paginationLineObserver     = require('./paginationLineObserver');
 
 var isInTheMiddleOfASceneMarkVisibilityToggle = require("ep_script_scene_marks/static/js/sceneMarkVisibility").isInTheMiddleOfASceneMarkVisibilityToggle;
 
@@ -103,7 +104,7 @@ exports.aceDomLineProcessLineAttributes = function(hook, context) {
 exports.acePostWriteDomLineHTML = function(hook, context) {
   var $node = $(context.node);
 
-  markNodeAsChangedIfIsNotASceneMark($node);
+  paginationLineObserver.markNodeAsChangedIfIsNotASceneMark($node);
 
   var nodeHasSplitPageBreak    = paginationSplit.nodeHasPageBreak($node);
   var nodeHasNonSplitPageBreak = paginationNonSplit.nodeHasPageBreak($node);
@@ -122,12 +123,6 @@ exports.acePostWriteDomLineHTML = function(hook, context) {
     $node.addClass("withMoreAndContd");
   }
 }
-var markNodeAsChangedIfIsNotASceneMark = function($line) {
-  var lineIsASceneMark = sceneMarkUtils.checkIfHasSceneMark($line);
-  if (!lineIsASceneMark) {
-    paginationLinesChanged.markNodeAsChanged($line);
-  }
-}
 
 exports.aceEditEvent = function(hook, context) {
   // don't do anything if page break is disabled
@@ -142,6 +137,8 @@ exports.aceEditEvent = function(hook, context) {
     if (scriptHasNoPaginationYet()) {
       paginateWholePad(context);
     }
+
+    paginationLineObserver.init();
 
     // when pad is loaded, it marks all lines as changed, so we need to reset counter
     paginationLinesChanged.reset(context.rep);
@@ -162,7 +159,6 @@ exports.aceEditEvent = function(hook, context) {
     if (context.callstack.docTextChanged &&
         isEditedByMe(eventType) &&
         !isInTheMiddleOfASceneMarkVisibilityToggle(eventType)) {
-      markCurrentLineAsChangedIfNotASceneMark(context);
       resetTimerToRestartPagination(context);
     }
   }
@@ -194,15 +190,6 @@ var isAPaginationScheduledByMe = function(eventType) {
 
 var myPaginationEventType = function() {
   return "pagination-" + clientVars.userId;
-}
-
-var markCurrentLineAsChangedIfNotASceneMark = function(context) {
-  var currentLine = context.rep.selStart[0];
-  var currentLineIsASceneMark = sceneMarkUtils.lineNumberContainsSceneMark(currentLine);
-
-  if (!currentLineIsASceneMark) {
-    paginationLinesChanged.markLineAsChanged(currentLine);
-  }
 }
 
 var paginationTimer;
@@ -241,6 +228,11 @@ var paginateWholePad = function(context) {
 }
 
 var repaginate = function(context) {
+  paginationLineObserver.performIgnoringLineChanges(function() {
+    nextPaginationCycle(context);
+  });
+}
+var nextPaginationCycle = function(context) {
   var callstack        = context.callstack;
   var attributeManager = context.documentAttributeManager;
   var rep              = context.rep;
