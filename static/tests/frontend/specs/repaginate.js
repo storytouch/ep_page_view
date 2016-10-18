@@ -340,6 +340,85 @@ describe("ep_script_page_view - repaginate", function() {
     });
   });
 
+  context("when user starts a char composition", function() {
+    var originalIdOfLastLineWithPageBreak;
+
+    var getIdOfLineWithLastPageBreak = function() {
+      var $lineWithPageBreak = utils.linesAfterNonSplitPageBreaks().last().prev();
+      var currentIdOfLineWithLastPageBreak = $lineWithPageBreak.attr("id");
+
+      return currentIdOfLineWithLastPageBreak;
+    }
+
+    var startCharComposition = function() {
+      triggerCompositionEvent('compositionstart');
+    }
+    var endCharComposition = function() {
+      triggerCompositionEvent('compositionend');
+    }
+    var triggerCompositionEvent = function(eventName) {
+      helper.padInner$(helper.padInner$.document.documentElement).trigger(eventName);
+    }
+
+    beforeEach(function(done) {
+      this.timeout(4000);
+
+      var lastLineText = "last line";
+
+      // build script with several pages full of generals + a final general
+      var pageFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE);
+      var pages              = pageFullOfGenerals.repeat(7);
+      var lastGeneral        = utils.general(lastLineText);
+      var script             = pages + lastGeneral;
+
+      utils.createScriptWith(script, lastLineText, function() {
+        // wait for pagination to finish
+        helper.waitFor(function() {
+          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
+          return $linesWithPageBreaks.length > 0;
+        }, 2000).done(function() {
+          // store value for tests
+          originalIdOfLineWithLastPageBreak = getIdOfLineWithLastPageBreak();
+
+          // start char composition and force Etherpad to generate an edit event by inserting some chars
+          startCharComposition();
+          utils.getLine(0).sendkeys('some new text... ');
+
+          done();
+        });
+      });
+    });
+
+    it("does not repaginate any part of the script", function(done) {
+      this.timeout(2100);
+
+      helper.waitFor(function() {
+        // wait for pagination to re-run (should fail, i.e., not re-run)
+        return getIdOfLineWithLastPageBreak() !== originalIdOfLineWithLastPageBreak;
+      }, 2000).done(function() {
+        expect().fail(function() { return 'Pagination was re-run while on a char composition' });
+      }).fail(function() {
+        done();
+      });
+    });
+
+    context('then finishes the composition', function() {
+      beforeEach(function(done) {
+        endCharComposition();
+        done();
+      });
+
+      it("repaginates the script", function(done) {
+        this.timeout(2100);
+
+        helper.waitFor(function() {
+          // wait for pagination to re-run
+          return getIdOfLineWithLastPageBreak() !== originalIdOfLineWithLastPageBreak;
+        }, 2000).done(done);
+      });
+    });
+  });
+
   context("when line after a page break has top margin", function() {
     beforeEach(function(done) {
       this.timeout(4000);

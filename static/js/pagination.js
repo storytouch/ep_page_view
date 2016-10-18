@@ -228,9 +228,15 @@ var paginateWholePad = function(context) {
 }
 
 var repaginate = function(context) {
-  paginationLineObserver.performIgnoringLineChanges(function() {
-    nextPaginationCycle(context);
-  });
+  var isInTheMiddleOfACharComposition = context.editorInfo.ace_getInInternationalComposition();
+  if (isInTheMiddleOfACharComposition) {
+    // cannot paginate now, user is in the middle of an edition. Wait some more to repaginate
+    resetTimerToRestartPagination(context);
+  } else {
+    paginationLineObserver.performIgnoringLineChanges(function() {
+      nextPaginationCycle(context);
+    });
+  }
 }
 var nextPaginationCycle = function(context) {
   var callstack        = context.callstack;
