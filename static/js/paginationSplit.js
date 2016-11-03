@@ -31,6 +31,9 @@ utils.registerPageBreakTag(PAGE_BREAK_TAG);
 var FIRST_HALF_TAG                     = "split_first_half";
 var FIRST_HALF_WITH_MORE_AND_CONTD_TAG = "split_with_more_and_contd_first_half";
 var SECOND_HALF_TAG                    = "split_second_half";
+exports.SECOND_HALF_TAG = SECOND_HALF_TAG;
+
+var DO_NOT_COLLECT = 'ignore_pagination_attribs';
 
 var SENTENCE_MARKER_AND_WHITESPACE_REGEX = /^(.*[.?!;]\s+)[^.?!;]*$/;
 var WHITESPACE_REGEX                     = /^(.*\s+)[^\s]*$/;
@@ -369,8 +372,12 @@ var isSecondHalfOfSplit = function(cls) {
 // line attribute. So we need to collect it:
 exports.collectContentPre = function(hook, context) {
   var tname = context.tname;
+  var cls   = context.cls || '';
   var state = context.state;
   var lineAttributes = state.lineAttributes;
+
+  var shouldNotCollectThisTag = cls.indexOf(DO_NOT_COLLECT) !== -1;
+  if (shouldNotCollectThisTag) return;
 
   // new line
   if (tname === "div") {
@@ -394,6 +401,13 @@ exports.collectContentPre = function(hook, context) {
     var splitId = getSplitIdFromClass(context.cls);
     lineAttributes[SECOND_HALF_ATTRIB] = splitId;
   }
+}
+
+// Bug fix: when pasting lines with page breaks, we don't want the page breaks to be collected
+exports.dontCollectPageBreaksOfLines = function($lines) {
+  var tagsCollected = [FIRST_HALF_TAG, FIRST_HALF_WITH_MORE_AND_CONTD_TAG, SECOND_HALF_TAG];
+  var $tagsToNotBeCollected = $lines.find(tagsCollected.join(','));
+  $tagsToNotBeCollected.addClass(DO_NOT_COLLECT);
 }
 
 exports.buildHtmlWithPageBreaks = function(cls) {
@@ -586,7 +600,9 @@ exports.mergeHelperLines = function($helperLines) {
   return $helperLines.not($secondHalvesOfMergedLines);
 }
 
-var fullTextOfSplitLine = function($targetLine, $nextLine) {
+var linesAreHalvesOfSameSplit = function($targetLine, $nextLine) {
+  var halvesOfSameSplit = false;
+
   var lineIsFirstHalfOfSplit = $targetLine.find(PAGE_BREAK_TAG).length > 0;
   if (lineIsFirstHalfOfSplit) {
     var firstHalfClass  = $targetLine.find(FIRST_HALF_TAG + "," + FIRST_HALF_WITH_MORE_AND_CONTD_TAG).attr("class");
@@ -594,11 +610,16 @@ var fullTextOfSplitLine = function($targetLine, $nextLine) {
     var splitIdOfFirstHalf  = getSplitIdFromClass(firstHalfClass);
     var splitIdOfSecondHalf = getSplitIdFromClass(secondHalfClass);
 
-    var linesAreHalvesOfSameSplit = (splitIdOfFirstHalf === splitIdOfSecondHalf);
+    halvesOfSameSplit = (splitIdOfFirstHalf === splitIdOfSecondHalf);
+  }
 
-    if (linesAreHalvesOfSameSplit) {
-      // if line is 1st half of split line, join it with next line
-      return $targetLine.text() + $nextLine.text();
-    }
+  return halvesOfSameSplit;
+}
+exports.linesAreHalvesOfSameSplit = linesAreHalvesOfSameSplit;
+
+var fullTextOfSplitLine = function($targetLine, $nextLine) {
+  if (linesAreHalvesOfSameSplit($targetLine, $nextLine)) {
+    // if line is 1st half of split line, join it with next line
+    return $targetLine.text() + $nextLine.text();
   }
 }
