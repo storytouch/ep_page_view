@@ -148,4 +148,9 @@
   div.lastPaginated ~ div calculating:before {
     content: "\e80e";
   }
+
+  /* prevent the last line from sticking on the bottom of the viewport*/
+  #innerdocbody div:last-of-type {
+    margin-bottom: 40px;
+  }
 }
