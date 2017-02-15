@@ -149,8 +149,9 @@
     content: "\e80e";
   }
 
-  /* prevent the last line from sticking on the bottom of the viewport*/
-  #innerdocbody div:last-of-type {
+  /* Prevent the last line from sticking on the bottom of the viewport.
+     Useful for a smooth scrolling when editing last line. */
+  #innerdocbody > div:last-of-type {
     margin-bottom: 40px;
   }
 }
