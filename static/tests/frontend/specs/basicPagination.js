@@ -85,7 +85,7 @@ describe("ep_script_page_view - pagination basic tests", function() {
         pageBreak.checkIfItFitsXLinesPerPage(done);
       });
 
-      context('and act and sequence are visible', function() {
+      context('and scene marks are visible', function() {
         before(function() {
           // click on SM icon to open them
           helper.padInner$('sm_icon').first().click();
@@ -95,18 +95,20 @@ describe("ep_script_page_view - pagination basic tests", function() {
           helper.padInner$('sm_icon').first().click();
         });
 
-        it("fits " + HEADINGS_PER_PAGE + " lines in a page", function(done) {
-          // wait until all SMs are visible before start testing
+        it('still fits ' + HEADINGS_PER_PAGE + ' lines in a page', function(done) {
+          // wait until SMs are visible before start testing
           helper.waitFor(function() {
-            var allSMsAreVisible = helper.padInner$('div.hidden').length === 0;
-            return allSMsAreVisible;
+            var sceneMarksAreVisible = helper.padInner$('div.sceneMark:not(.hidden)').length > 0;
+            return sceneMarksAreVisible;
           }).done(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            var $firstPageBreak = $linesWithPageBreaks.first();
-            var $secondPageBreak = $linesWithPageBreaks.last();
 
-            expect($firstPageBreak.text()).to.be("2nd page");
-            expect($secondPageBreak.text()).to.be("1st of 3rd page");
+            // $linesWithPageBreaks are all synopsis, need to get first heading after them
+            var $firstLineOfSecondPage = pageBreak.getScriptElementAfterSceneMarkLine($linesWithPageBreaks.first());
+            var $firstLineOfThirdPage = pageBreak.getScriptElementAfterSceneMarkLine($linesWithPageBreaks.last());
+
+            expect($firstLineOfSecondPage.text()).to.be('2nd page');
+            expect($firstLineOfThirdPage.text()).to.be('1st of 3rd page');
 
             done();
           });
@@ -144,7 +146,9 @@ describe("ep_script_page_view - pagination basic tests", function() {
             return $linesWithPageBreaks.length === 2;
           }).done(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            var $firstLineOfThirdPage = $linesWithPageBreaks.last();
+            // $linesWithPageBreaks are all synopsis, need to get first heading after them
+            var $firstLineOfThirdPage = pageBreak.getScriptElementAfterSceneMarkLine($linesWithPageBreaks.last());
+
             expect(utils.cleanText($firstLineOfThirdPage.text())).to.be(veryLongLineText);
 
             done();
@@ -236,10 +240,22 @@ describe("ep_script_page_view - pagination basic tests", function() {
 var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
 ep_script_page_view_test_helper.pageBreak = {
   createScript: function(builder, done) {
+    var self = this;
     var utils = ep_script_page_view_test_helper.utils;
+
     utils.cleanPad(function() {
-      utils.createScriptWith(builder('1st page'), '1st page', done);
+      utils.createScriptWith(builder('1st page'), '1st page', function() {
+        self.waitForLinesToBeProcessed(done);
+      });
     });
+  },
+
+  // new lines with EASC types are processed in two steps. Need to wait for that to finish
+  waitForLinesToBeProcessed: function(done) {
+    helper.waitFor(function() {
+      var hasTempClasses = helper.padInner$('.line_to_be_formatted').length > 0;
+      return !hasTempClasses;
+    }).done(done);
   },
 
   scriptWithPageFullOfGenerals: function(text) {
@@ -290,6 +306,7 @@ ep_script_page_view_test_helper.pageBreak = {
       return $linesWithPageBreaks.length === 2;
     }, 3000).done(done);
   },
+
   checkIfItFitsXLinesPerPage: function(done) {
     var utils = ep_script_page_view_test_helper.utils;
 
@@ -297,18 +314,29 @@ ep_script_page_view_test_helper.pageBreak = {
     var $firstPageBreak = $linesWithPageBreaks.first();
     var $secondPageBreak = $linesWithPageBreaks.last();
 
-    expect($firstPageBreak.prev().text()).to.be("1st page");
-    expect($firstPageBreak.text()).to.be("2nd page");
+    // ignore SMs on top of pages
+    var $firstLineOfSecondPage = $firstPageBreak.is('.sceneMark') ? this.getScriptElementAfterSceneMarkLine($firstPageBreak) : $firstPageBreak;
+    var $firstLineOfThirdPage = $secondPageBreak.is('.sceneMark') ? this.getScriptElementAfterSceneMarkLine($secondPageBreak) : $secondPageBreak;
+    var $lastLineOfFirstPage = $firstPageBreak.prev();
+    var $lastLineOfSecondPage = $secondPageBreak.prev();
 
-    expect($secondPageBreak.prev().text()).to.be("2nd page");
-    expect($secondPageBreak.text()).to.be("1st of 3rd page");
+    expect($lastLineOfFirstPage.text()).to.be('1st page');
+    expect($firstLineOfSecondPage.text()).to.be('2nd page');
+
+    expect($lastLineOfSecondPage.text()).to.be('2nd page');
+    expect($firstLineOfThirdPage.text()).to.be('1st of 3rd page');
 
     done();
   },
+
+  getScriptElementAfterSceneMarkLine: function($sceneMark) {
+    return $sceneMark.nextUntil(':not(.sceneMark)').addBack().last().next();
+  },
+
   testItFitsXLinesPerPage: function(elementBuilder, pageBuilder, test, done) {
     var self = this;
     self.prepareScriptToTestIfItFitsXLinesPerPage(elementBuilder, pageBuilder, test, function() {
       self.checkIfItFitsXLinesPerPage(done);
     });
-  }
+  },
 }
