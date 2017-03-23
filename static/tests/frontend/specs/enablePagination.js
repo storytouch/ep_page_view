@@ -5,19 +5,6 @@ describe('ep_script_page_view - Enable / Disable automatic pagination', function
 
   var utils;
 
-  var clickOnSettingIfNeeded = function(shouldEnable) {
-    var $paginationSetting = helper.padChrome$('#options-pagination');
-    if($paginationSetting.prop("checked") !== shouldEnable) {
-      $paginationSetting.click();
-    }
-  }
-  var enablePagination = function() {
-    clickOnSettingIfNeeded(SHOULD_HAVE_PAGE_BREAK);
-  }
-  var disablePagination = function() {
-    clickOnSettingIfNeeded(SHOULD_NOT_HAVE_PAGE_BREAK);
-  }
-
   var waitForPageBreaksChange = function(shouldHavePageBreak, done) {
     helper.waitFor(function() {
       var scriptHasPageBreaks = utils.linesAfterNonSplitPageBreaks().length > 0;
@@ -47,29 +34,29 @@ describe('ep_script_page_view - Enable / Disable automatic pagination', function
   after(function() {
     // make sure we always leave this test with paginations enabled, to avoid failing tests on
     // other suites
-    enablePagination();
+    utils.enablePagination();
   });
 
   context('when pagination is already enabled and script has page breaks', function() {
     before(function(done) {
-      enablePagination();
+      utils.enablePagination();
       makeSurePageBreaksWereAdded(done);
     });
 
     it('removes all page breaks when user disables pagination', function(done) {
-      disablePagination();
+      utils.disablePagination();
       makeSurePageBreaksWereRemoved(done);
     });
   });
 
   context('when pagination is already disabled and script has no page breaks', function() {
     before(function(done) {
-      disablePagination();
+      utils.disablePagination();
       makeSurePageBreaksWereRemoved(done);
     });
 
     it('creates page breaks when user enables pagination', function(done) {
-      enablePagination();
+      utils.enablePagination();
       makeSurePageBreaksWereAdded(done);
     });
   });

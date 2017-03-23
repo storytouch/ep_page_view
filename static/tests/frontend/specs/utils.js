@@ -288,6 +288,19 @@ ep_script_page_view_test_helper.utils = {
     utils.pressKey(utils.DELETE);
   },
 
+  _clickOnSettingIfNeeded: function(shouldEnable) {
+    var $paginationSetting = helper.padChrome$('#options-pagination');
+    if ($paginationSetting.prop('checked') !== shouldEnable) {
+      $paginationSetting.click();
+    }
+  },
+  enablePagination: function() {
+    this._clickOnSettingIfNeeded(true);
+  },
+  disablePagination: function() {
+    this._clickOnSettingIfNeeded(false);
+  },
+
   moveViewportToLine: function(lineNumber) {
     var utils = ep_script_page_view_test_helper.utils;
     var outer$ = helper.padOuter$;
