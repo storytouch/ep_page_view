@@ -8,6 +8,10 @@ ep_script_page_view_test_helper.utils = {
     return "<sequence_name>" + name + "</sequence_name><br/>" +
            "<sequence_summary>" + summary + "</sequence_summary><br/>";
   },
+  synopsis: function(name, summary) {
+    return "<scene_name>" + name + "</scene_name><br/>" +
+           "<scene_summary>" + summary + "</scene_summary><br/>";
+  },
   heading: function(text) {
     return "<heading>" + text + "</heading><br/>";
   },
@@ -85,22 +89,6 @@ ep_script_page_view_test_helper.utils = {
     'dialogue'      : { val : '4' },
     'transition'    : { val : '5' },
     'shot'          : { val : '6' }
-  },
-  changeToElement: function(tag, callback, lineNum){
-    lineNum = lineNum || 0;
-    var chrome$ = helper.padChrome$;
-    var inner$ = helper.padInner$;
-    var targetElement = ep_script_page_view_test_helper.utils.TARGET_ELEMENT[tag];
-
-    chrome$('#script_element-selection').val(targetElement.val);
-    chrome$('#script_element-selection').change();
-
-    helper.waitFor(function() {
-      var $textElement = ep_script_page_view_test_helper.utils.getLine(lineNum);
-      return tag === 'general' || $textElement.find(tag).length > 0;
-    }
-    // this helper.waitFor needs a little more time to finish, so we give it 2s
-    , 2000).done(callback);
   },
 
   enableLineNumbers: function(callback) {
@@ -383,6 +371,13 @@ ep_script_page_view_test_helper.utils = {
     return $lineWithPageBreak.find("nonSplitPageBreak, splitPageBreak").first();
   },
 
+  getFirstScriptElementOfPageStartingAt: function($lineOnTopOfPage) {
+    var $lastLineOfPreviousPage = $lineOnTopOfPage.prev();
+    var $sceneMarksAndPreviousLine = $lastLineOfPreviousPage.nextUntil(':not(.sceneMark)').addBack();
+    var $lastLineOnBlockOfSceneMarks = $sceneMarksAndPreviousLine.last();
+    return $lastLineOnBlockOfSceneMarks.next();
+  },
+
   testSplitPageBreakIsOn: function(textAfterPageBreak, done, expectedPageNumber) {
     expectedPageNumber = expectedPageNumber || 2;
 
@@ -408,16 +403,16 @@ ep_script_page_view_test_helper.utils = {
     });
   },
 
-  testNonSplitPageBreakIsOn: function(textAfterPageBreak, done, expectedPageNumber) {
+  testNonSplitPageBreakIsOnScriptElementWithText: function(textAfterPageBreak, done, expectedPageNumber) {
     expectedPageNumber = expectedPageNumber || 2;
 
     var utils = ep_script_page_view_test_helper.utils;
 
     // wait for page break to be above targetElement
     helper.waitFor(function() {
-      var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
-      var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
-      return $firstPageBreak.text().trim() === textAfterPageBreak.trim();
+      var $lineAfterFirstPageBreak = utils.linesAfterNonSplitPageBreaks().first();
+      var $firstScriptElementAfterPageBreak = utils.getFirstScriptElementOfPageStartingAt($lineAfterFirstPageBreak);
+      return $firstScriptElementAfterPageBreak.text().trim() === textAfterPageBreak.trim();
     }, 2000).done(function() {
       // verify page number is correct
       var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
@@ -518,18 +513,22 @@ ep_script_page_view_test_helper.utils = {
     var $lineAfterPageBreak = this.linesAfterNonSplitPageBreaks().first();
 
     // check if first 5 lines after page break are the heading and its act/seq
-    var line0IsActName    = $lineAfterPageBreak.find('act_name').length > 0;
-    var line1IsActSummary = $lineAfterPageBreak.next().find('act_summary').length > 0;
-    var line2IsSeqName    = $lineAfterPageBreak.next().next().find('sequence_name').length > 0;
-    var line3IsSeqSummary = $lineAfterPageBreak.next().next().next().find('sequence_summary').length > 0;
-    var line4IsHeading    = $lineAfterPageBreak.next().next().next().next().find('heading').length > 0;
+    var line0IsActName      = $lineAfterPageBreak.find('act_name').length > 0;
+    var line1IsActSummary   = $lineAfterPageBreak.next().find('act_summary').length > 0;
+    var line2IsSeqName      = $lineAfterPageBreak.next().next().find('sequence_name').length > 0;
+    var line3IsSeqSummary   = $lineAfterPageBreak.next().next().next().find('sequence_summary').length > 0;
+    var line4IsSceneName    = $lineAfterPageBreak.next().next().next().next().find('scene_name').length > 0;
+    var line5IsSceneSummary = $lineAfterPageBreak.next().next().next().next().next().find('scene_summary').length > 0;
+    var line6IsHeading      = $lineAfterPageBreak.next().next().next().next().next().next().find('heading').length > 0;
 
     // use if + fail() for a clearer failure message when test does not pass
-    if (!line0IsActName)    expect().fail(function() { return 'line 0 after page break is not act name' });
-    if (!line1IsActSummary) expect().fail(function() { return 'line 1 after page break is not act summary' });
-    if (!line2IsSeqName)    expect().fail(function() { return 'line 2 after page break is not sequence name' });
-    if (!line3IsSeqSummary) expect().fail(function() { return 'line 3 after page break is not sequence summary' });
-    if (!line4IsHeading)    expect().fail(function() { return 'line 4 after page break is not heading' });
+    if (!line0IsActName)      expect().fail(function() { return 'line 0 after page break is not act name' });
+    if (!line1IsActSummary)   expect().fail(function() { return 'line 1 after page break is not act summary' });
+    if (!line2IsSeqName)      expect().fail(function() { return 'line 2 after page break is not sequence name' });
+    if (!line3IsSeqSummary)   expect().fail(function() { return 'line 3 after page break is not sequence summary' });
+    if (!line4IsSceneName)    expect().fail(function() { return 'line 4 after page break is not scene name' });
+    if (!line5IsSceneSummary) expect().fail(function() { return 'line 5 after page break is not scene summary' });
+    if (!line6IsHeading)      expect().fail(function() { return 'line 6 after page break is not heading' });
 
     done();
   },

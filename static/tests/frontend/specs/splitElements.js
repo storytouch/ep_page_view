@@ -258,7 +258,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
       it("moves the entire general for next page", function(done) {
         var wholeElement = targetElementText;
-        utils.testNonSplitPageBreakIsOn(wholeElement, done);
+        utils.testNonSplitPageBreakIsOnScriptElementWithText(wholeElement, done);
       });
     });
 
@@ -368,7 +368,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
             utils.testSplitPageBreakIsOn(sentence2, function() {
               // 2: verify second page break was added on top of last line
               var pageNumber = 3;
-              utils.testNonSplitPageBreakIsOn(targetElementText, done, pageNumber);
+              utils.testNonSplitPageBreakIsOnScriptElementWithText(targetElementText, done, pageNumber);
             });
           });
         });
@@ -908,7 +908,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
       it("moves the entire action for next page", function(done) {
         var wholeElement = targetElementText;
-        utils.testNonSplitPageBreakIsOn(wholeElement, done);
+        utils.testNonSplitPageBreakIsOnScriptElementWithText(wholeElement, done);
       });
     });
 
@@ -988,7 +988,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
         it("moves the entire action for next page", function(done) {
           var wholeElement = targetElementText;
-          utils.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOnScriptElementWithText(wholeElement, done);
         });
       });
 
@@ -1003,7 +1003,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
         it("moves the entire action for next page", function(done) {
           var wholeElement = targetElementText;
-          utils.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOnScriptElementWithText(wholeElement, done);
         });
       });
     });
@@ -1057,7 +1057,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
       it("moves the entire action for next page", function(done) {
         var wholeElement = targetElementText;
-        utils.testNonSplitPageBreakIsOn(wholeElement, done);
+        utils.testNonSplitPageBreakIsOnScriptElementWithText(wholeElement, done);
       });
     });
 
@@ -1093,6 +1093,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
       beforeEach(function(done) {
         this.timeout(6000);
 
+        var smUtils = ep_script_scene_marks_test_helper.utils;
         var inner$ = helper.padInner$;
 
         var line1 = utils.buildStringWithLength(59, "W") + ". ";
@@ -1111,17 +1112,15 @@ describe("ep_script_page_view - pagination of split elements", function() {
         $lastLineOfSecondPage.sendkeys(veryLongLine);
 
         // change both lines to action
-        utils.changeToElement(utils.ACTION, function() {
-          var $lastLineOfFirstPage = utils.getLine(LAST_LINE_OF_PAGE_1);
-          $lastLineOfFirstPage.sendkeys("{selectall}");
-          utils.changeToElement(utils.ACTION, function() {
+        smUtils.changeLineToElement(utils.ACTION, LAST_LINE_OF_PAGE_2, function() {
+          smUtils.changeLineToElement(utils.ACTION, LAST_LINE_OF_PAGE_1, function() {
             // there should be 3 page breaks now
             helper.waitFor(function() {
               var $splitElementsWithPageBreaks = inner$("div splitPageBreak");
               return $splitElementsWithPageBreaks.length === 3;
             }, 2000).done(done);
-          }, LAST_LINE_OF_PAGE_1);
-        }, LAST_LINE_OF_PAGE_2);
+          });
+        });
       });
 
       context("and user adds text before any split line", function() {
@@ -1325,7 +1324,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
         it("moves the entire transition for next page", function(done) {
           var wholeElement = targetElementText;
-          utils.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOnScriptElementWithText(wholeElement, done);
         });
       });
     });
@@ -1450,7 +1449,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
         it("considers the height of the resulting second half of the transition split", function(done) {
           var firstLineOnPage3 = targetElementText;
           var pageNumber = 3;
-          utils.testNonSplitPageBreakIsOn(firstLineOnPage3, done, 3);
+          utils.testNonSplitPageBreakIsOnScriptElementWithText(firstLineOnPage3, done, 3);
         });
       });
 
@@ -1552,7 +1551,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
         });
 
         it("moves the entire dialogue and character for next page", function(done) {
-          utils.testNonSplitPageBreakIsOn(characterName, done);
+          utils.testNonSplitPageBreakIsOnScriptElementWithText(characterName, done);
         });
       });
 
@@ -1567,7 +1566,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
         it("moves the entire dialogue for next page", function(done) {
           var wholeElement = targetElementText;
-          utils.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOnScriptElementWithText(wholeElement, done);
         });
       });
     });
@@ -1653,7 +1652,9 @@ describe("ep_script_page_view - pagination of split elements", function() {
         });
       });
 
-      context("and there is a very long character before dialogue", function() {
+      // FIXME Line numbers are not aligned to correspondent text line
+      // https://trello.com/c/hdZGr9EA/684
+      context.skip("and there is a very long character before dialogue", function() {
         before(function() {
           linesBeforeTargetElement = GENERALS_PER_PAGE - 4;
           var character = utils.character("VERY LOOOOOOOOOOOOOONG CHARACTER NAME");
@@ -1731,7 +1732,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
           });
 
           it("moves the entire dialogue and character for next page", function(done) {
-            utils.testNonSplitPageBreakIsOn(characterName, done);
+            utils.testNonSplitPageBreakIsOnScriptElementWithText(characterName, done);
           });
         });
       });
@@ -1781,7 +1782,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
         });
 
         it("moves the entire parenthetical and character for next page", function(done) {
-          utils.testNonSplitPageBreakIsOn(characterName, done);
+          utils.testNonSplitPageBreakIsOnScriptElementWithText(characterName, done);
         });
       });
 
@@ -1796,7 +1797,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
         it("moves the entire parenthetical for next page", function(done) {
           var wholeElement = targetElementText;
-          utils.testNonSplitPageBreakIsOn(wholeElement, done);
+          utils.testNonSplitPageBreakIsOnScriptElementWithText(wholeElement, done);
         });
       });
     });
@@ -1901,7 +1902,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
           });
 
           it("moves the entire parenthetical and character for next page", function(done) {
-            utils.testNonSplitPageBreakIsOn(characterName, done);
+            utils.testNonSplitPageBreakIsOnScriptElementWithText(characterName, done);
           });
         });
       });
@@ -1924,7 +1925,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
     it("does not split heading into two parts, one on each page", function(done) {
       var fullElementText = targetElementText;
-      utils.testNonSplitPageBreakIsOn(fullElementText, done);
+      utils.testNonSplitPageBreakIsOnScriptElementWithText(fullElementText, done);
     });
   });
 
@@ -1941,7 +1942,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
     it("does not split shot into two parts, one on each page", function(done) {
       var fullElementText = targetElementText;
-      utils.testNonSplitPageBreakIsOn(fullElementText, done);
+      utils.testNonSplitPageBreakIsOnScriptElementWithText(fullElementText, done);
     });
   });
 
@@ -1958,7 +1959,7 @@ describe("ep_script_page_view - pagination of split elements", function() {
 
     it("does not split character into two parts, one on each page", function(done) {
       var fullElementText = targetElementText;
-      utils.testNonSplitPageBreakIsOn(fullElementText, done);
+      utils.testNonSplitPageBreakIsOnScriptElementWithText(fullElementText, done);
     });
   });
 });

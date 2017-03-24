@@ -47,12 +47,10 @@ describe("ep_script_page_view - pagination basic tests", function() {
 
     context("and one of the lines has its type changed", function() {
       it("updates pagination", function(done) {
-        var inner$ = helper.padInner$;
+        var smUtils = ep_script_scene_marks_test_helper.utils;
 
         // change second line to action, so all lines will be shifted down one position
-        var $secondLine = inner$("div").first().next();
-        $secondLine.sendkeys("{selectall}");
-        utils.changeToElement(utils.ACTION, function() {
+        smUtils.changeLineToElement(utils.ACTION, 1, function() {
           // wait for pagination to be completed
           helper.waitFor(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
@@ -64,7 +62,7 @@ describe("ep_script_page_view - pagination basic tests", function() {
                    ($secondPageBreak.text() === "2nd page") &&
                    ($lineAfterSecondPageBreak.text() === "1st of 3rd page");
           }, 3000).done(done);
-        }, 1);
+        });
       });
     });
   });
@@ -104,8 +102,8 @@ describe("ep_script_page_view - pagination basic tests", function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
 
             // $linesWithPageBreaks are all synopsis, need to get first heading after them
-            var $firstLineOfSecondPage = pageBreak.getScriptElementAfterSceneMarkLine($linesWithPageBreaks.first());
-            var $firstLineOfThirdPage = pageBreak.getScriptElementAfterSceneMarkLine($linesWithPageBreaks.last());
+            var $firstLineOfSecondPage = utils.getFirstScriptElementOfPageStartingAt($linesWithPageBreaks.first());
+            var $firstLineOfThirdPage = utils.getFirstScriptElementOfPageStartingAt($linesWithPageBreaks.last());
 
             expect($firstLineOfSecondPage.text()).to.be('2nd page');
             expect($firstLineOfThirdPage.text()).to.be('1st of 3rd page');
@@ -147,7 +145,7 @@ describe("ep_script_page_view - pagination basic tests", function() {
           }).done(function() {
             var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
             // $linesWithPageBreaks are all synopsis, need to get first heading after them
-            var $firstLineOfThirdPage = pageBreak.getScriptElementAfterSceneMarkLine($linesWithPageBreaks.last());
+            var $firstLineOfThirdPage = utils.getFirstScriptElementOfPageStartingAt($linesWithPageBreaks.last());
 
             expect(utils.cleanText($firstLineOfThirdPage.text())).to.be(veryLongLineText);
 
@@ -315,22 +313,19 @@ ep_script_page_view_test_helper.pageBreak = {
     var $secondPageBreak = $linesWithPageBreaks.last();
 
     // ignore SMs on top of pages
-    var $firstLineOfSecondPage = $firstPageBreak.is('.sceneMark') ? this.getScriptElementAfterSceneMarkLine($firstPageBreak) : $firstPageBreak;
-    var $firstLineOfThirdPage = $secondPageBreak.is('.sceneMark') ? this.getScriptElementAfterSceneMarkLine($secondPageBreak) : $secondPageBreak;
-    var $lastLineOfFirstPage = $firstPageBreak.prev();
-    var $lastLineOfSecondPage = $secondPageBreak.prev();
+    var $firstScriptElementOfSecondPage = utils.getFirstScriptElementOfPageStartingAt($firstPageBreak);
+    var $firstScriptElementOfThirdPage  = utils.getFirstScriptElementOfPageStartingAt($secondPageBreak);
 
-    expect($lastLineOfFirstPage.text()).to.be('1st page');
-    expect($firstLineOfSecondPage.text()).to.be('2nd page');
+    var $lastScriptElementOfFirstPage   = $firstPageBreak.prev();
+    var $lastScriptElementOfSecondPage  = $secondPageBreak.prev();
 
-    expect($lastLineOfSecondPage.text()).to.be('2nd page');
-    expect($firstLineOfThirdPage.text()).to.be('1st of 3rd page');
+    expect($lastScriptElementOfFirstPage.text()).to.be('1st page');
+    expect($firstScriptElementOfSecondPage.text()).to.be('2nd page');
+
+    expect($lastScriptElementOfSecondPage.text()).to.be('2nd page');
+    expect($firstScriptElementOfThirdPage.text()).to.be('1st of 3rd page');
 
     done();
-  },
-
-  getScriptElementAfterSceneMarkLine: function($sceneMark) {
-    return $sceneMark.nextUntil(':not(.sceneMark)').addBack().last().next();
   },
 
   testItFitsXLinesPerPage: function(elementBuilder, pageBuilder, test, done) {

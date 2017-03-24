@@ -1,8 +1,9 @@
 describe("ep_script_page_view - repaginate", function() {
-  var utils;
+  var utils, smUtils;
 
   before(function(){
     utils = ep_script_page_view_test_helper.utils;
+    smUtils = ep_script_scene_marks_test_helper.utils;
   });
 
   beforeEach(function(done){
@@ -19,7 +20,7 @@ describe("ep_script_page_view - repaginate", function() {
       var lastLineText = "general";
 
       // build script full of generals and with one line on second page
-      var script = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE+1);
+      var script = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE + 1);
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
         helper.waitFor(function() {
@@ -69,7 +70,7 @@ describe("ep_script_page_view - repaginate", function() {
       var lastLineText = "last general";
 
       // build script full of generals + a very long general (split between pages) + another general
-      var pageFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE-1);
+      var pageFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE - 1);
       var splitGeneral       = utils.general(firstHalfOfSplit + textToBeRemoved + secondHalfOfSplit);
       var lastGeneral        = utils.general(lastLineText);
       var script             = pageFullOfGenerals + splitGeneral + lastGeneral;
@@ -124,7 +125,7 @@ describe("ep_script_page_view - repaginate", function() {
       // build script with a general to be removed + page full of generals +
       // a very long general (to be split between pages) + another general
       var lineToBeRemoved             = utils.general("remove me");
-      var pageFullOfGenerals          = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE-1);
+      var pageFullOfGenerals          = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE - 1);
       var lineToBeAtBottomOfFirstPage = utils.general(firstHalfOfSplit + secondHalfOfSplit);
       var lastGeneral                 = utils.general(lastLineText);
 
@@ -179,7 +180,7 @@ describe("ep_script_page_view - repaginate", function() {
       var seq                = utils.sequence('first sequence', 'summary of sequence');
       var firstHeading       = utils.heading('first heading');
       // to make tests easier, replace the first general by a heading with act+seq, so the next
-      // heading doesn't need to have any scene mark without any scene mark
+      // heading doesn't need to have any scene mark
       var pageFullOfGenerals = utils.buildScriptWithGenerals("general", numberOfGeneralsBeforeHeading - 1);
       var heading            = utils.heading("heading");
       var character          = utils.character("character");
@@ -203,7 +204,7 @@ describe("ep_script_page_view - repaginate", function() {
 
     context("and new line type builds a block of lines", function() {
       before(function() {
-        numberOfGeneralsBeforeHeading = GENERALS_PER_PAGE-5;
+        numberOfGeneralsBeforeHeading = GENERALS_PER_PAGE - 5;
         buildLineToBeChanged = function(text) {
           return utils.general(text);
         };
@@ -212,20 +213,22 @@ describe("ep_script_page_view - repaginate", function() {
       it("repaginates pad from 3 lines above changed line", function(done) {
         this.timeout(4000);
 
-        var inner$ = helper.padInner$;
+        // +7: act + seq + synopsis + 1st heading
+        // +4: synopsis + heading + character
+        // -1: lines are zero-based
+        var lineNumberToBeChanged = 7 + numberOfGeneralsBeforeHeading + 4 - 1;
 
         // change line on top of second page to build a block (heading => character => dialogue) and
         // push last two lines from first page to second page
-        var $firstLineOfSecondPage = inner$("div").prev().last();
-        $firstLineOfSecondPage.sendkeys("{selectall}");
-        utils.changeToElement(utils.DIALOGUE, function() {
+        smUtils.changeLineToElement(utils.DIALOGUE, lineNumberToBeChanged, function() {
           // wait for pagination to be re-run
           helper.waitFor(function() {
             // now we have a heading on top of second page
-            var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks();
-            return $firstLineOfSecondPage.first().text() === "heading";
+            var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().first();
+            var $firstScriptElementOfSecondPage = utils.getFirstScriptElementOfPageStartingAt($firstLineOfSecondPage);
+            return $firstScriptElementOfSecondPage.text() === "heading";
           }, 2000).done(done);
-        }, GENERALS_PER_PAGE+1);
+        });
       });
     });
 
@@ -233,7 +236,7 @@ describe("ep_script_page_view - repaginate", function() {
       var textOfChangedLine;
 
       before(function() {
-        numberOfGeneralsBeforeHeading = GENERALS_PER_PAGE-5;
+        numberOfGeneralsBeforeHeading = GENERALS_PER_PAGE - 5;
         buildLineToBeChanged = function(text) {
           textOfChangedLine = text;
           return utils.dialogue(text);
@@ -243,20 +246,19 @@ describe("ep_script_page_view - repaginate", function() {
       it("repaginates pad from 3 lines above changed line", function(done) {
         this.timeout(4000);
 
-        var inner$ = helper.padInner$;
+        var lineNumberToBeChanged = 7 + numberOfGeneralsBeforeHeading + 4 - 1;
 
         // change line on bottom of block (heading => character => dialogue) to destroy the block and
         // pull first two lines from second page to first page
-        var $lastLineOfBlock = inner$("div").prev().last();
-        $lastLineOfBlock.sendkeys("{selectall}");
-        utils.changeToElement(utils.GENERAL, function() {
+        smUtils.changeLineToElement(utils.GENERAL, lineNumberToBeChanged, function() {
           // wait for pagination to be re-run
           helper.waitFor(function() {
             // now we have the changed line on top of second page
             var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().first();
-            return $firstLineOfSecondPage.text() === textOfChangedLine;
+            var $firstScriptElementOfSecondPage = utils.getFirstScriptElementOfPageStartingAt($firstLineOfSecondPage);
+            return $firstScriptElementOfSecondPage.text() === textOfChangedLine;
           }, 2000).done(done);
-        }, GENERALS_PER_PAGE+1);
+        });
       });
     });
 
@@ -264,7 +266,7 @@ describe("ep_script_page_view - repaginate", function() {
       var originalIdOfFirstLineWithPageBreak, originalIdOfLastLineWithPageBreak;
 
       before(function() {
-        numberOfGeneralsBeforeHeading = GENERALS_PER_PAGE+1;
+        numberOfGeneralsBeforeHeading = GENERALS_PER_PAGE + 1;
         buildLineToBeChanged = function(text) {
           return utils.dialogue(text);
         };
@@ -276,7 +278,7 @@ describe("ep_script_page_view - repaginate", function() {
         var inner$ = helper.padInner$;
 
         var lastLineText = "last general";
-        var changedLine = GENERALS_PER_PAGE+7;
+        var changedLine = GENERALS_PER_PAGE + 11;
 
         // we need another page break for this scenario, so add another page full of generals
         var pageFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE);
@@ -297,9 +299,7 @@ describe("ep_script_page_view - repaginate", function() {
           originalIdOfLastLineWithPageBreak  = $linesWithPageBreaks.last().attr("id");
 
           // change line on bottom of block (heading => character => dialogue) to destroy the block
-          var $lastLineOfBlock = inner$("div:has(dialogue)").first();
-          $lastLineOfBlock.sendkeys("{selectall}");
-          utils.changeToElement(utils.GENERAL, function() {
+          smUtils.changeLineToElement(utils.GENERAL, changedLine, function() {
             // wait for pagination to be re-run before start testing
             helper.waitFor(function() {
               // id of line with last page break should be different
@@ -309,7 +309,7 @@ describe("ep_script_page_view - repaginate", function() {
 
               return ($linesAfterPageBreaks.length === 2) && (newIdOfLastLineWithPageBreak !== originalIdOfLastLineWithPageBreak);
             }, 2000).done(done);
-          }, changedLine);
+          });
         });
       });
 
@@ -432,7 +432,7 @@ describe("ep_script_page_view - repaginate", function() {
       var firstHeading       = utils.heading('first heading');
       // to make tests easier, replace the first general by a heading with act+seq, so the next
       // heading doesn't need to have any scene mark without any scene mark
-      var pageAlmostFullOfGenerals = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE-3);
+      var pageAlmostFullOfGenerals = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE - 3);
       var heading = utils.heading("heading");
       var pageFullOfGenerals = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE);
       var script = act + seq + firstHeading + pageAlmostFullOfGenerals + heading + pageFullOfGenerals;
@@ -464,8 +464,8 @@ describe("ep_script_page_view - repaginate", function() {
         // although there are 2 empty lines on 1st page, the heading itself needs 3 lines
         // (1 for text and 2 for top margin), so it should still be on top of 2nd page
         var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().first();
-
-        expect($firstLineOfSecondPage.text()).to.be("heading");
+        var $firstScriptElementOfSecondPage = utils.getFirstScriptElementOfPageStartingAt($firstLineOfSecondPage);
+        expect($firstScriptElementOfSecondPage.text()).to.be("heading");
 
         done();
       });
@@ -624,13 +624,13 @@ describe("ep_script_page_view - repaginate", function() {
       // one last general (to be moved to top of 3rd page)
 
       // leave room for heading + top margin + a general (so heading is not moved down as a top of block)
-      var firstPageFullOfGenerals  = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-4);
+      var firstPageFullOfGenerals  = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE - 4);
       var act                      = utils.act('first act', 'summary of act');
       var seq                      = utils.sequence('first sequence', 'summary of sequence');
       var firstHeading             = utils.heading('first heading');
       var lineToBeOnTopOf3rdPage   = utils.general(TEXT_OF_LAST_LINE);
       // leave room for future moving of heading (without top margin)
-      var secondPageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-1);
+      var secondPageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE - 1);
 
       var script = firstPageFullOfGenerals + act + seq + firstHeading + secondPageFullOfGenerals + lineToBeOnTopOf3rdPage;
 
@@ -680,13 +680,13 @@ describe("ep_script_page_view - repaginate", function() {
       // one last general (to be moved to top of 3rd page)
 
       // leave room for heading + top margin + a general (so heading is not moved down as a top of block)
-      var firstPageFullOfGenerals  = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-4);
+      var firstPageFullOfGenerals  = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE - 4);
       var act                      = utils.act('first act', 'summary of act');
       var seq                      = utils.sequence('first sequence', 'summary of sequence');
       var firstHeading             = utils.heading('first heading');
       var lineToBeOnTopOf3rdPage   = utils.general(TEXT_OF_LAST_LINE);
       // leave room for future moving of heading (without top margin)
-      var secondPageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-1);
+      var secondPageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE - 1);
 
       var script = firstPageFullOfGenerals + act + seq + firstHeading + secondPageFullOfGenerals + lineToBeOnTopOf3rdPage;
 
@@ -733,7 +733,7 @@ describe("ep_script_page_view - repaginate", function() {
 
       // build script with 1st page full of generals + one heading with act and seq on
       // top of 2nd page + some generals
-      var pageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-3);
+      var pageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE - 3);
       var act                = utils.act('first act', 'summary of act');
       var seq                = utils.sequence('first sequence', 'summary of sequence');
       var firstHeading       = utils.heading('first heading');
@@ -752,14 +752,14 @@ describe("ep_script_page_view - repaginate", function() {
     });
 
     context('and user changes the type of next line to break that block', function() {
-      var LINE_TO_BE_MOVED_TO_TOP_OF_PAGE = GENERALS_PER_PAGE + 2;
+      // GENERALS_PER_PAGE - 3: generals
+      // +7: act + seq + synopsis + 1st heading
+      var LINE_TO_BE_MOVED_TO_TOP_OF_PAGE = GENERALS_PER_PAGE - 3 + 7;
 
       beforeEach(function(done) {
         // change line on bottom of block (heading => general) to destroy the block and
         // pull heading (and its scene marks) from second page to first page
-        utils.placeCaretInTheBeginningOfLine(LINE_TO_BE_MOVED_TO_TOP_OF_PAGE, function() {
-          utils.changeToElement(utils.HEADING, done, LINE_TO_BE_MOVED_TO_TOP_OF_PAGE);
-        });
+        smUtils.changeLineToElement(utils.HEADING, LINE_TO_BE_MOVED_TO_TOP_OF_PAGE, done);
       });
 
       it('repaginates pad from 3 lines above changed line', function(done) {
@@ -769,7 +769,8 @@ describe("ep_script_page_view - repaginate", function() {
         helper.waitFor(function() {
           // now we have the changed line on top of second page
           var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().first();
-          return $firstLineOfSecondPage.text() === TEXT_OF_FUTURE_TOP_OF_PAGE;
+          var $firstScriptElementOfSecondPage = utils.getFirstScriptElementOfPageStartingAt($firstLineOfSecondPage);
+          return $firstScriptElementOfSecondPage.text() === TEXT_OF_FUTURE_TOP_OF_PAGE;
         }, 2000).done(done);
       });
     });
