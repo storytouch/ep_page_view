@@ -45,16 +45,10 @@ var enable = function() {
 }
 var disable = function() {
   var context = this;
-
-  var attributeManager = context.documentAttributeManager;
-  var rep              = context.rep;
-  var editorInfo       = context.editorInfo;
-
-  var firstLineOfPad = 0;
-  var lastLineOfPad = rep.lines.length();
+  var editorInfo = context.editorInfo;
 
   editorInfo.ace_callWithAce(function() {
-    cleanPageBreaks(firstLineOfPad, lastLineOfPad, attributeManager, rep, editorInfo);
+    cleanAllPageBreaks(context);
   }, 'disablePagination');
 }
 exports.aceInitialized = function(hook, context) {
@@ -125,11 +119,17 @@ exports.acePostWriteDomLineHTML = function(hook, context) {
 }
 
 exports.aceEditEvent = function(hook, context) {
-  // don't do anything if page break is disabled
-  if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) return;
-
   var callstack = context.callstack;
   var eventType = callstack.type;
+
+  // if page break is disabled, only remove possible existing page breaks, don't do anything else
+  if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) {
+    if (finishedLoadingPad(eventType)) {
+      cleanAllPageBreaks(context);
+    }
+
+    return;
+  }
 
   if (finishedLoadingPad(eventType)) {
     // when script is imported to Etherpad, it does not have any pagination, so we need to
@@ -379,6 +379,17 @@ var makeNextCyclePaginateLinesAfter = function(lineNumber, rep) {
   var continuePaginationFromLine = reachedEndOfPad ? rep.lines.length() + 1 : utils.getLineNumberFromDOMLine($lineToStartNextPagination, rep);
 
   paginationLinesChanged.markLineAsChanged(continuePaginationFromLine);
+}
+
+var cleanAllPageBreaks = function(context) {
+  var attributeManager = context.documentAttributeManager;
+  var rep              = context.rep;
+  var editorInfo       = context.editorInfo;
+
+  var firstLineOfPad = 0;
+  var lastLineOfPad = rep.lines.length();
+
+  cleanPageBreaks(firstLineOfPad, lastLineOfPad, attributeManager, rep, editorInfo);
 }
 
 var cleanPageBreaks = function(startAtLine, endAtLine, attributeManager, rep, editorInfo) {

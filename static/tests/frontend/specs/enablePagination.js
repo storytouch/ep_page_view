@@ -3,7 +3,7 @@ describe('ep_script_page_view - Enable / Disable automatic pagination', function
   var SHOULD_HAVE_PAGE_BREAK = true;
   var SHOULD_NOT_HAVE_PAGE_BREAK = false;
 
-  var utils;
+  var utils, padId;
 
   var waitForPageBreaksChange = function(shouldHavePageBreak, done) {
     helper.waitFor(function() {
@@ -21,7 +21,7 @@ describe('ep_script_page_view - Enable / Disable automatic pagination', function
   before(function(done) {
     utils = ep_script_page_view_test_helper.utils;
 
-    helper.newPad(function() {
+    padId = helper.newPad(function() {
       utils.cleanPad(function() {
         // build a script with 3 full pages an an extra line on 4th page
         var script = utils.buildScriptWithGenerals('general', NUMBER_OF_PAGES * GENERALS_PER_PAGE + 1);
@@ -37,27 +37,59 @@ describe('ep_script_page_view - Enable / Disable automatic pagination', function
     utils.enablePagination();
   });
 
-  context('when pagination is already enabled and script has page breaks', function() {
+  context('when script has page breaks and user disables pagination', function() {
     before(function(done) {
       utils.enablePagination();
-      makeSurePageBreaksWereAdded(done);
+
+      makeSurePageBreaksWereAdded(function() {
+        utils.disablePagination();
+        done();
+      });
     });
 
-    it('removes all page breaks when user disables pagination', function(done) {
-      utils.disablePagination();
+    it('removes all page breaks', function(done) {
       makeSurePageBreaksWereRemoved(done);
     });
   });
 
-  context('when pagination is already disabled and script has no page breaks', function() {
+  context('when script has no page breaks and user enables pagination', function() {
     before(function(done) {
       utils.disablePagination();
-      makeSurePageBreaksWereRemoved(done);
+
+      makeSurePageBreaksWereRemoved(function() {
+        utils.enablePagination();
+        done();
+      });
     });
 
-    it('creates page breaks when user enables pagination', function(done) {
-      utils.enablePagination();
+    it('creates page breaks', function(done) {
       makeSurePageBreaksWereAdded(done);
+    });
+  });
+
+  context('when pagination is disabled and script with page breaks is loaded', function() {
+    before(function(done) {
+      utils.enablePagination();
+
+      makeSurePageBreaksWereAdded(function() {
+        // wait for page breaks to be saved
+        setTimeout(function() {
+          // load another pad, so can disable pagination without affecting page breaks of
+          // original pad
+          helper.newPad(function() {
+            utils.disablePagination();
+
+            // load original pad, the one with page breaks
+            helper.newPad(done, padId);
+          });
+        }, 1000);
+      });
+
+      this.timeout(60000);
+    });
+
+    it('removes all page breaks', function(done) {
+      makeSurePageBreaksWereRemoved(done);
     });
   });
 });
