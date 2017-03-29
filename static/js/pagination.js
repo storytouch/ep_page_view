@@ -123,7 +123,8 @@ exports.aceEditEvent = function(hook, context) {
   var eventType = callstack.type;
 
   // if page break is disabled, only remove possible existing page breaks, don't do anything else
-  if (!clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled) {
+  var pageBreakIsDisabled = !clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled;
+  if (pageBreakIsDisabled) {
     if (finishedLoadingPad(eventType)) {
       cleanAllPageBreaks(context);
     }
@@ -164,9 +165,18 @@ exports.aceEditEvent = function(hook, context) {
   }
 }
 
+// store value for caching (don't need to check event types again when we already know pad was loaded)
+var padAlreadyLoaded = false;
 var finishedLoadingPad = function(eventType) {
-  // this is the last event when loading a pad before user can start typing
-  return eventType === "setWraps";
+  var isLastEventOfLoadingPad = false;
+
+  if (!padAlreadyLoaded) {
+    // this is the last event when loading a pad before user can start typing
+    isLastEventOfLoadingPad = eventType === 'setWraps';
+    padAlreadyLoaded = isLastEventOfLoadingPad;
+  }
+
+  return isLastEventOfLoadingPad;
 }
 
 var scriptHasNoPaginationYet = function() {
