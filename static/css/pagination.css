@@ -77,9 +77,9 @@
     cursor: default;
     /* WARNING if any of these values is changed, you need to change div.beforePageBreak style and
        fixSmallZooms.js too */
-    height:40px;
-    margin-top:77px;
-    margin-bottom:77px;
+    height:10px;
+    margin-top:48px;
+    margin-bottom:48px;
     border-bottom:1px dotted #aaa;
     border-top:1px dotted #aaa;
 
@@ -97,10 +97,10 @@
   /* leave room for page break on line at the end of the page */
   #innerdocbody.breakPages div.beforePageBreak {
     /* All values of calc are from page break */
-    /* 40px: height; 77px: margin-top and margin-bottom; 1px: border-top and border-bottom;
+    /* 10px: height; 48px: margin-top and margin-bottom; 1px: border-top and border-bottom;
        2px: Bug fix: some zoom values mess up with border (they don't have 1px), so we
        need an extra px to avoid messing up with pagination */
-    padding-bottom: calc(40px + 77px + 77px + 1px + 1px + 2px);
+    padding-bottom: calc(10px + 48px + 48px + 1px + 1px + 2px);
   }
 
   /* hide ")" from 1st half of split parenthetical: */
@@ -124,7 +124,7 @@
 
   /* page number: */
   #innerdocbody.breakPages div pagenumber {
-    margin-top: -38px;
+    margin-top: -32px;
     margin-right: 4px;
     float: right;
   }

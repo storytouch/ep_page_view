@@ -29,9 +29,9 @@ var DEFAULT_CONTD_RIGHT_MARGIN = 222;
 var DEFAULT_CONTD_WIDTH = 64;
 var DEFAULT_CONTD_WIDTH_PTBR = 58;
 // WARNING: if you change any of these values, you need to change on the CSS of page breaks too
-var DEFAULT_PAGE_BREAK_HEIGHT = 40;
-var DEFAULT_PAGE_BREAK_MARGING_TOP = 77;
-var DEFAULT_PAGE_BREAK_MARGING_BOTTOM = 77;
+var DEFAULT_PAGE_BREAK_HEIGHT = 10;
+var DEFAULT_PAGE_BREAK_MARGING_TOP = 48;
+var DEFAULT_PAGE_BREAK_MARGING_BOTTOM = 48;
 var DEFAULT_PAGE_BREAK_BORDER_TOP = 1;
 var DEFAULT_PAGE_BREAK_BORDER_BOTTOM = 1;
 // Bug fix: some zoom values mess up with border (they don't have exactly 1px), so we
