@@ -4,7 +4,7 @@
   line-height: 16px;
 }
 
-@media (min-width : 636px) {
+@media (min-width: 464px) {
   /* Removes top margin for elements after page breaks */
   #innerdocbody.breakPages div.beforePageBreak + div heading,
   #innerdocbody.breakPages div.beforePageBreak + div action,
@@ -71,7 +71,7 @@
   #innerdocbody.breakPages div splitPageBreak:before,
   #innerdocbody.breakPages div nonSplitPageBreak:before {
     content: "";
-    margin-right:-85px;
+    margin-right:-128px;
     background-color:#f7f7f7;
     float: right;
     cursor: default;
