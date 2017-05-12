@@ -13,7 +13,7 @@ exports.STYLES_UPDATED = 'STYLES_UPDATED.ep_script_page_view';
 // A4
 var REGULAR_LINES_PER_PAGE = 58;
 
-var LARGE_SCREEN_MIN_WIDTH = 636;
+var LARGE_SCREEN_MIN_WIDTH = 464; // see pagination.css
 
 var DEFAULT_PADDING_LEFT  = 117;
 var DEFAULT_PADDING_RIGHT = 78;
@@ -83,7 +83,7 @@ var updatePageWidth = function(newCharProportion) {
   // this was moved from CSS file to here, so it can have a dynamic value
   var pageStyle      = ".outerPV { width: " + newPageWidth + "px !important; }";
   // add some px for safety (to avoid a vertical line to be displayed on 25% or 33%)
-  var pageBreakStyle = "splitPageBreak:before, nonSplitPageBreak:before { width: " + (newPageWidth + 11) + "px !important; }";
+  var pageBreakStyle = "splitPageBreak:before, nonSplitPageBreak:before { width: " + (newPageWidth + 50) + "px !important; }";
 
   // overwrite current style for page width
   // Note: we cannot change .outerPV width using jQuery.css() because Etherpad already overwrites this
