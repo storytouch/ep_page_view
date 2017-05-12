@@ -18,7 +18,7 @@
 /* For LESS THAN 641px wide */
 @media (max-width : 640px) {
   #innerdocbody{
-    padding-top:0px !important;
+    padding-top:77px !important;
     margin-left:0px !important;
   }
   #sidediv{
@@ -67,7 +67,7 @@
 @media (min-width: 542px) and (max-width : 691px) {
   #innerdocbody > div {
     padding-left: 67px; /* left margin gets only enough to display scene number */
-    padding-right: calc(100% - 511px);
+    padding-right: calc(100% - 511px); /* 444 + 67 (padding-left) */
   }
 }
 
