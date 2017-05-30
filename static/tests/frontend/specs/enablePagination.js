@@ -92,4 +92,32 @@ describe('ep_script_page_view - Enable / Disable automatic pagination', function
       makeSurePageBreaksWereRemoved(done);
     });
   });
+
+  context('when pagination is enabled on preferences by the user', function() {
+    before(function() {
+      utils.enablePagination();
+    });
+
+    it('reloads original pad with pagination disabled', function(done) {
+      // reload same pad
+      helper.newPad(function() {
+        var $paginationSetting = helper.padChrome$('#options-pagination');
+        expect($paginationSetting.prop('checked')).to.be(false);
+        done();
+      }, padId);
+
+      this.timeout(60000);
+    });
+
+    it('loads new pads with pagination disabled', function(done) {
+      // load a new pad
+      helper.newPad(function() {
+        var $paginationSetting = helper.padChrome$('#options-pagination');
+        expect($paginationSetting.prop('checked')).to.be(false);
+        done();
+      });
+
+      this.timeout(60000);
+    });
+  });
 });
