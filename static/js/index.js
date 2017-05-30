@@ -104,21 +104,24 @@ function setupPageViewInitialSetting(pageView) {
 function setupPageBreakInitialSetting(automaticPagination) {
   var $paginationSetting = $('#options-pagination');
 
-  /* from URL param */
-  var enablePageBreaks = (getParam("pagebreak") !== "false"); // enable pagination by default
-  if (enablePageBreaks) {
-    $paginationSetting.prop('checked', 'checked');
-  } else {
-    $paginationSetting.prop('checked', false);
-  }
+  // Temporary solution while pagination is not 100%: disable pagination by default
+  $paginationSetting.prop('checked', false);
 
-  /* from cookie */
-  if (padcookie.getPref(COOKIE_PREF_NAME)) {
-    $paginationSetting.prop('checked', 'checked');
-  } else if (padcookie.getPref(COOKIE_PREF_NAME) == false) {
-    // only disable pagination if cookie is set to disabled it. If cookie is not set, we do nothing
-    $paginationSetting.prop("checked", false);
-  }
+  // /* from URL param */
+  // var enablePageBreaks = (getParam("pagebreak") !== "false"); // enable pagination by default
+  // if (enablePageBreaks) {
+  //   $paginationSetting.prop('checked', 'checked');
+  // } else {
+  //   $paginationSetting.prop('checked', false);
+  // }
+
+  // /* from cookie */
+  // if (padcookie.getPref(COOKIE_PREF_NAME)) {
+  //   $paginationSetting.prop('checked', 'checked');
+  // } else if (padcookie.getPref(COOKIE_PREF_NAME) == false) {
+  //   // only disable pagination if cookie is set to disabled it. If cookie is not set, we do nothing
+  //   $paginationSetting.prop("checked", false);
+  // }
 
   // enable/disable pagination according to values read
   if($paginationSetting.is(':checked')) {
