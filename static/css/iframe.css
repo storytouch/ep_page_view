@@ -92,11 +92,8 @@
 
   .innerPV{
     background-color:#fff;
-    border-radius: 5px 5px 0 0;
-    border: 1px solid #ccc;
     border-width: 1px 1px 0 1px;
     position: relative;
-    box-shadow: 10px 20px 40px 20px #ddd;
     padding-right:0px !important;
     padding-top:77px !important;
     min-height:1500px;
