@@ -1,4 +1,5 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
+var _ = require('ep_etherpad-lite/static/js/underscore');
 var Security = require('ep_etherpad-lite/static/js/security');
 
 var EMPTY_CHARACTER_NAME = "empty";
@@ -265,13 +266,13 @@ exports.cleanHelperLines = function($helperLines) {
   });
 }
 
-var pageBreakTags = new Set(["more", "contdLine", "pagenumber"]);
+var pageBreakTags = ["more", "contdLine", "pagenumber"];
 var pageBreakTagsSelector;
 exports.registerPageBreakTag = function(tagName) {
-  pageBreakTags.add(tagName);
+  pageBreakTags.push(tagName);
 
   // cache selector for faster processing
-  pageBreakTagsSelector = Array.from(pageBreakTags).join(",");
+  pageBreakTagsSelector = _(pageBreakTags).unique().join(",");
 }
 
 var getPageBreakTagsSelector = function() {
