@@ -4,16 +4,16 @@ var utils = require('./utils');
 
 var linesChanged = {
   rep: undefined,
-  lines: new Set(),
+  lines: {},
   initialized: false,
 
   add: function(lineNumber) {
-    this.lines.add(lineNumber);
+    this.lines[lineNumber] = true;
   },
 
   reset: function(rep) {
     this.rep = rep;
-    this.lines.clear();
+    this.lines = {};
     this.initialized = true;
   },
 };
@@ -38,13 +38,13 @@ exports.markLineAsChanged = function(lineNumber) {
 }
 
 exports.hasLinesChanged = function() {
-  return linesChanged.lines.size > 0;
+  return _(linesChanged.lines).keys().size > 0;
 }
 
 exports.minLineChanged = function() {
-  return _.min(Array.from(linesChanged.lines));
+  return _(_(linesChanged.lines).keys()).min();
 }
 
 exports.lineWasChanged = function(lineNumber) {
-  return linesChanged.lines.has(lineNumber);
+  return linesChanged.lines[lineNumber];
 }
