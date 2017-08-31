@@ -3,6 +3,7 @@
 // so we need to adjust page width accordantly
 
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
+var browser = require('ep_etherpad-lite/static/js/browser');
 var utils = require('./utils');
 var DEFAULT_MARGINS = require('ep_script_elements/static/js/fixSmallZooms').DEFAULT_MARGINS;
 
@@ -20,7 +21,9 @@ var DEFAULT_PADDING_RIGHT = 78;
 var DEFAULT_PADDING       = DEFAULT_PADDING_LEFT + DEFAULT_PADDING_RIGHT;
 
 var DEFAULT_PAGE_WIDTH = 641;
-var DEFAULT_CHAR_WIDTH = 7.2; // this was calculated using 100% zoom on Chrome
+// this was calculated using 100% zoom on Chrome
+// on windows the text is rendered differently from mac
+var DEFAULT_CHAR_WIDTH = browser.mac ? 7.2 : 6.6;
 var DEFAULT_TEXT_WIDTH = DEFAULT_PAGE_WIDTH - DEFAULT_PADDING;
 
 // values needed for MORE/CONT'D update
