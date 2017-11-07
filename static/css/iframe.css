@@ -84,7 +84,7 @@
   }
 
   .outerBackground{
-    background-color:#f7f7f7 !important;
+    background-color:#fff;
     width: 641px; /* this is overwritten by ep_comments */
     margin:auto;
     border:none;
@@ -117,9 +117,5 @@
     top: 7px !important;
     left: auto !important;
     padding-top: 77px !important;
-  }
-
-  .outerBackground{
-    background-color:#6e6e !important;
   }
 }
