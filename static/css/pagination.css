@@ -6,11 +6,11 @@
 
 @media (min-width: 464px) {
   /* Removes top margin for elements after page breaks */
-  #innerdocbody.breakPages div.beforePageBreak + div heading,
-  #innerdocbody.breakPages div.beforePageBreak + div action,
-  #innerdocbody.breakPages div.beforePageBreak + div character,
-  #innerdocbody.breakPages div.beforePageBreak + div transition,
-  #innerdocbody.breakPages div.beforePageBreak + div shot {
+  div.aferPageBreak heading,
+  div.aferPageBreak action,
+  div.aferPageBreak character,
+  div.aferPageBreak transition,
+  div.aferPageBreak shot {
     margin-top: 0px;
   }
 
@@ -18,35 +18,26 @@
      page breaks.
      This is necessary because first line is originally on top of a page (so without any margin),
      but when it is cloned it is added after a regular line (so it would have a margin) */
-  #innerdocbody.breakPages div.cloned.cloned__first heading {
+  div.cloned.cloned__first heading {
     margin-top: 0;
   }
 
-  #innerdocbody.breakPages div splitPageBreak,
-  #innerdocbody.breakPages div nonSplitPageBreak,
-  #innerdocbody.breakPages div contdLine,
-  #innerdocbody.breakPages div more,
-  #innerdocbody.breakPages div contd {
+  div splitPageBreak,
+  div nonSplitPageBreak,
+  div contdLine,
+  div more,
+  div contd {
     display: block;
   }
 
-  #innerdocbody.breakPages div more:before,
-  #innerdocbody.breakPages div contd:before,
-  #innerdocbody.breakPages div contd:after {
+  div more:before,
+  div contd:before,
+  div contd:after {
     float: left; /* need this to not allow caret to be placed on element */
     cursor: default;
   }
 
-  /* WARNING there are other styles for MORE and CONT'D dynamically set on fixSmallZooms.js */
-  #innerdocbody.breakPages div more:before {
-    content: "(MORE)";
-  }
-  #innerdocbody.breakPages[lang=pt-br] div more:before {
-    content: "(MAIS)";
-  }
-
-  #innerdocbody.breakPages div contd:before {
-    content: attr(data-character);
+  div contd:before {
     text-transform: uppercase;
 
     /* the following attributes are necessary to display ellipsis when character name is too long */
@@ -56,21 +47,37 @@
     /* WARNING this is set on fixSmallZooms.js
     max-width: calc(100% - 64px - 222px); */ /*64px: CONT'D width; 222px: CONT'D right margin */
   }
-  #innerdocbody.breakPages div contd:after {
-    content: "(CONT'D)";
-
+  div contd:after {
     /* the following attributes are necessary to display ellipsis when character name is too long */
     text-align: right;
     /* WARNING this is set on fixSmallZooms.js
     width: 64px;*/
   }
-  #innerdocbody.breakPages[lang=pt-br] div contd:after {
+
+  /* [perf] do not build pseudo-elements while on paste */
+  /* WARNING there are other styles for MORE and CONT'D dynamically set on fixSmallZooms.js */
+  #innerdocbody:not(.pasting)             div more:before {
+    content: "(MORE)";
+  }
+  #innerdocbody:not(.pasting)[lang=pt-br] div more:before {
+    content: "(MAIS)";
+  }
+  #innerdocbody:not(.pasting)             div contd:before {
+    content: attr(data-character);
+  }
+  #innerdocbody:not(.pasting)             div contd:after {
+    content: "(CONT'D)";
+  }
+  #innerdocbody:not(.pasting)[lang=pt-br] div contd:after {
     content: "(CONT.)";
   }
-
-  #innerdocbody.breakPages div splitPageBreak:before,
-  #innerdocbody.breakPages div nonSplitPageBreak:before {
+  #innerdocbody:not(.pasting)             div splitPageBreak:before,
+  #innerdocbody:not(.pasting)             div nonSplitPageBreak:before {
     content: "";
+  }
+
+  div splitPageBreak:before,
+  div nonSplitPageBreak:before {
     margin-right:-128px;
     background-color:#f7f7f7;
     float: right;
@@ -95,7 +102,7 @@
   }
 
   /* leave room for page break on line at the end of the page */
-  #innerdocbody.breakPages div.beforePageBreak {
+  div.beforePageBreak {
     /* All values of calc are from page break */
     /* 10px: height; 48px: margin-top and margin-bottom; 1px: border-top and border-bottom;
        2px: Bug fix: some zoom values mess up with border (they don't have 1px), so we
@@ -104,35 +111,39 @@
   }
 
   /* hide ")" from 1st half of split parenthetical: */
-  #innerdocbody.breakPages div.firstHalf parenthetical:after {
+  div.firstHalf parenthetical:after {
     content: ' ';
     margin-right: 0;
   }
   /* hide "(" from 2nd half of split parenthetical: */
-  #innerdocbody.breakPages div.firstHalf + div parenthetical:before {
+  div.secondHalf parenthetical:before {
     content: ' ';
     margin-left: 0;
   }
 
   /* special style used on the calculation of split lines: hide both "()" of cloned parenthetical */
-  #innerdocbody.breakPages div.clone parenthetical:after,
-  #innerdocbody.breakPages div.clone parenthetical:before {
+  /* FIXME do we still need this, after pagination algorithm is changed to not use cloned lines? */
+/*
+  div.clone parenthetical:after,
+  div.clone parenthetical:before {
     content: ' ';
     margin-left: 0;
     margin-right: 0;
   }
+*/
 
   /* page number: */
-  #innerdocbody.breakPages div pagenumber {
+  div pagenumber {
     margin-top: -32px;
     margin-right: 4px;
     float: right;
   }
-  #innerdocbody.breakPages div pagenumber:before {
+  /* [perf] do not build pseudo-elements while on paste */
+  #innerdocbody:not(.pasting) div pagenumber:before {
     margin-right: 5px;
     content: attr(data-page-number) ".";
   }
-  #innerdocbody.breakPages div calculating {
+  div calculating {
     float: right;
   }
 
@@ -145,13 +156,14 @@
     z-index:150;
   }
 
-  div.lastPaginated ~ div calculating:before {
+  /* [perf] do not build pseudo-elements while on paste */
+  #innerdocbody:not(.pasting) div.lastPaginated ~ div calculating:before {
     content: "\e80e";
   }
 
   /* Prevent the last line from sticking on the bottom of the viewport.
      Useful for a smooth scrolling when editing last line. */
-  #innerdocbody > div:last-of-type {
-    margin-bottom: 40px;
+  #innerdocbody {
+    padding-bottom: 40px;
   }
 }
