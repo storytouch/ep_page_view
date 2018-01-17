@@ -14,6 +14,7 @@ var undoElementType            = require('./undoElementType');
 var calculatingPageNumberIcons = require('./calculatingPageNumberIcons');
 var paginationCalculation      = require('./paginationPageBreaksCalculation');
 var paginationLineObserver     = require('./paginationLineObserver');
+var cssOptimization            = require('./cssOptimization');
 
 var isInTheMiddleOfASceneMarkVisibilityToggle = require("ep_script_scene_marks/static/js/sceneMarkVisibility").isInTheMiddleOfASceneMarkVisibilityToggle;
 
@@ -143,6 +144,9 @@ exports.aceEditEvent = function(hook, context) {
 
     // when pad is loaded, it marks all lines as changed, so we need to reset counter
     paginationLinesChanged.reset(context.rep);
+
+    // need to be after pad is loaded, otherwise some classes may be overwritten
+    cssOptimization.init();
   }
   // repagination didn't finish, need to continue (but only if I was the one who started it,
   // otherwise we'll get errors when 2 users have the same pad opened)
