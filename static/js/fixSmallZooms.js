@@ -1,13 +1,6 @@
-// This feature is needed because small zooms (<= 67%) do not scale font size the same way it
-// scales other elements on the page. This causes a page to fit less than 61 chars/line on generals,
-// so we need to adjust page width accordantly
-
-var $ = require('ep_etherpad-lite/static/js/rjquery').$;
-var browser = require('ep_etherpad-lite/static/js/browser');
+var fixSmallZoomsForPlugins = require('ep_script_elements/static/js/fixSmallZoomsForPlugins');
 var utils = require('./utils');
 var DEFAULT_MARGINS = require('ep_script_elements/static/js/fixSmallZooms').DEFAULT_MARGINS;
-
-exports.STYLES_UPDATED = 'STYLES_UPDATED.ep_script_page_view';
 
 // Letter
 // var REGULAR_LINES_PER_PAGE = 54;
@@ -21,9 +14,6 @@ var DEFAULT_PADDING_RIGHT = 78;
 var DEFAULT_PADDING       = DEFAULT_PADDING_LEFT + DEFAULT_PADDING_RIGHT;
 
 var DEFAULT_PAGE_WIDTH = 641;
-// this was calculated using 100% zoom on Chrome
-// on windows the text is rendered differently from mac
-var DEFAULT_CHAR_WIDTH = browser.mac ? 7.2 : 6.6;
 var DEFAULT_TEXT_WIDTH = DEFAULT_PAGE_WIDTH - DEFAULT_PADDING;
 
 // values needed for MORE/CONT'D update
@@ -49,58 +39,48 @@ var DEFAULT_PAGE_BREAK_TOTAL_HEIGHT =
   SAFETY;
 
 exports.init = function() {
-  waitForResizeToFinishThenCall(function() {
-    updateStyles();
-  });
-
-  updateStyles();
+  fixSmallZoomsForPlugins.registerStyleGeneratorForNewPadOuterScreenSize(getNewStylesForPadOuter);
+  fixSmallZoomsForPlugins.registerStyleGeneratorForNewPadInnerScreenSize(getNewStylesForPadInner);
 }
 
-// Copied form ep_comments_page
-var waitForResizeToFinishThenCall = function(callback) {
-  var resizeTimer;
-  var timeout = 200;
-  $(window).on("resize", function() {
-    clearTimeout(resizeTimer);
-    resizeTimer = setTimeout(callback, timeout);
-  });
-}
-
-var updateStyles = function() {
-  updateWidthsAndMargins();
-  updatePageHeight();
-
-  utils.getPadOuter().trigger(exports.STYLES_UPDATED);
-}
-
-var updateWidthsAndMargins = function() {
-  var newCharProportion = getCharProportion();
-
-  updatePageWidth(newCharProportion);
-  updateMoreContdStyles(newCharProportion);
-}
-
-var updatePageWidth = function(newCharProportion) {
+// Note: we cannot change .outerPV width using jQuery.css() because Etherpad already overwrites this
+// CSS property on every window resize. Instead, we need to force style to be applied using a dynamic
+// CSS code on pad outer head
+var getNewStylesForPadOuter = function(newProportions, defaults) {
+  var newCharProportion = newProportions.horizontal;
   var newPageWidth = calculatePageWidth(newCharProportion);
 
   // this was moved from CSS file to here, so it can have a dynamic value
-  var pageStyle      = ".outerPV { width: " + newPageWidth + "px !important; }";
+  var pageStyle = ".outerPV { width: " + newPageWidth + "px !important; }";
+
+  return getStyleOnlyForLargeScreens(pageStyle);
+}
+
+var getNewStylesForPadInner = function(newProportions, defaults) {
+  var newCharProportion = newProportions.horizontal;
+  var oneLineHeight = newProportions.vertical;
+  updatePageHeight(oneLineHeight);
+
+  var styles = getNewPageWidthStyle(newCharProportion) +
+               getNewMoreContdStyles(newCharProportion);
+
+  return styles;
+}
+
+var getNewPageWidthStyle = function(newCharProportion) {
+  var newPageWidth = calculatePageWidth(newCharProportion);
+
   // add some px for safety (to avoid a vertical line to be displayed on 25% or 33%)
   var pageBreakStyle = "splitPageBreak:before, nonSplitPageBreak:before { width: " + (newPageWidth + 50) + "px !important; }";
 
-  // overwrite current style for page width
-  // Note: we cannot change .outerPV width using jQuery.css() because Etherpad already overwrites this
-  // CSS property on every window resize. Instead, we need to force style to be applied using a dynamic
-  // CSS code on pad outer head
-  utils.getPadOuter().find("head").append("<style>" + getStyleOnlyForLargeScreens(pageStyle) + "</style>");
-  utils.getPadInner().find("head").append("<style>" + getStyleOnlyForLargeScreens(pageBreakStyle) + "</style>");
+  return getStyleOnlyForLargeScreens(pageBreakStyle);
 }
 
 var getStyleOnlyForLargeScreens = function(style) {
   return '@media (min-width : ' + LARGE_SCREEN_MIN_WIDTH + 'px) { ' + style + ' }';
 }
 
-var updateMoreContdStyles = function(newCharProportion) {
+var getNewMoreContdStyles = function(newCharProportion) {
   var styles = [];
 
   var characterLeftMargin  = newCharProportion * DEFAULT_MARGINS.character.horizontal.left;
@@ -149,15 +129,7 @@ var updateMoreContdStyles = function(newCharProportion) {
   var pageBreakHeight = "padding-bottom: " + calcutePageBreakHeight(newCharProportion) + "px !important;";
   styles.push("div.beforePageBreak.withMoreAndContd { " + pageBreakHeight + " }");
 
-  // add all styles to editor
-  utils.getPadInner().find("head").append("<style>" + styles.join("\n") + "</style>");
-}
-
-var getCharProportion = function() {
-  var oneCharWidth = utils.getWidthOfOneChar();
-  var charProportion = oneCharWidth / DEFAULT_CHAR_WIDTH;
-
-  return charProportion;
+  return styles.join("\n");
 }
 
 // Use char proportion to find width needed so we always have 61 chars/line for generals
@@ -167,9 +139,12 @@ var calculatePageWidth = function(charProportion) {
   return DEFAULT_PADDING + widthNeededToFit61CharsWithCurrentZoom;
 }
 
+// FIXME review the following methods. Do we still need them, after changing the way we're calculating
+// the page breaks? (not using cloned browser lines)
+
 // Use line proportion to find height needed so we always have REGULAR_LINES_PER_PAGE generals/page
-var calculatePageHeight = function() {
-  var oneLineHeight = utils.getHeightOfOneLine();
+var calculatePageHeight = function(oneLineHeight) {
+  oneLineHeight = oneLineHeight || utils.getHeightOfOneLine();
   var pageHeightNeeded = oneLineHeight * REGULAR_LINES_PER_PAGE;
 
   return pageHeightNeeded;
@@ -182,8 +157,8 @@ exports.getMaxPageHeight = function() {
   return maxPageHeight;
 }
 
-var updatePageHeight = function() {
-  maxPageHeight = calculatePageHeight();
+var updatePageHeight = function(oneLineHeight) {
+  maxPageHeight = calculatePageHeight(oneLineHeight);
 
   // update cached value for line height
   utils.updateRegularLineHeight();
