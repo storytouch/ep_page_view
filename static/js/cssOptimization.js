@@ -11,22 +11,22 @@ var FIRST_HALF_CLASS = 'firstHalf';
 var SECOND_HALF_CLASS = 'secondHalf';
 
 exports.init = function() {
-  initializePaginationClass(BEFORE_PAGE_BREAK_CLASS, AFTER_PAGE_BREAK_CLASS);
-  initializePaginationClass(FIRST_HALF_CLASS, SECOND_HALF_CLASS);
+  markExistingPageBreakLinesWithPaginationClasses(BEFORE_PAGE_BREAK_CLASS, AFTER_PAGE_BREAK_CLASS);
+  markExistingPageBreakLinesWithPaginationClasses(FIRST_HALF_CLASS, SECOND_HALF_CLASS);
 
-  updatePaginationClassWhenLinesWithPageBreaksAreChanged(BEFORE_PAGE_BREAK_CLASS, AFTER_PAGE_BREAK_CLASS);
-  updatePaginationClassWhenLinesWithPageBreaksAreChanged(FIRST_HALF_CLASS, SECOND_HALF_CLASS);
+  ensurePaginationClassesAreAddedWhenPageBreaksAreChanged(BEFORE_PAGE_BREAK_CLASS, AFTER_PAGE_BREAK_CLASS);
+  ensurePaginationClassesAreAddedWhenPageBreaksAreChanged(FIRST_HALF_CLASS, SECOND_HALF_CLASS);
 }
 
-var initializePaginationClass = function(sourceClass, targetClass) {
+var markExistingPageBreakLinesWithPaginationClasses = function(sourceClass, targetClass) {
   var $allLinesWithPageBreaks = utils.getPadInner().find('.' + sourceClass);
-  updatePageBreakClass($allLinesWithPageBreaks.toArray(), targetClass);
+  markLineAfterPageBreakWithClass($allLinesWithPageBreaks.toArray(), targetClass);
 }
 
-var updatePaginationClassWhenLinesWithPageBreaksAreChanged = function(sourceClass, targetClass) {
+var ensurePaginationClassesAreAddedWhenPageBreaksAreChanged = function(sourceClass, targetClass) {
   detailedLinesChangedListener.onLinesAddedOrRemoved(function(linesChanged) {
     var linesWithPageBreaks = getLinesWithPageBreaks(linesChanged.linesAdded, sourceClass);
-    updatePageBreakClass(linesWithPageBreaks, targetClass);
+    markLineAfterPageBreakWithClass(linesWithPageBreaks, targetClass);
   });
 }
 
@@ -36,7 +36,7 @@ var getLinesWithPageBreaks = function(linesChanged, sourceClass) {
   });
 }
 
-var updatePageBreakClass = function(linesWithPageBreaks, targetClass) {
+var markLineAfterPageBreakWithClass = function(linesWithPageBreaks, targetClass) {
   _(linesWithPageBreaks).each(function(lineWithPageBreak) {
     $(lineWithPageBreak).next().addClass(targetClass);
   });
