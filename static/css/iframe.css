@@ -43,10 +43,12 @@
     padding-right: 0px;
     max-width: 444px;
   }
+  #innerdocbody > div.sceneMark {
+    max-width: 480px;
+  }
   .outerBackground{
     width:100%;
   }
-
   .innerPV{
     border:none;
     box-shadow:none;
