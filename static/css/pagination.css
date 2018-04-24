@@ -167,3 +167,48 @@
     padding-bottom: 40px;
   }
 }
+
+/*style was taken from fixSmallZoom*/
+@media (min-width : 464px) {
+  .outerPV {
+    width: 641.1935763888889px !important;
+  }
+}
+
+@media (min-width : 464px) {
+  splitPageBreak:before,
+  nonSplitPageBreak:before {
+    width: 691.1935763888889px !important;
+  }
+}
+
+div more:before,
+div contdLine {
+  margin-left: 152px;
+}
+
+div more:before {
+  margin-right: 242px;
+}
+
+div contd:after {
+  margin-right: 222px;
+}
+
+div contdLine {
+  max-width: calc(100% - 152px - 16px + 222px);
+  min-width: calc(100% - 152px - 16px);
+  margin-right: -222px;
+}
+
+div contd:before {
+  max-width: calc(100% - 64px - 222px);
+}
+
+#innerdocbody[lang=pt-br] div contd:before {
+  max-width: calc(100% - 58px - 222px);
+}
+
+div.beforePageBreak.withMoreAndContd {
+  padding-bottom: 142px !important;
+}
