@@ -168,47 +168,55 @@
   }
 }
 
-/*style was taken from fixSmallZoom*/
+/*styles were taken from fixSmallZoom*/
+
 @media (min-width : 464px) {
   .outerPV {
-    width: 641.1935763888889px !important;
+    width: 642px !important;
   }
 }
 
 @media (min-width : 464px) {
-  splitPageBreak:before,
-  nonSplitPageBreak:before {
-    width: 691.1935763888889px !important;
+  #innerdocbody:not(.pasting) splitPageBreak:before,
+  #innerdocbody:not(.pasting) nonSplitPageBreak:before {
+    width: 692px !important;
   }
 }
 
-div more:before,
-div contdLine {
+/* align with character left margin */
+#innerdocbody:not(.pasting) more:before,
+#innerdocbody:not(.pasting) contdLine {
   margin-left: 152px;
 }
 
-div more:before {
+/* need this to move pad text down (and not be on the right of MORE/CONT'D) */
+#innerdocbody:not(.pasting) more:before {
   margin-right: 242px;
 }
 
-div contd:after {
+/* need this to move pad text down (and not be on the right of MORE/CONT'D) */
+#innerdocbody:not(.pasting) contd:after {
   margin-right: 222px;
 }
 
-div contdLine {
+/* make CONT'D and character name work together */
+#innerdocbody:not(.pasting) contdLine {
   max-width: calc(100% - 152px - 16px + 222px);
   min-width: calc(100% - 152px - 16px);
   margin-right: -222px;
 }
 
-div contd:before {
+/* display ellipsis when character name is too long */
+#innerdocbody:not(.pasting) contd:before {
   max-width: calc(100% - 64px - 222px);
 }
 
-#innerdocbody[lang=pt-br] div contd:before {
+/* override width because label in pt-br is shorter */
+#innerdocbody:not(.pasting)[lang=pt-br] div contd:before {
   max-width: calc(100% - 58px - 222px);
 }
 
-div.beforePageBreak.withMoreAndContd {
+/* leave room for page break on line at the end of the page */
+#innerdocbody:not(.pasting) .beforePageBreak.withMoreAndContd {
   padding-bottom: 142px !important;
 }
