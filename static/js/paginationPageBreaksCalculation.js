@@ -9,6 +9,7 @@ var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_
 var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
 
 var MAX_PAGE_BREAKS_PER_CYCLE = 5;
+var PAGE_BREAK_HEIGHT = 16;
 
 // initialize with a function that does nothing
 var cleanMarksOnHeadingsOnTopOfPage = function() {};
@@ -219,7 +220,7 @@ var getTotalHeightOfPaginationCycle = function() {
     // height of one page
     fullPage() +
     // height of page break
-    utils.getPageBreakHeight() +
+    PAGE_BREAK_HEIGHT +
     // assuming worst case: all page breaks have MORE/CONT'D and all of them have a split line
     // which resulted in 2 halves that are 1 line higher than the unsplit line
     3 * utils.getHeightOfOneLine() // (1 for MORE, 1 for CONT'D and 1 for extra line due to split)
