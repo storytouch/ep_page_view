@@ -4,7 +4,6 @@ var padcookie = require('ep_etherpad-lite/static/js/pad_cookie').padcookie;
 
 var utils = require('./utils');
 var paginationCalculation = require('./pagination');
-var fixSmallZooms = require('./fixSmallZooms');
 
 var COOKIE_PREF_NAME = 'automaticPagination';
 var LINE_NUMBERS_ENABLED_OUTER_CLASS = 'lineNumbersAndPageView';
@@ -76,8 +75,6 @@ exports.postAceInit = function(hook, context){
   $('#options-linenoscheck').on('click', function() {
     adjustToLineNumberSetting();
   });
-
-  fixSmallZooms.init();
 };
 
 function adjustToLineNumberSetting() {

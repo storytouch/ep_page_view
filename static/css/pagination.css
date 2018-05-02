@@ -167,3 +167,56 @@
     padding-bottom: 40px;
   }
 }
+
+/*styles were taken from fixSmallZoom*/
+
+@media (min-width : 464px) {
+  .outerPV {
+    width: 642px !important;
+  }
+}
+
+@media (min-width : 464px) {
+  #innerdocbody:not(.pasting) splitPageBreak:before,
+  #innerdocbody:not(.pasting) nonSplitPageBreak:before {
+    width: 692px !important;
+  }
+}
+
+/* align with character left margin */
+#innerdocbody:not(.pasting) more:before,
+#innerdocbody:not(.pasting) contdLine {
+  margin-left: 152px;
+}
+
+/* need this to move pad text down (and not be on the right of MORE/CONT'D) */
+#innerdocbody:not(.pasting) more:before {
+  margin-right: 242px;
+}
+
+/* need this to move pad text down (and not be on the right of MORE/CONT'D) */
+#innerdocbody:not(.pasting) contd:after {
+  margin-right: 222px;
+}
+
+/* make CONT'D and character name work together */
+#innerdocbody:not(.pasting) contdLine {
+  max-width: calc(100% - 152px - 16px + 222px);
+  min-width: calc(100% - 152px - 16px);
+  margin-right: -222px;
+}
+
+/* display ellipsis when character name is too long */
+#innerdocbody:not(.pasting) contd:before {
+  max-width: calc(100% - 64px - 222px);
+}
+
+/* override width because label in pt-br is shorter */
+#innerdocbody:not(.pasting)[lang=pt-br] div contd:before {
+  max-width: calc(100% - 58px - 222px);
+}
+
+/* leave room for page break on line at the end of the page */
+#innerdocbody:not(.pasting) .beforePageBreak.withMoreAndContd {
+  padding-bottom: 142px !important;
+}
