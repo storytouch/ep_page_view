@@ -4,7 +4,13 @@
   line-height: 16px;
 }
 
+/* TODO review the "!important" used here. They might had been necessary when we had
+   fixSmallZooms.js, but might not be necessary anymore */
 @media (min-width: 464px) {
+  .outerPV {
+    width: 642px !important;
+  }
+
   /* Removes top margin for elements after page breaks */
   div.aferPageBreak heading,
   div.aferPageBreak action,
@@ -37,25 +43,46 @@
     cursor: default;
   }
 
+  /* align with character left margin */
+  more:before,
+  contdLine {
+    margin-left: 152px;
+  }
+
+  /* make CONT'D and character name work together */
+  contdLine {
+    max-width: calc(100% - 152px - 16px + 222px);
+    min-width: calc(100% - 152px - 16px);
+    margin-right: -222px;
+  }
+
   div contd:before {
     text-transform: uppercase;
 
-    /* the following attributes are necessary to display ellipsis when character name is too long */
+    /* display ellipsis when character name is too long */
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
-    /* WARNING this is set on fixSmallZooms.js
-    max-width: calc(100% - 64px - 222px); */ /*64px: CONT'D width; 222px: CONT'D right margin */
+    max-width: calc(100% - 64px - 222px); /*64px: CONT'D width; 222px: CONT'D right margin */
   }
+  /* override width because label in pt-br is shorter */
+  #innerdocbody[lang=pt-br] div contd:before {
+    max-width: calc(100% - 58px - 222px);
+  }
+
   div contd:after {
-    /* the following attributes are necessary to display ellipsis when character name is too long */
+    /* display ellipsis when character name is too long */
     text-align: right;
-    /* WARNING this is set on fixSmallZooms.js
-    width: 64px;*/
+    /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
+    margin-right: 222px;
+  }
+
+  /* need this to move pad text down (and not be on the right of MORE/CONT'D) */
+  div more:before {
+    margin-right: 242px;
   }
 
   /* [perf] do not build pseudo-elements while on paste */
-  /* WARNING there are other styles for MORE and CONT'D dynamically set on fixSmallZooms.js */
   #innerdocbody:not(.pasting)             div more:before {
     content: "(MORE)";
   }
@@ -82,18 +109,15 @@
     background-color:#f7f7f7;
     float: right;
     cursor: default;
-    /* WARNING if any of these values is changed, you need to change div.beforePageBreak style and
-       fixSmallZooms.js too */
+
+    /* WARNING if any of these values is changed, you need to change div.beforePageBreak too */
     height:10px;
     margin-top:48px;
     margin-bottom:48px;
     border-bottom:1px dotted #aaa;
     border-top:1px dotted #aaa;
 
-    /* WARNING page break width is not defined on CSS anymore due to an issue with small zooms.
-               See fixSmallZooms.js for more details.
-    width:641px;
-    */
+    width: 692px !important;
 
     /* might be useful for printing: */
   /*  page-break-after: always;
@@ -108,6 +132,9 @@
        2px: Bug fix: some zoom values mess up with border (they don't have 1px), so we
        need an extra px to avoid messing up with pagination */
     padding-bottom: calc(10px + 48px + 48px + 1px + 1px + 2px);
+  }
+  div.beforePageBreak.withMoreAndContd {
+    padding-bottom: 142px !important;
   }
 
   /* hide ")" from 1st half of split parenthetical: */
@@ -166,57 +193,4 @@
   #innerdocbody {
     padding-bottom: 40px;
   }
-}
-
-/*styles were taken from fixSmallZoom*/
-
-@media (min-width : 464px) {
-  .outerPV {
-    width: 642px !important;
-  }
-}
-
-@media (min-width : 464px) {
-  #innerdocbody:not(.pasting) splitPageBreak:before,
-  #innerdocbody:not(.pasting) nonSplitPageBreak:before {
-    width: 692px !important;
-  }
-}
-
-/* align with character left margin */
-#innerdocbody:not(.pasting) more:before,
-#innerdocbody:not(.pasting) contdLine {
-  margin-left: 152px;
-}
-
-/* need this to move pad text down (and not be on the right of MORE/CONT'D) */
-#innerdocbody:not(.pasting) more:before {
-  margin-right: 242px;
-}
-
-/* need this to move pad text down (and not be on the right of MORE/CONT'D) */
-#innerdocbody:not(.pasting) contd:after {
-  margin-right: 222px;
-}
-
-/* make CONT'D and character name work together */
-#innerdocbody:not(.pasting) contdLine {
-  max-width: calc(100% - 152px - 16px + 222px);
-  min-width: calc(100% - 152px - 16px);
-  margin-right: -222px;
-}
-
-/* display ellipsis when character name is too long */
-#innerdocbody:not(.pasting) contd:before {
-  max-width: calc(100% - 64px - 222px);
-}
-
-/* override width because label in pt-br is shorter */
-#innerdocbody:not(.pasting)[lang=pt-br] div contd:before {
-  max-width: calc(100% - 58px - 222px);
-}
-
-/* leave room for page break on line at the end of the page */
-#innerdocbody:not(.pasting) .beforePageBreak.withMoreAndContd {
-  padding-bottom: 142px !important;
 }
