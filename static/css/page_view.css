@@ -1,47 +1,10 @@
+.outerBackground{
+  width:100%;
+}
+
 #editorcontainerbox{
-/* Removed as it messed up the editbar styling */
-/*
-  background-color:#F7F7F7;
-*/
+  top:0px;
 }
-
-@media (min-width: 712px) {
-  #editorcontainer.page_view {
-    background-color: #f7f7f7;
-    text-align: center;
-    top:37px;
-  }
-
-  #editorcontainerbox{
-/*
-    background-color:#f7f7f7;
-*/
-    top:0px;
-  }
-
-  #editorcontainer .page_view{
-    top:0px;
-    padding-top:20px;
-  }
-
-  #editorloadingbox{
-    margin-top:100px;
-  }
-
+#editorcontainer{
+  top:0px;
 }
-
-@media (max-width: 711px) {
-
-  .outerBackground{
-    width:100%;
-  }
-
-  #editorcontainerbox{
-    top:0px;
-  }
-  #editorcontainer{
-    top:0px;
-  }
-
-}
-
