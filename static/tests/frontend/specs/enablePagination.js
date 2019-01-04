@@ -1,4 +1,4 @@
-describe('ep_script_page_view - Enable / Disable automatic pagination', function() {
+describe.skip('ep_script_page_view - Enable / Disable automatic pagination', function() {
   var NUMBER_OF_PAGES = 3;
   var SHOULD_HAVE_PAGE_BREAK = true;
   var SHOULD_NOT_HAVE_PAGE_BREAK = false;

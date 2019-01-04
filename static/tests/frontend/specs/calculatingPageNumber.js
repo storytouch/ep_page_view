@@ -1,4 +1,4 @@
-describe("ep_script_page_view - calculating page number", function() {
+describe.skip("ep_script_page_view - calculating page number", function() {
   var utils;
 
   before(function(){

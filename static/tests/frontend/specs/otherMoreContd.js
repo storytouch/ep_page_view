@@ -1,4 +1,4 @@
-describe("ep_script_page_view - other MORE/CONT'D tests", function() {
+describe.skip("ep_script_page_view - other MORE/CONT'D tests", function() {
   var utils, scriptBuilder, lastLineText;
 
   before(function(){

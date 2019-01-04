@@ -1,4 +1,4 @@
-describe("ep_script_page_view - repaginate", function() {
+describe.skip("ep_script_page_view - repaginate", function() {
   var utils, smUtils;
 
   before(function(){

@@ -1,4 +1,4 @@
-describe("ep_script_page_view - scroll", function() {
+describe.skip("ep_script_page_view - scroll", function() {
   var utils;
 
   before(function(){
