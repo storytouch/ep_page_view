@@ -80,16 +80,6 @@ ep_script_page_view_test_helper.utils = {
   DIALOGUE: 'dialogue',
   TRANSITION: 'transition',
   SHOT: 'shot',
-  TARGET_ELEMENT: {
-    'general'       : { val : '-1' },
-    'heading'       : { val : '0' },
-    'action'        : { val : '1' },
-    'character'     : { val : '2' },
-    'parenthetical' : { val : '3' },
-    'dialogue'      : { val : '4' },
-    'transition'    : { val : '5' },
-    'shot'          : { val : '6' }
-  },
 
   enableLineNumbers: function(callback) {
     var utils = ep_script_page_view_test_helper.utils;
@@ -297,8 +287,7 @@ ep_script_page_view_test_helper.utils = {
     var targetScrollTop = $targetLine.offset().top;
 
     var $editor = outer$("#outerdocbody");
-    $editor.scrollTop(targetScrollTop); // Works in Chrome
-    $editor.parent().scrollTop(targetScrollTop); // Works in Firefox
+    $editor.parent().scrollTop(targetScrollTop);
   },
 
   testLineIsOnTopOfViewport: function(lineNumberOnPad, done, innerLineNumber) {
@@ -316,7 +305,7 @@ ep_script_page_view_test_helper.utils = {
     var expectedScrollTop = $targetLine.offset().top + innerLineShift;
 
     var $editor = outer$("#outerdocbody");
-    var actualScrollTop = $editor.scrollTop();
+    var actualScrollTop = $editor.parent().scrollTop();
 
     expect(actualScrollTop).to.be.within(expectedScrollTop - acceptedRange, expectedScrollTop + acceptedRange);
 
@@ -330,7 +319,7 @@ ep_script_page_view_test_helper.utils = {
     var $editor = outer$("#outerdocbody");
 
     var $targetLine = utils.getLine(lineNumberBeforeWaitFor);
-    var shiftBetweenTopAndLineWithCaret = $targetLine.offset().top - $editor.scrollTop();
+    var shiftBetweenTopAndLineWithCaret = $targetLine.offset().top - $editor.parent().scrollTop();
 
     helper.waitFor(waitFor, timeout).done(function() {
       var acceptedRange = 1;
@@ -340,7 +329,7 @@ ep_script_page_view_test_helper.utils = {
       // top of the line on pad - original shift
       var expectedScrollTop = $targetLine.offset().top - shiftBetweenTopAndLineWithCaret;
 
-      var actualScrollTop = $editor.scrollTop();
+      var actualScrollTop = $editor.parent().scrollTop();
 
       expect(actualScrollTop).to.be.within(expectedScrollTop - acceptedRange, expectedScrollTop + acceptedRange);
 

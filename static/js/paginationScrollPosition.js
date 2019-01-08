@@ -65,7 +65,7 @@ exports.keepViewportScrollPosition = function(action, attributeManager, rep) {
 
 var markScrollAnchorLine = function(attributeManager, rep) {
   var $editor = utils.getPadOuter().find('#outerdocbody');
-  var targetScroll = $editor.scrollTop();
+  var targetScroll = $editor.parent().scrollTop();
   var $mainAnchorLine = getMainAnchorLine(targetScroll, rep);
 
   // set attribute on next and previous lines to have fallbacks in case main anchor line is
@@ -158,7 +158,7 @@ var adjustScrollToMatchAnchorLine = function(attributeManager, rep) {
 
   var targetScroll = $anchorLine.get(0).getBoundingClientRect().top - topPositionShift - extraShift;
   var $editor = utils.getPadOuter().find('#outerdocbody');
-  $editor.scrollTop(targetScroll);
+  $editor.parent().scrollTop(targetScroll);
 
   removeMarksFromAnchorLines($allAnchorLines, attributeManager, rep);
 }
