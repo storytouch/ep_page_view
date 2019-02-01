@@ -4,7 +4,7 @@
       "name": "page_view",
       "client_hooks": {
         "postAceInit": "ep_script_page_view/static/js/index",
-        "aceEditorCSS": "ep_script_page_view/static/js/index",
+        "aceEditorCSS": "ep_script_page_view/static/js/aceEditorCSS",
         "aceInitialized": "ep_script_page_view/static/js/pagination",
         "aceAttribsToClasses": "ep_script_page_view/static/js/pagination",
         "acePostWriteDomLineHTML": "ep_script_page_view/static/js/pagination",
