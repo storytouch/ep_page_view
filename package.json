@@ -1,7 +1,15 @@
 {
-  "name":        "ep_script_page_view",
-  "version":     "0.0.1",
-  "keywords":    ["page view", "pv", "preview", "overview", "page break", "break", "new page"],
+  "name": "ep_script_page_view",
+  "version": "0.0.1",
+  "keywords": [
+    "page view",
+    "pv",
+    "preview",
+    "overview",
+    "page break",
+    "break",
+    "new page"
+  ],
   "description": "Add support to do 'page view' for movie scripts. Based on ep_page_view project from Etherpad (https://github.com/ether/ep_page_view).",
   "contributors": [
     {
@@ -23,14 +31,11 @@
       "email": "joassouzasantos@gmail.com"
     }
   ],
-
-  "repository" : {
+  "repository": {
     "type": "git",
-    "url":  "git://github.com/storytouch/ep_script_page_view.git"
+    "url": "git://github.com/storytouch/ep_script_page_view.git"
   },
-
   "dependencies": {},
-
   "engines": {
     "node": "*"
   }
