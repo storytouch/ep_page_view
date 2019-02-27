@@ -2,6 +2,8 @@ var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 var Security = require('ep_etherpad-lite/static/js/security');
 
+var scriptElementUtils = require('ep_script_elements/static/js/utils');
+
 var EMPTY_CHARACTER_NAME = "empty";
 
 var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
@@ -56,7 +58,7 @@ exports.typeOf = function($line) {
 }
 
 exports.getLineTypeOf = function(lineNumber, attributeManager) {
-  return attributeManager.getAttributeOnLine(lineNumber, "script_element");
+  return scriptElementUtils.getLineType(lineNumber, attributeManager);
 }
 
 var bottomOf = function($targetLine) {
