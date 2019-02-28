@@ -4,6 +4,7 @@ var randomString         = require('ep_etherpad-lite/static/js/pad_utils').rando
 var utils                = require('./utils');
 var paginationPageNumber = require('./paginationPageNumber');
 var paginationNonSplit   = require('./paginationNonSplit');
+var scriptElementUtils   = require('ep_script_elements/static/js/utils');
 
 var PAGE_BREAKS_ATTRIB                     = "splitPageBreak";
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "splitPageBreakWithMoreAndContd";
@@ -539,9 +540,7 @@ var splitLine = function(splitPosition, attributeManager, editorInfo, rep) {
 }
 
 var setTypeOfSecondHalfOfLine = function(lineNumber, lineType, attributeManager) {
-  if (lineType) {
-    attributeManager.setAttributeOnLine(lineNumber+1, 'script_element', lineType);
-  }
+  scriptElementUtils.updateLineType(lineNumber + 1, attributeManager, lineType);
 }
 
 var addPageBreakBetweenLines = function(splitPosition, pageNumber, attributeManager) {
