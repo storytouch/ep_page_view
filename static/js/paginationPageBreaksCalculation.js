@@ -5,8 +5,8 @@ var paginationBlocks           = require('./paginationBlocks');
 var paginationSplit            = require('./paginationSplit');
 var paginationNonSplit         = require('./paginationNonSplit');
 
-var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
-var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
+var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + ',' + paginationSplit.PAGE_BREAK_TAG;
+var DIV_WITH_PAGE_BREAK = 'div:has(' + PAGE_BREAK + ')';
 
 var MAX_PAGE_BREAKS_PER_CYCLE = 5;
 var PAGE_BREAK_HEIGHT = 16;
@@ -21,7 +21,7 @@ exports.calculatePageBreaks = function(startLine, originalCaretPosition, attribu
   var pageBreaks = [];
 
   // start paginating only from startLine
-  var $linesOfScript = utils.getPadInner().find("div");
+  var $linesOfScript = utils.getPadInner().find('div');
   var $firstLineAfterLastUnchangedPageBreak = lineAfterUnchangedPageBreak(startLine, $linesOfScript, rep);
 
   var $helperLines = createHelperLines($firstLineAfterLastUnchangedPageBreak, $linesOfScript);
@@ -121,17 +121,17 @@ var increaseOffsetTop = function(offset, topShift) {
 
 var getNumberOfMergedLinesOnPage = function(pageBreakInfo) {
   var $linesOfThisPage = pageBreakInfo.$firstLineOfThisPage.nextUntil(pageBreakInfo.$firstLineOfNextPage).andSelf();
-  var $mergedLinesOfThisPage = $linesOfThisPage.filter("." + paginationSplit.MERGED_LINE);
+  var $mergedLinesOfThisPage = $linesOfThisPage.filter('.' + paginationSplit.MERGED_LINE);
   return $mergedLinesOfThisPage.length;
 }
 
 var adjustPadInnerHeight = function() {
   var padInnerFrame = utils.getPadOuter().find("iframe[name='ace_inner']");
-  var originalHeight = parseInt(padInnerFrame.css("height"));
+  var originalHeight = parseInt(padInnerFrame.css('height'));
 
   // change pad inner css to force pad outer to adjust
   var heightWithHelperLines = utils.getPadInner().height();
-  padInnerFrame.css("height", heightWithHelperLines.toString() + "px");
+  padInnerFrame.css('height', heightWithHelperLines.toString() + 'px');
 
   return originalHeight;
 }
@@ -165,18 +165,18 @@ var getFirstLineNotReachedByThisPaginationCycle = function(startAtOffset) {
 var getLineAt = function(offset) {
   var editorDocument  = utils.getPadOuter().find("iframe[name='ace_inner']").get(0).contentDocument;
   var elementAtOffset = editorDocument.elementFromPoint(offset.left, offset.top);
-  var $lineAtOffset = $(elementAtOffset).closest("div");
+  var $lineAtOffset = $(elementAtOffset).closest('div');
 
   // offset might be at a margin, so try next line
   if ($lineAtOffset.length === 0) {
     var oneLine = utils.getHeightOfOneLine();
     elementAtOffset = editorDocument.elementFromPoint(offset.left, offset.top + oneLine);
-    $lineAtOffset = $(elementAtOffset).closest("div");
+    $lineAtOffset = $(elementAtOffset).closest('div');
 
     // headings have 2-lines margin, so it's possible that we still didn't reach its content
     if ($lineAtOffset.length === 0) {
       elementAtOffset = editorDocument.elementFromPoint(offset.left, offset.top + 2*oneLine);
-      $lineAtOffset = $(elementAtOffset).closest("div");
+      $lineAtOffset = $(elementAtOffset).closest('div');
     }
   }
 
@@ -228,8 +228,8 @@ var getTotalHeightOfPaginationCycle = function() {
 }
 
 var getOriginalLineFromHelperLine = function($helperLine, $linesOfScript) {
-  var lineId = $helperLine.attr("data-original-id");
-  var $originalLine = $linesOfScript.filter("#"+lineId);
+  var lineId = $helperLine.attr('data-original-id');
+  var $originalLine = $linesOfScript.filter('#'+lineId);
 
   return $originalLine;
 }

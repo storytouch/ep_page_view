@@ -1,7 +1,7 @@
 var utils = require('./utils');
 var paginationLinesChanged = require('./paginationLinesChanged');
 
-var sceneMarkUtils = require("ep_script_scene_marks/static/js/utils");
+var sceneMarkUtils = require('ep_script_scene_marks/static/js/utils');
 
 exports.init = function() {
   startObserving();

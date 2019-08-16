@@ -1,11 +1,11 @@
 var utils = require('./utils');
 var paginationPageNumber = require('./paginationPageNumber');
 
-var PAGE_BREAKS_ATTRIB                     = "nonSplitPageBreak";
-var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "nonSplitPageBreakWithMoreAndContd";
+var PAGE_BREAKS_ATTRIB                     = 'nonSplitPageBreak';
+var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = 'nonSplitPageBreakWithMoreAndContd';
 exports.PAGE_BREAK_ATTRIBS = [PAGE_BREAKS_ATTRIB, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB];
 
-var PAGE_BREAK_TAG = "nonSplitPageBreak";
+var PAGE_BREAK_TAG = 'nonSplitPageBreak';
 exports.PAGE_BREAK_TAG = PAGE_BREAK_TAG;
 utils.registerPageBreakTag(PAGE_BREAK_TAG);
 
@@ -113,8 +113,8 @@ var callAllListenersOfHeadingOnTopOfPage = function(headingLineNumber, attribute
 }
 
 var getMoreAndContdInfo = function($line) {
-  var lineIsParentheticalOrDialogue = $line.has("parenthetical, dialogue").length > 0;
-  var nextLineIsParentheticalOrDialogue = $line.next().has("parenthetical, dialogue").length > 0;
+  var lineIsParentheticalOrDialogue = $line.has('parenthetical, dialogue').length > 0;
+  var nextLineIsParentheticalOrDialogue = $line.next().has('parenthetical, dialogue').length > 0;
 
   if (lineIsParentheticalOrDialogue && nextLineIsParentheticalOrDialogue) {
     return {

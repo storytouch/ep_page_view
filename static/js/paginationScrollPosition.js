@@ -3,23 +3,23 @@ var _ = require('ep_etherpad-lite/static/js/underscore');
 
 var utils = require('./utils');
 
-var SCROLL_SHIFT_ATTRIB = "scroll_shift";
-var SORT_ORDER_ATTRIB   = "sort_order";
+var SCROLL_SHIFT_ATTRIB = 'scroll_shift';
+var SORT_ORDER_ATTRIB   = 'sort_order';
 
 var SCROLL_SHIFT_REGEXP = new RegExp("(?:^|)" + SCROLL_SHIFT_ATTRIB + ":(\\S+)");
 var SORT_ORDER_REGEXP   = new RegExp("(?:^|)" + SORT_ORDER_ATTRIB + ":([0-9]+)");
 
-var SCROLL_TARGET_TAG = "scroll_target";
+var SCROLL_TARGET_TAG = 'scroll_target';
 
-var MAIN_TARGET = "1";
-var NEXT_TARGET = "2";
-var PREV_TARGET = "3";
+var MAIN_TARGET = '1';
+var NEXT_TARGET = '2';
+var PREV_TARGET = '3';
 
 exports.buildHtmlWithTargetScroll = function(cls) {
-  var scrollTarget = getShiftValueFromClass(cls) || "";
+  var scrollTarget = getShiftValueFromClass(cls) || '';
 
   if(scrollTarget) {
-    var sortOrder = getSortOrderValueFromClass(cls) || "";
+    var sortOrder = getSortOrderValueFromClass(cls) || '';
 
     var shiftAttrib     = " " + SCROLL_SHIFT_ATTRIB + "='" + scrollTarget + "'";
     var sortOrderAttrib = " " + SORT_ORDER_ATTRIB   + "='" + sortOrder    + "'";
@@ -45,7 +45,7 @@ exports.blockElements = function() {
 
 exports.atribsToClasses = function(context) {
   if (isScrollTarget(context.key) || isSortOrder(context.key)) {
-    return [context.key + ":" + context.value];
+    return [context.key + ':' + context.value];
   }
 }
 var isScrollTarget = function(contextKey) {
@@ -107,7 +107,7 @@ var getCaretLineOnViewport = function(viewportScrollTop, rep) {
   var caretLineNode = utils.getDOMLineFromLineNumber(caretLine, rep);
 
   if (lineIsOnViewport(caretLineNode, viewportScrollTop)) {
-    return utils.getPadInner().find("#" + caretLineNode.id).first();
+    return utils.getPadInner().find('#' + caretLineNode.id).first();
   }
 }
 
@@ -123,7 +123,7 @@ var lineIsOnViewport = function(lineNode, viewportScrollTop) {
 }
 
 var getFirstLineVisibleOnViewport = function(viewportScrollTop) {
-  var $lines = utils.getPadInner().find("div");
+  var $lines = utils.getPadInner().find('div');
   var found = false;
   var $linesAfterViewportTop = $lines.filter(function() {
     if (!found && this.getBoundingClientRect().top >= viewportScrollTop) {
@@ -164,7 +164,7 @@ var adjustScrollToMatchAnchorLine = function(attributeManager, rep) {
 }
 
 var getAnchorLines = function() {
-  var $anchorLines = utils.getPadInner().find("div:has(" + SCROLL_TARGET_TAG + ")");
+  var $anchorLines = utils.getPadInner().find('div:has(' + SCROLL_TARGET_TAG + ')');
   // return line sorted, so we use the one with highest priority (lowest SORT_ORDER_ATTRIB value)
   var $sortedAnchorLines = $anchorLines.sort(function(prev, next) {
     var prevSortOrder = parseInt(sortOrderOf($(prev)));
@@ -180,7 +180,7 @@ var sortOrderOf = function($line) {
 }
 
 var pageBreakHeightOf = function($line) {
-  return parseInt($line.css("padding-bottom"));
+  return parseInt($line.css('padding-bottom'));
 }
 
 var removeMarksFromAnchorLines = function($lines, attributeManager, rep) {

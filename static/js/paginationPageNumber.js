@@ -1,6 +1,6 @@
 var utils = require('./utils');
 
-var PAGE_NUMBER_ATTRIB = "pageNumber";
+var PAGE_NUMBER_ATTRIB = 'pageNumber';
 exports.PAGE_NUMBER_ATTRIB = PAGE_NUMBER_ATTRIB;
 
 exports.cleanPageBreaks = function(startAtLine, endAtLine, attributeManager) {

@@ -1,7 +1,7 @@
 var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 
-var scriptElementUtils = require("ep_script_elements/static/js/utils");
+var scriptElementUtils = require('ep_script_elements/static/js/utils');
 
 var utils                      = require('./utils');
 var paginationSplit            = require('./paginationSplit');
@@ -15,10 +15,10 @@ var paginationCalculation      = require('./paginationPageBreaksCalculation');
 var paginationLineObserver     = require('./paginationLineObserver');
 var cssOptimization            = require('./cssOptimization');
 
-var isInTheMiddleOfASceneMarkVisibilityToggle = require("ep_script_scene_marks/static/js/sceneMarkVisibility").isInTheMiddleOfASceneMarkVisibilityToggle;
+var isInTheMiddleOfASceneMarkVisibilityToggle = require('ep_script_scene_marks/static/js/sceneMarkVisibility').isInTheMiddleOfASceneMarkVisibilityToggle;
 
-var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + "," + paginationSplit.PAGE_BREAK_TAG;
-var DIV_WITH_PAGE_BREAK = "div:has(" + PAGE_BREAK + ")";
+var PAGE_BREAK = paginationNonSplit.PAGE_BREAK_TAG + ',' + paginationSplit.PAGE_BREAK_TAG;
+var DIV_WITH_PAGE_BREAK = 'div:has(' + PAGE_BREAK + ')';
 
 var REPAGINATION_LINE_SHIFT = 3;
 var REACHED_END_OF_PAD = -1;
@@ -78,11 +78,11 @@ exports.aceAttribsToClasses = function(hook, context) {
 }
 
 exports.aceDomLineProcessLineAttributes = function(hook, context) {
-  var scrollTargetHtml = paginationScrollPosition.buildHtmlWithTargetScroll(context.cls) || "";
+  var scrollTargetHtml = paginationScrollPosition.buildHtmlWithTargetScroll(context.cls) || '';
   var pageBreak = paginationNonSplit.buildHtmlWithPageBreaks(context.cls) ||
                   paginationSplit.buildHtmlWithPageBreaks(context.cls) ||
                   // use a default object for clearer code bellow
-                  { preHtml: "", postHtml: "", default: true };
+                  { preHtml: '', postHtml: '', default: true };
 
   if (scrollTargetHtml || !pageBreak.default) {
     var modifier = {
@@ -106,15 +106,15 @@ exports.acePostWriteDomLineHTML = function(hook, context) {
 
   // adjust layout of parentheticals split between pages
   if (nodeHasSplitPageBreak) {
-    $node.addClass("firstHalf");
+    $node.addClass('firstHalf');
   }
 
   // leave room for page break on line at the end of the page
   if (nodeHasSplitPageBreak || nodeHasNonSplitPageBreak) {
-    $node.addClass("beforePageBreak");
+    $node.addClass('beforePageBreak');
   }
   if (nodeHasMoreAndContd) {
-    $node.addClass("withMoreAndContd");
+    $node.addClass('withMoreAndContd');
   }
 }
 
@@ -123,7 +123,7 @@ exports.aceEditEvent = function(hook, context) {
   var eventType = callstack.type;
 
   // if page break is disabled, only remove possible existing page breaks, don't do anything else
-  var pageBreakIsDisabled = !clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled;
+  var pageBreakIsDisabled = !utils.getPluginProps().pageBreakEnabled;
   if (pageBreakIsDisabled) {
     if (finishedLoadingPad(eventType)) {
       cleanAllPageBreaks(context);
@@ -188,7 +188,7 @@ var scriptHasNoPaginationYet = function() {
 }
 
 var isEditedByMe = function(eventType) {
-  return eventType !== "applyChangesToBase";
+  return eventType !== 'applyChangesToBase';
 }
 
 var paginationDidNotFinish = function() {
@@ -198,17 +198,17 @@ var isAChangeOnElementType = function(eventType) {
   return eventType === scriptElementUtils.CHANGE_ELEMENT_EVENT;
 }
 var isAPaginationScheduledByMe = function(eventType) {
-  return eventType === "pagination-" + clientVars.userId;
+  return eventType === 'pagination-' + clientVars.userId;
 }
 
 var myPaginationEventType = function() {
-  return "pagination-" + clientVars.userId;
+  return 'pagination-' + clientVars.userId;
 }
 
 var paginationTimer;
 var resetTimerToRestartPagination = function(context) {
   // define delay if not defined yet
-  clientVars.plugins.plugins.ep_script_page_view.paginationDelay = clientVars.plugins.plugins.ep_script_page_view.paginationDelay || 500;
+  utils.getPluginProps().paginationDelay = utils.getPluginProps().paginationDelay || 500;
 
   var editorInfo = context.editorInfo;
 
@@ -219,7 +219,7 @@ var resetTimerToRestartPagination = function(context) {
     editorInfo.ace_callWithAce(function(ace) {
       // do nothing here, we handle pagination on aceEditEvent
     }, myPaginationEventType());
-  }, clientVars.plugins.plugins.ep_script_page_view.paginationDelay);
+  }, utils.getPluginProps().paginationDelay);
 }
 
 // simpler version of repaginate(), should be run only on clean pads (with no pagination)

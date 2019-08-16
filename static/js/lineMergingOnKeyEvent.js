@@ -23,7 +23,7 @@ exports.aceKeyEvent = function(hook, context) {
 
 var getMergeInfo = function(editorInfo, attributeManager, evt, rep) {
   // check key pressed before anything else to be more efficient
-  var isMergeKey = (evt.keyCode === BACKSPACE || evt.keyCode === DELETE) && evt.type === "keydown";
+  var isMergeKey = (evt.keyCode === BACKSPACE || evt.keyCode === DELETE) && evt.type === 'keydown';
 
   // if text is selected, we simply ignore, as it is not a merge event
   if (isMergeKey && !textSelected(editorInfo)) {

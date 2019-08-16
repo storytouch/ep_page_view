@@ -6,11 +6,11 @@ var paginationPageNumber = require('./paginationPageNumber');
 var paginationNonSplit   = require('./paginationNonSplit');
 var scriptElementUtils   = require('ep_script_elements/static/js/utils');
 
-var PAGE_BREAKS_ATTRIB                     = "splitPageBreak";
-var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = "splitPageBreakWithMoreAndContd";
+var PAGE_BREAKS_ATTRIB                     = 'splitPageBreak';
+var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = 'splitPageBreakWithMoreAndContd';
 
-var FIRST_HALF_ATTRIB = "splitFirstHalf";
-var SECOND_HALF_ATTRIB = "splitSecondHalf";
+var FIRST_HALF_ATTRIB = 'splitFirstHalf';
+var SECOND_HALF_ATTRIB = 'splitSecondHalf';
 
 var ETHERPAD_AND_PAGE_BREAK_ATTRIBS = _.union(
   [
@@ -25,13 +25,13 @@ var ETHERPAD_AND_PAGE_BREAK_ATTRIBS = _.union(
   paginationNonSplit.PAGE_BREAK_ATTRIBS
 );
 
-var PAGE_BREAK_TAG = "splitPageBreak";
+var PAGE_BREAK_TAG = 'splitPageBreak';
 exports.PAGE_BREAK_TAG = PAGE_BREAK_TAG;
 utils.registerPageBreakTag(PAGE_BREAK_TAG);
 
-var FIRST_HALF_TAG                     = "split_first_half";
-var FIRST_HALF_WITH_MORE_AND_CONTD_TAG = "split_with_more_and_contd_first_half";
-var SECOND_HALF_TAG                    = "split_second_half";
+var FIRST_HALF_TAG                     = 'split_first_half';
+var FIRST_HALF_WITH_MORE_AND_CONTD_TAG = 'split_with_more_and_contd_first_half';
+var SECOND_HALF_TAG                    = 'split_second_half';
 exports.SECOND_HALF_TAG = SECOND_HALF_TAG;
 
 var DO_NOT_COLLECT = 'ignore_pagination_attribs';
@@ -39,7 +39,7 @@ var DO_NOT_COLLECT = 'ignore_pagination_attribs';
 var SENTENCE_MARKER_AND_WHITESPACE_REGEX = /^(.*[.?!;]\s+)[^.?!;]*$/;
 var WHITESPACE_REGEX                     = /^(.*\s+)[^\s]*$/;
 
-var MERGED_LINE = "merged";
+var MERGED_LINE = 'merged';
 exports.MERGED_LINE = MERGED_LINE;
 
 // number of minimum lines each element needs before a page break so it can be split in two parts
@@ -109,7 +109,7 @@ exports.getSplitInfo = function($helperLine, $originalLine, lineNumberShift, ava
 // Put together information about the line. Use the returned value to move around line information
 // through the functions of this file
 var getLineInfo = function($helperLine, $originalLine, originalCaretPosition, attributeManager, rep) {
-  var lineIdBeforeRepagination     = $originalLine.attr("id");
+  var lineIdBeforeRepagination     = $originalLine.attr('id');
   var lineNumberBeforeRepagination = rep.lines.indexOfKey(lineIdBeforeRepagination);
   var lineHasMarker                = lineHasMarkerExcludingSplitLineMarkers(lineNumberBeforeRepagination, attributeManager);
   // If line has no marker, it means it lost its "*", so we need to decrement column number
@@ -171,9 +171,9 @@ var getMinimumLinesBeforePageBreakFor = function(lineInfo) {
 
   // exception: if current line is a dialogue or parenthetical, and previous line is a character,
   // it needs 2 lines before page break, and not only 1
-  if (typeOfLine === "dialogue" || typeOfLine === "parenthetical") {
+  if (typeOfLine === 'dialogue' || typeOfLine === 'parenthetical') {
     var typeOfPreviousLine = lineInfo.typeOfPreviousLine();
-    if (typeOfPreviousLine === "character") {
+    if (typeOfPreviousLine === 'character') {
       minimumLines = 2;
     }
   }
@@ -189,7 +189,7 @@ var getMinimumLinesAfterPageBreakFor = function(lineInfo) {
 
 var getSplitMethod = function(lineInfo) {
   var typeOfLine = lineInfo.typeOfLine;
-  if (typeOfLine === "general" || typeOfLine === "transition") {
+  if (typeOfLine === 'general' || typeOfLine === 'transition') {
     return getFirstCharAfterLastSentenceMarkerAndWhitespacesOrFullInnerLine;
   }
   return getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine;
@@ -329,7 +329,7 @@ var calculateHeightToFitText = function(text, lineInfo) {
   var $theClone = utils.createCleanCopyOf($originalLine, text);
 
   // parentheticals need this to calculate line height without any "()"
-  $theClone.addClass("clone");
+  $theClone.addClass('clone');
 
   var height = $theClone.insertAfter($originalLine).get(0).getBoundingClientRect().height;
   $theClone.remove();
@@ -381,7 +381,7 @@ exports.collectContentPre = function(hook, context) {
   if (shouldNotCollectThisTag) return;
 
   // new line
-  if (tname === "div") {
+  if (tname === 'div') {
     delete lineAttributes[PAGE_BREAKS_ATTRIB];
     delete lineAttributes[PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB];
     delete lineAttributes[FIRST_HALF_ATTRIB];
@@ -449,7 +449,7 @@ var getSplitIdFromClass = function(cls) {
 }
 
 var newSplitId = function() {
-  return "split-" + randomString(16);
+  return 'split-' + randomString(16);
 }
 
 exports.blockElements = function() {
@@ -510,7 +510,7 @@ exports.mergeLinesWithExtraChars = function(lineNumber, rep, attributeManager, e
     var end = [lineNumber+1, charsToRemoveOnSecondHalf];
 
     // remove "\n" at the end of the line
-    editorInfo.ace_replaceRange(start, end, "");
+    editorInfo.ace_replaceRange(start, end, '');
   }
 }
 
@@ -604,8 +604,8 @@ var linesAreHalvesOfSameSplit = function($targetLine, $nextLine) {
 
   var lineIsFirstHalfOfSplit = $targetLine.find(PAGE_BREAK_TAG).length > 0;
   if (lineIsFirstHalfOfSplit) {
-    var firstHalfClass  = $targetLine.find(FIRST_HALF_TAG + "," + FIRST_HALF_WITH_MORE_AND_CONTD_TAG).attr("class");
-    var secondHalfClass = $nextLine.find(SECOND_HALF_TAG).attr("class");
+    var firstHalfClass  = $targetLine.find(FIRST_HALF_TAG + ',' + FIRST_HALF_WITH_MORE_AND_CONTD_TAG).attr('class');
+    var secondHalfClass = $nextLine.find(SECOND_HALF_TAG).attr('class');
     var splitIdOfFirstHalf  = getSplitIdFromClass(firstHalfClass);
     var splitIdOfSecondHalf = getSplitIdFromClass(secondHalfClass);
 
