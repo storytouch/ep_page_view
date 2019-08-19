@@ -4,12 +4,12 @@ var Security = require('ep_etherpad-lite/static/js/security');
 
 var scriptElementUtils = require('ep_script_elements/static/js/utils');
 
-var EMPTY_CHARACTER_NAME = "empty";
+var EMPTY_CHARACTER_NAME = 'empty';
 
-var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialogue, transition, shot";
+var SCRIPT_ELEMENTS_SELECTOR = 'heading, action, character, parenthetical, dialogue, transition, shot';
 
-var CLONED_ELEMENTS_CLASS = "cloned";
-var CLONED_ELEMENTS_SELECTOR = "." + CLONED_ELEMENTS_CLASS;
+var CLONED_ELEMENTS_CLASS = 'cloned';
+var CLONED_ELEMENTS_SELECTOR = '.' + CLONED_ELEMENTS_CLASS;
 
 // Letter
 // var REGULAR_LINES_PER_PAGE = 54;
@@ -50,9 +50,13 @@ exports.getPadInner = function() {
 }
 var getPadInner = exports.getPadInner;
 
+exports.getPluginProps = function() {
+  return clientVars.plugins.plugins.ep_script_page_view;
+}
+
 exports.typeOf = function($line) {
   var $innerElement = $line.find(SCRIPT_ELEMENTS_SELECTOR);
-  var tagName = $innerElement.prop("tagName") || "general"; // general does not have inner tag
+  var tagName = $innerElement.prop('tagName') || 'general'; // general does not have inner tag
 
   return tagName.toLowerCase();
 }
@@ -133,11 +137,11 @@ exports.updateRegularLineHeight = function() {
 }
 
 exports.getWidthOfOneChar = function() {
-  return widthOf(getPadOuter().find("#linemetricsdiv"));
+  return widthOf(getPadOuter().find('#linemetricsdiv'));
 }
 
 exports.getHeightOfOneLine = function() {
-  return heightOf(getPadOuter().find("#linemetricsdiv"));
+  return heightOf(getPadOuter().find('#linemetricsdiv'));
 }
 var getHeightOfOneLine = exports.getHeightOfOneLine;
 
@@ -145,13 +149,13 @@ exports.findCharacterNameOf = function($line) {
   // navigate up until find an element that is not a dialogue or parenthetical
   // (include $line because there might be no dialogue or parenthetical before it, so the result would
   // be empty)
-  var $firstElementOfDialogueOfBlock = $line.prevUntil("div:not(:has(dialogue,parenthetical))").andSelf().first();
+  var $firstElementOfDialogueOfBlock = $line.prevUntil('div:not(:has(dialogue,parenthetical))').andSelf().first();
 
-  // element before dialogue block should be a character -- if it is not, the text will be ""
-  var $characterBeforeDialogueBlock = $firstElementOfDialogueOfBlock.prev().find("character");
+  // element before dialogue block should be a character -- if it is not, the text will be ''
+  var $characterBeforeDialogueBlock = $firstElementOfDialogueOfBlock.prev().find('character');
 
-  // we cannot store "" as character name, Etherpad considers this an inexistent attribute. So we
-  // store a fake value and replace it by "" when showing on editor
+  // we cannot store '' as character name, Etherpad considers this an inexistent attribute. So we
+  // store a fake value and replace it by '' when showing on editor
   var characterName = $characterBeforeDialogueBlock.text().toUpperCase() || EMPTY_CHARACTER_NAME;
 
   return characterName;
@@ -160,15 +164,15 @@ exports.findCharacterNameOf = function($line) {
 exports.performNonUnduableEvent = function(callstack, action) {
   var eventType = callstack.editEvent.eventType;
 
-  callstack.startNewEvent("nonundoable");
+  callstack.startNewEvent('nonundoable');
   action();
   callstack.startNewEvent(eventType);
 }
 
 exports.buildCharacterNameToClass = function(value) {
-  var characterName = (value === EMPTY_CHARACTER_NAME ? "" : value);
+  var characterName = (value === EMPTY_CHARACTER_NAME ? '' : value);
 
-  // "characterName:<character name>"
+  // 'characterName:<character name>'
   return 'characterName:<' + Security.escapeHTMLAttribute(characterName) + '>';
 }
 
@@ -195,13 +199,13 @@ var buildSimplePageBreak = exports.buildSimplePageBreak;
 var extractCharacterNameFromClass = function(cls) {
   var regex  = "(?:^| )characterName:<([^>]*)>"; // "characterName:<character name>"
   var characterNameFound = cls.match(new RegExp(regex));
-  var characterName = characterNameFound ? characterNameFound[1] : "";
+  var characterName = characterNameFound ? characterNameFound[1] : '';
 
   return characterName;
 }
 
 exports.pageNumberOfDOMLine = function($line) {
-  return $line.find("pagenumber").attr("data-page-number");
+  return $line.find('pagenumber').attr('data-page-number');
 }
 
 exports.buildPageNumberToClass = function(value) {
@@ -211,13 +215,13 @@ exports.buildPageNumberToClass = function(value) {
 var extractPageNumberFromClass = function(cls) {
   var regex = "(?:^| )pageNumber:([0-9]*)";
   var pageNumberFound = cls.match(new RegExp(regex));
-  var pageNumber = pageNumberFound ? pageNumberFound[1] : "";
+  var pageNumber = pageNumberFound ? pageNumberFound[1] : '';
 
   return pageNumber;
 }
 
 exports.getLineNumberFromDOMLine = function($line, rep) {
-  var lineId     = $line.attr("id");
+  var lineId     = $line.attr('id');
   var lineNumber = rep.lines.indexOfKey(lineId);
 
   return lineNumber;
@@ -236,7 +240,7 @@ exports.getNextLineIgnoringSceneMarks = function($targetLine) {
 }
 
 exports.nodeHasMoreAndContd = function($node) {
-  return $node.find("more").length > 0;
+  return $node.find('more').length > 0;
 }
 
 exports.setTextOfLine = function($targetLine, text) {
@@ -265,10 +269,10 @@ exports.createCleanCopyOf = function($targetLine, text) {
     innerHtml = text;
   } else {
     var tag = $innerTarget.get(0).tagName.toLowerCase();
-    innerHtml = "<" + tag + ">" + text + "</" + tag + ">";
+    innerHtml = '<' + tag + '>' + text + '</' + tag + '>';
   }
 
-  return $("<div>" + innerHtml + "</div>");
+  return $('<div>' + innerHtml + '</div>');
 }
 
 exports.cleanHelperLines = function($helperLines) {
@@ -278,26 +282,26 @@ exports.cleanHelperLines = function($helperLines) {
   $helperLines.find(getPageBreakTagsSelector()).remove();
 
   // remove classes that impact element dimensions
-  $helperLines.removeClass("firstHalf beforePageBreak withMoreAndContd");
+  $helperLines.removeClass('firstHalf beforePageBreak withMoreAndContd');
 
   // store original id on another attribute so it can be retrieved later
   $helperLines.each(function(index, element) {
     var $helperLine = $(element);
-    var originalId = $helperLine.attr("id");
-    $helperLine.attr("data-original-id", originalId);
+    var originalId = $helperLine.attr('id');
+    $helperLine.attr('data-original-id', originalId);
 
     // remove id to not mess up with existing lines
-    $helperLine.attr("id", "");
+    $helperLine.attr('id', '');
   });
 }
 
-var pageBreakTags = ["more", "contdLine", "pagenumber"];
+var pageBreakTags = ['more', 'contdLine', 'pagenumber'];
 var pageBreakTagsSelector;
 exports.registerPageBreakTag = function(tagName) {
   pageBreakTags.push(tagName);
 
   // cache selector for faster processing
-  pageBreakTagsSelector = _(pageBreakTags).unique().join(",");
+  pageBreakTagsSelector = _(pageBreakTags).unique().join(',');
 }
 
 var getPageBreakTagsSelector = function() {

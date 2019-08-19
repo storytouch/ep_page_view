@@ -1,52 +1,52 @@
 var ep_script_page_view_test_helper = ep_script_page_view_test_helper || {};
 ep_script_page_view_test_helper.utils = {
   act: function(name, summary) {
-    return "<act_name>" + name + "</act_name><br/>" +
-           "<act_summary>" + summary + "</act_summary><br/>";
+    return '<act_name>' + name + '</act_name><br/>' +
+           '<act_summary>' + summary + '</act_summary><br/>';
   },
   sequence: function(name, summary) {
-    return "<sequence_name>" + name + "</sequence_name><br/>" +
-           "<sequence_summary>" + summary + "</sequence_summary><br/>";
+    return '<sequence_name>' + name + '</sequence_name><br/>' +
+           '<sequence_summary>' + summary + '</sequence_summary><br/>';
   },
   synopsis: function(name, summary) {
-    return "<scene_name>" + name + "</scene_name><br/>" +
-           "<scene_summary>" + summary + "</scene_summary><br/>";
+    return '<scene_name>' + name + '</scene_name><br/>' +
+           '<scene_summary>' + summary + '</scene_summary><br/>';
   },
   heading: function(text) {
-    return "<heading>" + text + "</heading><br/>";
+    return '<heading>' + text + '</heading><br/>';
   },
   action: function(text) {
-    return "<action>" + text + "</action><br/>";
+    return '<action>' + text + '</action><br/>';
   },
   parenthetical: function(text) {
-    return "<parenthetical>" + text + "</parenthetical><br/>";
+    return '<parenthetical>' + text + '</parenthetical><br/>';
   },
   character: function(text) {
-    return "<character>" + text + "</character><br/>";
+    return '<character>' + text + '</character><br/>';
   },
   dialogue: function(text) {
-    return "<dialogue>" + text + "</dialogue><br/>";
+    return '<dialogue>' + text + '</dialogue><br/>';
   },
   shot: function(text) {
-    return "<shot>" + text + "</shot><br/>";
+    return '<shot>' + text + '</shot><br/>';
   },
   transition: function(text) {
-    return "<transition>" + text + "</transition><br/>";
+    return '<transition>' + text + '</transition><br/>';
   },
   general: function(text) {
-    return text + "<br/>";
+    return text + '<br/>';
   },
   createScriptWith: function(scriptContent, lastLineText, cb) {
     var inner$ = helper.padInner$;
     var utils = ep_script_page_view_test_helper.utils;
 
     // set script content
-    var $firstLine = inner$("div").first();
+    var $firstLine = inner$('div').first();
     $firstLine.html(scriptContent);
 
     // wait for Etherpad to finish processing the lines
     helper.waitFor(function(){
-      var $lastLine = inner$("div").last();
+      var $lastLine = inner$('div').last();
       return utils.cleanText($lastLine.text()) === lastLineText;
     }, 3000).done(cb);
   },
@@ -62,10 +62,10 @@ ep_script_page_view_test_helper.utils = {
   clickOnAddAct: function(done) {
     var outer$ = helper.padOuter$;
     helper.waitFor(function() {
-      var mouseWindowIsVisible = outer$(".mouseWindow").length != 0;
+      var mouseWindowIsVisible = outer$('.mouseWindow').length != 0;
       return mouseWindowIsVisible;
     }, 2000).done(function() {
-      var $addActMenuOption = outer$("#addAct");
+      var $addActMenuOption = outer$('#addAct');
       $addActMenuOption.click();
       done();
     });
@@ -93,10 +93,10 @@ ep_script_page_view_test_helper.utils = {
     var chrome$ = helper.padChrome$;
 
     // click on the settings button to make settings visible
-    var $settingsButton = chrome$(".buttonicon-settings");
+    var $settingsButton = chrome$('.buttonicon-settings');
     $settingsButton.click();
 
-    // check "Line Numbers"
+    // check 'Line Numbers'
     var $showLineNumbers = chrome$('#options-linenoscheck');
     if ($showLineNumbers.is(':checked') !== shouldShowLineNumbers) $showLineNumbers.click();
 
@@ -112,12 +112,12 @@ ep_script_page_view_test_helper.utils = {
     helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.paginationDelay = 100;
 
     var inner$ = helper.padInner$;
-    var $padContent = inner$("#innerdocbody");
-    $padContent.html("");
+    var $padContent = inner$('#innerdocbody');
+    $padContent.html('');
 
     // wait for Etherpad to re-create first line
     helper.waitFor(function(){
-      var lineNumber = inner$("div").length;
+      var lineNumber = inner$('div').length;
       return lineNumber === 1;
     }, 2000).done(callback);
   },
@@ -127,7 +127,7 @@ ep_script_page_view_test_helper.utils = {
   // ...
   getLine: function(lineNum) {
     var inner$ = helper.padInner$;
-    var $line = inner$("div").first();
+    var $line = inner$('div').first();
     for (var i = lineNum - 1; i >= 0; i--) {
       $line = $line.next();
     }
@@ -135,8 +135,8 @@ ep_script_page_view_test_helper.utils = {
   },
   getLineNumber: function(lineNum) {
     var outer$ = helper.padOuter$;
-    var $lineNumbersContainer = outer$("#sidedivinner");
-    var $line = $lineNumbersContainer.find("div").first();
+    var $lineNumbersContainer = outer$('#sidedivinner');
+    var $line = $lineNumbersContainer.find('div').first();
     for (var i = lineNum - 1; i >= 0; i--) {
       $line = $line.next();
     }
@@ -146,7 +146,7 @@ ep_script_page_view_test_helper.utils = {
   getLineWhereCaretIs: function() {
     var inner$ = helper.padInner$;
     var nodeWhereCaretIs = inner$.document.getSelection().anchorNode;
-    var $lineWhereCaretIs = $(nodeWhereCaretIs).closest("div");
+    var $lineWhereCaretIs = $(nodeWhereCaretIs).closest('div');
 
     return $lineWhereCaretIs;
   },
@@ -158,7 +158,7 @@ ep_script_page_view_test_helper.utils = {
   },
 
   cleanText: function(text) {
-    return text.replace(/\s/gi, " ");
+    return text.replace(/\s/gi, ' ');
   },
 
   buildStringWithLength: function(length, text) {
@@ -168,7 +168,7 @@ ep_script_page_view_test_helper.utils = {
   buildScriptWithGenerals: function(text, howMany) {
     var utils = ep_script_page_view_test_helper.utils;
 
-    var script = "";
+    var script = '';
     for (var i = 0; i < howMany; i++) {
       script += utils.general(text);
     }
@@ -178,17 +178,17 @@ ep_script_page_view_test_helper.utils = {
 
   undo: function() {
     var chrome$ = helper.padChrome$;
-    var $undoButton = chrome$(".buttonicon-undo");
+    var $undoButton = chrome$('.buttonicon-undo');
     $undoButton.click();
   },
 
   regularLineHeight: function() {
-    var $editor = helper.padInner$("#innerdocbody");
-    return parseFloat($editor.css("line-height"));
+    var $editor = helper.padInner$('#innerdocbody');
+    return parseFloat($editor.css('line-height'));
   },
   heightOf: function($element, pseudoElementName) {
     var pageBreak      = $element.get(0);
-    var pageBreakStyle = helper.padInner$.window.getComputedStyle(pageBreak, ":before");
+    var pageBreakStyle = helper.padInner$.window.getComputedStyle(pageBreak, ':before');
 
     var marginTop      = parseFloat(pageBreakStyle.marginTop);
     var paddingBottom  = parseFloat(pageBreakStyle.paddingBottom);
@@ -202,13 +202,13 @@ ep_script_page_view_test_helper.utils = {
   },
   heightOfSplitPageBreak: function() {
     var inner$ = helper.padInner$;
-    var $splitPageBreak = inner$("div splitPageBreak").first();
-    return ep_script_page_view_test_helper.utils.heightOf($splitPageBreak, ":before");
+    var $splitPageBreak = inner$('div splitPageBreak').first();
+    return ep_script_page_view_test_helper.utils.heightOf($splitPageBreak, ':before');
   },
   heightOfMore: function() {
     var inner$ = helper.padInner$;
-    var $more = inner$("div more").first();
-    return ep_script_page_view_test_helper.utils.heightOf($more, ":before");
+    var $more = inner$('div more').first();
+    return ep_script_page_view_test_helper.utils.heightOf($more, ':before');
   },
 
   placeCaretInTheBeginningOfLine: function(lineNum, cb, waitFor) {
@@ -222,14 +222,14 @@ ep_script_page_view_test_helper.utils = {
     };
 
     var $targetLine = utils.getLine(lineNum);
-    $targetLine.sendkeys("{selectall}{leftarrow}");
+    $targetLine.sendkeys('{selectall}{leftarrow}');
     helper.waitFor(waitFor).done(cb);
   },
 
   placeCaretAtTheEndOfLine: function(lineNum, cb) {
     var utils =  ep_script_page_view_test_helper.utils;
     var $targetLine = utils.getLine(lineNum);
-    $targetLine.sendkeys("{selectall}{rightarrow}");
+    $targetLine.sendkeys('{selectall}{rightarrow}');
     helper.waitFor(function() {
       var $targetLine = utils.getLine(lineNum);
       var $lineWhereCaretIs = utils.getLineWhereCaretIs();
@@ -249,13 +249,13 @@ ep_script_page_view_test_helper.utils = {
   pressKey: function(CODE) {
     var inner$ = helper.padInner$;
     if(inner$(window)[0].bowser.firefox || inner$(window)[0].bowser.modernIE){ // if it's a mozilla or IE
-      var evtType = "keypress";
+      var evtType = 'keypress';
     }else{
-      var evtType = "keydown";
+      var evtType = 'keydown';
     }
     var e = inner$.Event(evtType);
     e.keyCode = CODE;
-    inner$("#innerdocbody").trigger(e);
+    inner$('#innerdocbody').trigger(e);
   },
   pressBackspace: function() {
     var utils = ep_script_page_view_test_helper.utils;
@@ -286,7 +286,7 @@ ep_script_page_view_test_helper.utils = {
     var $targetLine = utils.getLine(lineNumber);
     var targetScrollTop = $targetLine.offset().top;
 
-    var $editor = outer$("#outerdocbody");
+    var $editor = outer$('#outerdocbody');
     $editor.parent().scrollTop(targetScrollTop);
   },
 
@@ -304,7 +304,7 @@ ep_script_page_view_test_helper.utils = {
     // top of the line on pad + shift of inner line
     var expectedScrollTop = $targetLine.offset().top + innerLineShift;
 
-    var $editor = outer$("#outerdocbody");
+    var $editor = outer$('#outerdocbody');
     var actualScrollTop = $editor.parent().scrollTop();
 
     expect(actualScrollTop).to.be.within(expectedScrollTop - acceptedRange, expectedScrollTop + acceptedRange);
@@ -316,7 +316,7 @@ ep_script_page_view_test_helper.utils = {
     var utils = ep_script_page_view_test_helper.utils;
     var outer$ = helper.padOuter$;
 
-    var $editor = outer$("#outerdocbody");
+    var $editor = outer$('#outerdocbody');
 
     var $targetLine = utils.getLine(lineNumberBeforeWaitFor);
     var shiftBetweenTopAndLineWithCaret = $targetLine.offset().top - $editor.parent().scrollTop();
@@ -340,7 +340,7 @@ ep_script_page_view_test_helper.utils = {
   linesAfterNonSplitPageBreaks: function() {
     var inner$ = helper.padInner$;
 
-    var $elementsWithPageBreaksOnBottom = inner$("div nonSplitPageBreak").closest("div");
+    var $elementsWithPageBreaksOnBottom = inner$('div nonSplitPageBreak').closest('div');
     var $linesAfterPageBreaks = $elementsWithPageBreaksOnBottom.next();
 
     return $linesAfterPageBreaks;
@@ -349,7 +349,7 @@ ep_script_page_view_test_helper.utils = {
   linesAfterSplitPageBreaks: function() {
     var inner$ = helper.padInner$;
 
-    var $elementsWithPageBreaksOnBottom = inner$("div splitPageBreak").closest("div");
+    var $elementsWithPageBreaksOnBottom = inner$('div splitPageBreak').closest('div');
     var $linesAfterPageBreaks = $elementsWithPageBreaksOnBottom.next();
 
     return $linesAfterPageBreaks;
@@ -357,7 +357,7 @@ ep_script_page_view_test_helper.utils = {
 
   pageBreakOfLine: function($line) {
     var $lineWithPageBreak = $line.prev();
-    return $lineWithPageBreak.find("nonSplitPageBreak, splitPageBreak").first();
+    return $lineWithPageBreak.find('nonSplitPageBreak, splitPageBreak').first();
   },
 
   getFirstScriptElementOfPageStartingAt: function($lineOnTopOfPage) {
@@ -380,12 +380,12 @@ ep_script_page_view_test_helper.utils = {
       // verify page break is on targetElement
       var $elementsWithPageBreaksOnTop = utils.linesAfterSplitPageBreaks();
       var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
-      var startWithTextAfterPageBreak = new RegExp("^" + textAfterPageBreak);
+      var startWithTextAfterPageBreak = new RegExp('^' + textAfterPageBreak);
       expect(utils.cleanText($firstPageBreak.text())).to.match(startWithTextAfterPageBreak);
 
       // verify page number is correct
-      var $lineWithPageBreak = utils.pageBreakOfLine($firstPageBreak).closest("div");
-      var actualPageNumber = $lineWithPageBreak.find("pagenumber").attr("data-page-number");
+      var $lineWithPageBreak = utils.pageBreakOfLine($firstPageBreak).closest('div');
+      var actualPageNumber = $lineWithPageBreak.find('pagenumber').attr('data-page-number');
       expect(actualPageNumber.toString()).to.be(expectedPageNumber.toString());
 
       done();
@@ -406,8 +406,8 @@ ep_script_page_view_test_helper.utils = {
       // verify page number is correct
       var $elementsWithPageBreaksOnTop = utils.linesAfterNonSplitPageBreaks();
       var $firstPageBreak = $elementsWithPageBreaksOnTop.first();
-      var $lineWithPageBreak = utils.pageBreakOfLine($firstPageBreak).closest("div");
-      var actualPageNumber = $lineWithPageBreak.find("pagenumber").attr("data-page-number");
+      var $lineWithPageBreak = utils.pageBreakOfLine($firstPageBreak).closest('div');
+      var actualPageNumber = $lineWithPageBreak.find('pagenumber').attr('data-page-number');
       expect(actualPageNumber.toString()).to.be(expectedPageNumber.toString());
 
       done();
@@ -420,16 +420,16 @@ ep_script_page_view_test_helper.utils = {
 
     // wait for pagination to be finished
     helper.waitFor(function() {
-      var $splitPageBreaks = inner$("div splitPageBreak");
+      var $splitPageBreaks = inner$('div splitPageBreak');
       var $nonSplitPageBreaks = utils.linesAfterNonSplitPageBreaks();
       return ($splitPageBreaks.length + $nonSplitPageBreaks.length) > 0;
     }, 2000).done(function() {
       // verify there is no MORE tag
-      var $moreTags = inner$("div more");
+      var $moreTags = inner$('div more');
       expect($moreTags.length).to.be(0);
 
       // verify there is no CONT'D tag
-      var $contdTags = inner$("div contd");
+      var $contdTags = inner$('div contd');
       expect($contdTags.length).to.be(0);
 
       done();
@@ -442,20 +442,20 @@ ep_script_page_view_test_helper.utils = {
 
     // wait for pagination to be finished
     helper.waitFor(function() {
-      var $splitPageBreaks = inner$("div splitPageBreak");
+      var $splitPageBreaks = inner$('div splitPageBreak');
       var $nonSplitPageBreaks = utils.linesAfterNonSplitPageBreaks();
       return ($splitPageBreaks.length + $nonSplitPageBreaks.length) > 0;
     }, 2000).done(function() {
       // verify there is a MORE tag
-      var $moreTags = inner$("div more");
+      var $moreTags = inner$('div more');
       expect($moreTags.length).to.be(1);
 
       // verify there is a CONT'D tag
-      var $contdTags = inner$("div contd");
+      var $contdTags = inner$('div contd');
       expect($contdTags.length).to.be(1);
 
       // verify character name is correct
-      var actualCharacterName = $contdTags.first().attr("data-character");
+      var actualCharacterName = $contdTags.first().attr('data-character');
       expect(actualCharacterName).to.be(expectedCharacterName);
 
       done();
@@ -485,7 +485,7 @@ ep_script_page_view_test_helper.utils = {
         var targetLineNumberPosition = ($targetLineNumber.offset() || noLineNumberOffset).top;
         // get inner span position instead of whole div, otherwise test will pass even if
         // behavior is not correct
-        var targetLineOnPadPosition  = $targetLineOnPad.find("span").offset().top;
+        var targetLineOnPadPosition  = $targetLineOnPad.find('span').offset().top;
 
         // get actual heights (relative to origin)
         var actualLineNumberHeight = targetLineNumberPosition - originOfLineNumbers;

@@ -1,4 +1,4 @@
-describe.skip("ep_script_page_view - calculating page number", function() {
+describe.skip('ep_script_page_view - calculating page number', function() {
   var utils;
 
   before(function(){
@@ -12,7 +12,7 @@ describe.skip("ep_script_page_view - calculating page number", function() {
     this.timeout(60000);
   });
 
-  context("when repagination is running and page number was not recalculated yet", function() {
+  context('when repagination is running and page number was not recalculated yet', function() {
     var MAX_PAGE_BREAKS_PER_CYCLE = 5;
 
     // build script with lots of pages, so repagination takes a while to finish
@@ -23,12 +23,12 @@ describe.skip("ep_script_page_view - calculating page number", function() {
 
       var inner$ = helper.padInner$;
 
-      var lastLineText = "general";
+      var lastLineText = 'general';
 
       // each page has several single-line generals, and last line is a two-lines general
       // (so it is split later)
-      var line1 = utils.buildStringWithLength(50, "1") + ". ";
-      var line2 = utils.buildStringWithLength(50, "2") + ". ";
+      var line1 = utils.buildStringWithLength(50, '1') + '. ';
+      var line2 = utils.buildStringWithLength(50, '2') + '. ';
       var fullPage = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE - 2) +
                      utils.general(line1 + line2);
       var lastLine = utils.general(lastLineText);
@@ -41,8 +41,8 @@ describe.skip("ep_script_page_view - calculating page number", function() {
         }, 10000).done(function() {
           // inserts a long text to first line, so all lines will be shift one line down
           // and pagination will change scroll position of elements
-          var longText = utils.buildStringWithLength(62, "1");
-          var $firstLine = inner$("div").first();
+          var longText = utils.buildStringWithLength(62, '1');
+          var $firstLine = inner$('div').first();
           $firstLine.sendkeys(longText);
 
           // wait for first cycle of repagination to be completed before start testing
@@ -54,13 +54,13 @@ describe.skip("ep_script_page_view - calculating page number", function() {
       });
     });
 
-    it("displays a loading icon beside page number value", function(done) {
+    it('displays a loading icon beside page number value', function(done) {
       var inner$ = helper.padInner$;
 
-      var $pageNumbers = inner$("pagenumber");
+      var $pageNumbers = inner$('pagenumber');
       // <calculating> is 0x0 by default. When it has height and width, it means it's icon is being
       // displayed
-      var pageNumbersLoading = $pageNumbers.find("calculating:visible").length;
+      var pageNumbersLoading = $pageNumbers.find('calculating:visible').length;
       var expectedPageNumbersLoadingAfterFirstCycle = NUMBER_OF_PAGES - MAX_PAGE_BREAKS_PER_CYCLE;
 
       expect(pageNumbersLoading).to.be(expectedPageNumbersLoadingAfterFirstCycle);
@@ -68,7 +68,7 @@ describe.skip("ep_script_page_view - calculating page number", function() {
       done();
     });
 
-    context("and repagination is complete", function() {
+    context('and repagination is complete', function() {
 
       beforeEach(function(done) {
         this.timeout(10000);
@@ -80,11 +80,11 @@ describe.skip("ep_script_page_view - calculating page number", function() {
         }, 10000).done(done);
       });
 
-      it("does not display a loading icon beside page number value", function(done) {
+      it('does not display a loading icon beside page number value', function(done) {
         var inner$ = helper.padInner$;
 
-        var $pageNumbers = inner$("pagenumber");
-        var pageNumbersLoading = $pageNumbers.find("calculating:visible").length;
+        var $pageNumbers = inner$('pagenumber');
+        var pageNumbersLoading = $pageNumbers.find('calculating:visible').length;
 
         expect(pageNumbersLoading).to.be(0);
 

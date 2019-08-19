@@ -14,10 +14,7 @@
         "aceEditEvent": "ep_script_page_view/static/js/pagination"
       },
       "hooks": {
-        "eejsBlock_mySettings": "ep_script_page_view/page_view",
-        "eejsBlock_styles": "ep_script_page_view/page_view",
-        "eejsBlock_dd_insert" : "ep_script_page_view/page_view",
-        "eejsBlock_dd_view" : "ep_script_page_view/page_view"
+        "eejsBlock_styles": "ep_script_page_view/page_view"
       }
     },
     {

@@ -16,8 +16,8 @@ exports.getBlockInfo = function($helperLine) {
   // block type:
   // (*) => transition (only one line of text)
   //        +--------- $currentLine ----------+
-  if (typeOfCurrentLine === "transition" && innerLinesOfCurrentLine === 1) {
-    if (typeOfPreviousLine !== "parenthetical" && typeOfPreviousLine !== "dialogue" ) {
+  if (typeOfCurrentLine === 'transition' && innerLinesOfCurrentLine === 1) {
+    if (typeOfPreviousLine !== 'parenthetical' && typeOfPreviousLine !== 'dialogue' ) {
       $topOfBlock = $previousLine;
     }
     // block type:
@@ -34,14 +34,14 @@ exports.getBlockInfo = function($helperLine) {
       $topOfBlock = $previousLine;
     }
   }
-  else if (typeOfCurrentLine === "parenthetical" || typeOfCurrentLine === "dialogue") {
-    if (typeOfPreviousLine === "character") {
+  else if (typeOfCurrentLine === 'parenthetical' || typeOfCurrentLine === 'dialogue') {
+    if (typeOfPreviousLine === 'character') {
       var $lineBeforePrevious = $previousLine.prev();
       var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
       // block type:
       // heading => character => (parenthetical || dialogue)
       //                         +------ $currentLine -----+
-      if (typeOfLineBeforePrevious === "heading") {
+      if (typeOfLineBeforePrevious === 'heading') {
         $topOfBlock = $lineBeforePrevious;
       }
       // block type:
@@ -51,14 +51,14 @@ exports.getBlockInfo = function($helperLine) {
         $topOfBlock = $previousLine;
       }
     }
-    else if (typeOfPreviousLine === "parenthetical" || typeOfPreviousLine === "dialogue") {
+    else if (typeOfPreviousLine === 'parenthetical' || typeOfPreviousLine === 'dialogue') {
       // block type:
       // !character => (parenthetical || dialogue) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
       //                                              +------------------ $currentLine -----------------+
       if (innerLinesOfCurrentLine === 1) {
         var $lineBeforePrevious = $previousLine.prev();
         var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
-        if (typeOfLineBeforePrevious !== "character" && typeOfNextLine !== "dialogue" && typeOfNextLine !== "parenthetical") {
+        if (typeOfLineBeforePrevious !== 'character' && typeOfNextLine !== 'dialogue' && typeOfNextLine !== 'parenthetical') {
           $topOfBlock = $previousLine;
         }
       }
@@ -68,7 +68,7 @@ exports.getBlockInfo = function($helperLine) {
       else if (getNumberOfInnerLinesOf($previousLine) === 1) {
         var $lineBeforePrevious = $previousLine.prev();
         var typeOfLineBeforePrevious = utils.typeOf($lineBeforePrevious);
-        if (typeOfLineBeforePrevious === "character") {
+        if (typeOfLineBeforePrevious === 'character') {
           $topOfBlock = $lineBeforePrevious;
         }
       }
@@ -76,15 +76,15 @@ exports.getBlockInfo = function($helperLine) {
     // block type:
     // !(character) => (parenthetical || dialogue) (only one line of text) => !(parenthetical || dialogue)
     //                 +------------------ $currentLine -----------------+
-    else if ((typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
+    else if ((typeOfNextLine !== 'parenthetical' && typeOfNextLine !== 'dialogue')
       &&
       innerLinesOfCurrentLine === 1) {
       $topOfBlock = $previousLine;
     }
   }
-  else if ((typeOfCurrentLine === "parenthetical" || typeOfCurrentLine === "dialogue")
+  else if ((typeOfCurrentLine === 'parenthetical' || typeOfCurrentLine === 'dialogue')
     &&
-    (typeOfNextLine !== "parenthetical" && typeOfNextLine !== "dialogue")
+    (typeOfNextLine !== 'parenthetical' && typeOfNextLine !== 'dialogue')
     &&
     innerLinesOfCurrentLine === 1) {
     $topOfBlock = $previousLine;
@@ -92,9 +92,9 @@ exports.getBlockInfo = function($helperLine) {
   // block type:
   // (heading || shot) => (action || character || general)
   //                      +-------- $currentLine --------+
-  else if ((typeOfCurrentLine === "action" || typeOfCurrentLine === "character" || typeOfCurrentLine === "general")
+  else if ((typeOfCurrentLine === 'action' || typeOfCurrentLine === 'character' || typeOfCurrentLine === 'general')
     &&
-    (typeOfPreviousLine === "heading" || typeOfPreviousLine === "shot")) {
+    (typeOfPreviousLine === 'heading' || typeOfPreviousLine === 'shot')) {
     $topOfBlock = $previousLine;
   }
 

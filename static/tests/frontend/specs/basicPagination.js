@@ -18,7 +18,7 @@ var DIALOGUES_PER_PAGE      = 58;
 var TRANSITIONS_PER_PAGE    = 28;
 var SHOTS_PER_PAGE          = 20;
 
-describe.skip("ep_script_page_view - pagination basic tests", function() {
+describe.skip('ep_script_page_view - pagination basic tests', function() {
   var utils, pageBreak;
 
   var getPageBuilder = function(elementsPerPage, builder) {
@@ -33,20 +33,20 @@ describe.skip("ep_script_page_view - pagination basic tests", function() {
     this.timeout(60000);
   });
 
-  context("when lines do not have any top or bottom margin", function() {
+  context('when lines do not have any top or bottom margin', function() {
     before(function(done) {
       var scriptBuilder = pageBreak.scriptWithPageFullOfGenerals;
       pageBreak.createScript(scriptBuilder, done);
     });
 
-    it("fits " + GENERALS_PER_PAGE + " lines in a page", function(done) {
+    it('fits ' + GENERALS_PER_PAGE + ' lines in a page', function(done) {
       var elementBuilder = utils.general;
       var pageBuilder    = getPageBuilder(GENERALS_PER_PAGE, elementBuilder);
       pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
     });
 
-    context("and one of the lines has its type changed", function() {
-      it("updates pagination", function(done) {
+    context('and one of the lines has its type changed', function() {
+      it('updates pagination', function(done) {
         var smUtils = ep_script_scene_marks_test_helper.utils;
 
         // change second line to action, so all lines will be shifted down one position
@@ -58,17 +58,17 @@ describe.skip("ep_script_page_view - pagination basic tests", function() {
             var $secondPageBreak = $linesWithPageBreaks.last();
             var $lineAfterSecondPageBreak = $secondPageBreak.next();
 
-            return ($firstPageBreak.text() === "1st page") &&
-                   ($secondPageBreak.text() === "2nd page") &&
-                   ($lineAfterSecondPageBreak.text() === "1st of 3rd page");
+            return ($firstPageBreak.text() === '1st page') &&
+                   ($secondPageBreak.text() === '2nd page') &&
+                   ($lineAfterSecondPageBreak.text() === '1st of 3rd page');
           }, 3000).done(done);
         });
       });
     });
   });
 
-  context("when lines have top or bottom margin", function() {
-    context("and all lines are headings", function() {
+  context('when lines have top or bottom margin', function() {
+    context('and all lines are headings', function() {
       before(function(done) {
         var test = this;
         var scriptBuilder = getPageBuilder(HEADINGS_PER_PAGE, utils.heading);
@@ -79,7 +79,7 @@ describe.skip("ep_script_page_view - pagination basic tests", function() {
         });
       });
 
-      it("fits " + HEADINGS_PER_PAGE + " lines in a page", function(done) {
+      it('fits ' + HEADINGS_PER_PAGE + ' lines in a page', function(done) {
         pageBreak.checkIfItFitsXLinesPerPage(done);
       });
 
@@ -114,14 +114,14 @@ describe.skip("ep_script_page_view - pagination basic tests", function() {
       });
 
       // this is valid for some other elements too (but not for generals)
-      context("and last line is of page too long to fit entirely on it", function() {
+      context('and last line is of page too long to fit entirely on it', function() {
         var veryLongLineText;
 
         before(function() {
           var inner$ = helper.padInner$;
 
-          // "PAGE2.........(...). "
-          veryLongLineText = "PAGE2" + utils.buildStringWithLength(61 - "PAGE2".length, ".") + " ";
+          // 'PAGE2.........(...). '
+          veryLongLineText = 'PAGE2' + utils.buildStringWithLength(61 - 'PAGE2'.length, '.') + ' ';
 
           // removes all lines on last page, so we can easily access last line of last page
           var $lastLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().last().prev();
@@ -130,12 +130,12 @@ describe.skip("ep_script_page_view - pagination basic tests", function() {
 
           // replaces last line with a very long text (> 61 chars, so it is
           // displayed in 2 lines on the editor)
-          var $lastLine = inner$("div").last().find("heading");
-          $lastLine.sendkeys("{selectall}");
+          var $lastLine = inner$('div').last().find('heading');
+          $lastLine.sendkeys('{selectall}');
           $lastLine.sendkeys(veryLongLineText);
         });
 
-        it("moves line to next page", function(done) {
+        it('moves line to next page', function(done) {
           var inner$ = helper.padInner$;
 
           // wait for new page to be created
@@ -155,78 +155,78 @@ describe.skip("ep_script_page_view - pagination basic tests", function() {
       });
     });
 
-    context("and all lines are actions", function() {
+    context('and all lines are actions', function() {
       before(function(done) {
         var scriptBuilder = getPageBuilder(ACTIONS_PER_PAGE, utils.action);
         pageBreak.createScript(scriptBuilder, done);
       });
 
-      it("fits " + ACTIONS_PER_PAGE + " lines in a page", function(done) {
+      it('fits ' + ACTIONS_PER_PAGE + ' lines in a page', function(done) {
         var elementBuilder = utils.action;
         var pageBuilder    = getPageBuilder(ACTIONS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
-    context("and all lines are characters", function() {
+    context('and all lines are characters', function() {
       before(function(done) {
         var scriptBuilder = getPageBuilder(CHARACTERS_PER_PAGE, utils.character);
         pageBreak.createScript(scriptBuilder, done);
       });
 
-      it("fits " + CHARACTERS_PER_PAGE + " lines in a page", function(done) {
+      it('fits ' + CHARACTERS_PER_PAGE + ' lines in a page', function(done) {
         var elementBuilder = utils.character;
         var pageBuilder    = getPageBuilder(CHARACTERS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
-    context("and all lines are parentheticals", function() {
+    context('and all lines are parentheticals', function() {
       before(function(done) {
         var scriptBuilder = getPageBuilder(PARENTHETICALS_PER_PAGE, utils.parenthetical);
         pageBreak.createScript(scriptBuilder, done);
       });
 
-      it("fits " + PARENTHETICALS_PER_PAGE + " lines in a page", function(done) {
+      it('fits ' + PARENTHETICALS_PER_PAGE + ' lines in a page', function(done) {
         var elementBuilder = utils.parenthetical;
         var pageBuilder    = getPageBuilder(PARENTHETICALS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
-    context("and all lines are dialogues", function() {
+    context('and all lines are dialogues', function() {
       before(function(done) {
         var scriptBuilder = getPageBuilder(DIALOGUES_PER_PAGE, utils.dialogue);
         pageBreak.createScript(scriptBuilder, done);
       });
 
-      it("fits " + DIALOGUES_PER_PAGE + " lines in a page", function(done) {
+      it('fits ' + DIALOGUES_PER_PAGE + ' lines in a page', function(done) {
         var elementBuilder = utils.dialogue;
         var pageBuilder    = getPageBuilder(DIALOGUES_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
-    context("and all lines are transitions", function() {
+    context('and all lines are transitions', function() {
       before(function(done) {
         var scriptBuilder = getPageBuilder(TRANSITIONS_PER_PAGE, utils.transition);
         pageBreak.createScript(scriptBuilder, done);
       });
 
-      it("fits " + TRANSITIONS_PER_PAGE + " lines in a page", function(done) {
+      it('fits ' + TRANSITIONS_PER_PAGE + ' lines in a page', function(done) {
         var elementBuilder = utils.transition;
         var pageBuilder    = getPageBuilder(TRANSITIONS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
       });
     });
 
-    context("and all lines are shots", function() {
+    context('and all lines are shots', function() {
       before(function(done) {
         var scriptBuilder = getPageBuilder(SHOTS_PER_PAGE, utils.shot);
         pageBreak.createScript(scriptBuilder, done);
       });
 
-      it("fits " + SHOTS_PER_PAGE + " lines in a page", function(done) {
+      it('fits ' + SHOTS_PER_PAGE + ' lines in a page', function(done) {
         var elementBuilder = utils.shot;
         var pageBuilder    = getPageBuilder(SHOTS_PER_PAGE, elementBuilder);
         pageBreak.testItFitsXLinesPerPage(elementBuilder, pageBuilder, this, done);
@@ -290,13 +290,13 @@ ep_script_page_view_test_helper.pageBreak = {
     expect($linesWithPageBreaks.length).to.be(0);
 
     // create another full page
-    var secondPage = pageBuilder("2nd page");
-    var $lastLine = inner$("div").last();
-    $lastLine.append("<br/>" + secondPage);
+    var secondPage = pageBuilder('2nd page');
+    var $lastLine = inner$('div').last();
+    $lastLine.append('<br/>' + secondPage);
 
     // add new line (should be placed on next page)
-    var $lastLine = inner$("div").last();
-    $lastLine.append(elementBuilder("1st of 3rd page") + elementBuilder("2nd of 3rd page"));
+    var $lastLine = inner$('div').last();
+    $lastLine.append(elementBuilder('1st of 3rd page') + elementBuilder('2nd of 3rd page'));
 
     // wait for new page to be created
     helper.waitFor(function() {
