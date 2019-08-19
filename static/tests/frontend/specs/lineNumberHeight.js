@@ -1,6 +1,6 @@
 // FIXME Line numbers are not aligned to correspondent text line
 // https://trello.com/c/hdZGr9EA/684
-describe.skip("ep_script_page_view - height of line numbers", function() {
+describe.skip('ep_script_page_view - height of line numbers', function() {
   var utils;
 
   before(function(){
@@ -14,13 +14,13 @@ describe.skip("ep_script_page_view - height of line numbers", function() {
     this.timeout(60000);
   });
 
-  context("when pad has a non-split page break without MORE-CONTD", function() {
+  context('when pad has a non-split page break without MORE-CONTD', function() {
     beforeEach(function(done) {
       this.timeout(4000);
 
       // build script with one line on second page
-      var script = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE+1);
-      utils.createScriptWith(script, "general", function() {
+      var script = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE+1);
+      utils.createScriptWith(script, 'general', function() {
         // wait for pagination to finish before start testing
         helper.waitFor(function() {
           var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
@@ -29,26 +29,26 @@ describe.skip("ep_script_page_view - height of line numbers", function() {
       });
     });
 
-    it("displays number of first line of next page on the top of its text", function(done) {
+    it('displays number of first line of next page on the top of its text', function(done) {
       var firstLineOfSecondPage = GENERALS_PER_PAGE+1;
       utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
     });
   });
 
-  context("when pad has a non-split page break with MORE-CONTD", function() {
+  context('when pad has a non-split page break with MORE-CONTD', function() {
     beforeEach(function(done) {
       this.timeout(4000);
 
       // build script with character => dialogue on first page, and parenthetical => dialogue
       // on second page (to have MORE/CONT'D)
-      var lastLineText = "last dialogue";
-      var fullLine = utils.buildStringWithLength(23, "1") + ". ";
+      var lastLineText = 'last dialogue';
+      var fullLine = utils.buildStringWithLength(23, '1') + '. ';
       // 2-line parenthetical
       var parentheticalText = fullLine + fullLine;
 
-      var pageFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE - 4);
-      var character = utils.character("character");
-      var dialogueOfPreviousPage = utils.dialogue("a very very very very very long dialogue");
+      var pageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE - 4);
+      var character = utils.character('character');
+      var dialogueOfPreviousPage = utils.dialogue('a very very very very very long dialogue');
       var parentheticalOfNextPage = utils.parenthetical(parentheticalText);
       var dialogueOfNextPage = utils.dialogue(lastLineText);
 
@@ -63,21 +63,21 @@ describe.skip("ep_script_page_view - height of line numbers", function() {
       });
     });
 
-    it("displays number of first line of next page on the top of its text", function(done) {
+    it('displays number of first line of next page on the top of its text', function(done) {
       var firstLineOfSecondPage = GENERALS_PER_PAGE-1;
       utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
     });
   });
 
-  context("when pad has a split page break without MORE-CONTD", function() {
+  context('when pad has a split page break without MORE-CONTD', function() {
     beforeEach(function(done) {
       this.timeout(4000);
 
       // build script with last line split between pages
-      var lastLineText = "last line";
-      var fullLine = utils.buildStringWithLength(59, "1") + ". ";
+      var lastLineText = 'last line';
+      var fullLine = utils.buildStringWithLength(59, '1') + '. ';
 
-      var pageFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE-1);
+      var pageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-1);
       var splitGeneral = utils.general(fullLine + fullLine);
       var lastLine = utils.general(lastLineText);
 
@@ -91,23 +91,23 @@ describe.skip("ep_script_page_view - height of line numbers", function() {
       });
     });
 
-    it("displays number of first line of next page on the top of its text", function(done) {
+    it('displays number of first line of next page on the top of its text', function(done) {
       var firstLineOfSecondPage = GENERALS_PER_PAGE+1;
       utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
     });
   });
 
-  context("when pad has a split page break with MORE-CONTD", function() {
+  context('when pad has a split page break with MORE-CONTD', function() {
     beforeEach(function(done) {
       this.timeout(4000);
 
       // build script with very long parenthetical at the end of first page
-      var lastLineText = "last line";
-      var fullLine = utils.buildStringWithLength(23, "1") + ". ";
+      var lastLineText = 'last line';
+      var fullLine = utils.buildStringWithLength(23, '1') + '. ';
       // 4-line parenthetical (to be split)
       var parentheticalText = fullLine + fullLine + fullLine + fullLine;
 
-      var pageFullOfGenerals = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE - 3);
+      var pageFullOfGenerals = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE - 3);
       var longParenthetical = utils.parenthetical(parentheticalText);
       var lastLine = utils.general(lastLineText);
 
@@ -122,7 +122,7 @@ describe.skip("ep_script_page_view - height of line numbers", function() {
       });
     });
 
-    it("displays number of first line of next page on the top of its text", function(done) {
+    it('displays number of first line of next page on the top of its text', function(done) {
       var firstLineOfSecondPage = GENERALS_PER_PAGE-2;
       utils.testLineNumberIsOnTheSamePositionOfItsLineText(firstLineOfSecondPage, this, done);
     });

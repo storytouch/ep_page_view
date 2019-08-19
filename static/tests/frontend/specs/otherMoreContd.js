@@ -1,4 +1,4 @@
-describe.skip("ep_script_page_view - other MORE/CONT'D tests", function() {
+describe.skip('ep_script_page_view - other MORE/CONT\'D tests', function() {
   var utils, scriptBuilder, lastLineText;
 
   before(function(){
@@ -14,16 +14,16 @@ describe.skip("ep_script_page_view - other MORE/CONT'D tests", function() {
     this.timeout(60000);
   });
 
-  context("when first page ends on a dialogue and second page starts on a parenthetical", function() {
+  context('when first page ends on a dialogue and second page starts on a parenthetical', function() {
     before(function() {
       scriptBuilder = function() {
-        var line1 = utils.buildStringWithLength(23, "1") + ". ";
-        var line2 = utils.buildStringWithLength(23, "2") + ". ";
+        var line1 = utils.buildStringWithLength(23, '1') + '. ';
+        var line2 = utils.buildStringWithLength(23, '2') + '. ';
         var longParenthetical = line1 + line2;
-        lastLineText = "last general";
+        lastLineText = 'last general';
 
-        var generals      = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE-2);
-        var dialogue      = utils.dialogue("dialogue");
+        var generals      = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-2);
+        var dialogue      = utils.dialogue('dialogue');
         var parenthetical = utils.parenthetical(longParenthetical);
         var lastGeneral   = utils.general(lastLineText);
 
@@ -31,22 +31,22 @@ describe.skip("ep_script_page_view - other MORE/CONT'D tests", function() {
       };
     });
 
-    it("adds the MORE/CONT'D tags", function(done) {
-      var noCharacter = "";
+    it('adds the MORE/CONT\'D tags', function(done) {
+      var noCharacter = '';
       utils.testPageBreakHasMoreAndContd(noCharacter, done);
     });
   });
 
-  context("when first page ends on a parenthetical and second page starts on a dialogue", function() {
+  context('when first page ends on a parenthetical and second page starts on a dialogue', function() {
     before(function() {
       scriptBuilder = function() {
-        var line1 = utils.buildStringWithLength(33, "1") + ". ";
-        var line2 = utils.buildStringWithLength(33, "2") + ". ";
+        var line1 = utils.buildStringWithLength(33, '1') + '. ';
+        var line2 = utils.buildStringWithLength(33, '2') + '. ';
         var longDialogue = line1 + line2;
-        lastLineText = "last general";
+        lastLineText = 'last general';
 
-        var generals      = utils.buildScriptWithGenerals("general", GENERALS_PER_PAGE-2);
-        var parenthetical = utils.parenthetical("parenthetical");
+        var generals      = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE-2);
+        var parenthetical = utils.parenthetical('parenthetical');
         var dialogue      = utils.dialogue(longDialogue);
         var lastGeneral   = utils.general(lastLineText);
 
@@ -54,8 +54,8 @@ describe.skip("ep_script_page_view - other MORE/CONT'D tests", function() {
       };
     });
 
-    it("adds the MORE/CONT'D tags", function(done) {
-      var noCharacter = "";
+    it('adds the MORE/CONT\'D tags', function(done) {
+      var noCharacter = '';
       utils.testPageBreakHasMoreAndContd(noCharacter, done);
     });
   });
