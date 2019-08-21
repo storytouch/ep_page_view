@@ -22,26 +22,17 @@ exports.aceKeyEvent = function(hook, context) {
 }
 
 var getMergeInfo = function(editorInfo, attributeManager, evt, rep) {
-  // check key pressed before anything else to be more efficient
-  var isMergeKey = (evt.keyCode === BACKSPACE || evt.keyCode === DELETE) && evt.type === "keydown";
-
   // if text is selected, we simply ignore, as it is not a merge event
-  if (isMergeKey && !textSelected(editorInfo)) {
-    // HACK: we need to get current position after calling synchronizeEditorWithUserSelection(), otherwise
-    // some tests might fail
+  if (evt.isRemoveKey && !textSelected(editorInfo)) {
     var currentLine   = rep.selStart[0];
-    var caretPosition = getCaretPosition(currentLine, rep, editorInfo, attributeManager);
 
-    var atSecondHalfOfSplit = paginationSplit.lineIsSecondHalfOfSplit(currentLine, attributeManager);
-    var atFirstHalfOfSplit  = paginationSplit.lineIsFirstHalfOfSplit(currentLine, attributeManager);
-
-    if (evt.keyCode === BACKSPACE && caretPosition.beginningOfLine && atSecondHalfOfSplit) {
+    if (evt.isBackspace && evt.caretPosition.beginningOfLine && isAtSecondHalfOfSplit(currentLine, attributeManager)) {
       return {
-        line: currentLine-1,
+        line: currentLine - 1,
         charsOnFirstHalf: 1,
         charsOnSecondHalf: 1, // remove also the '*'
       };
-    } else if (evt.keyCode === DELETE && caretPosition.endOfLine && atFirstHalfOfSplit) {
+    } else if (evt.isDelete && evt.caretPosition.endOfLine && isAtFirstHalfOfSplit(currentLine, attributeManager)) {
       return {
         line: currentLine,
         charsOnFirstHalf: 0,
@@ -52,15 +43,15 @@ var getMergeInfo = function(editorInfo, attributeManager, evt, rep) {
 }
 
 var textSelected = function(editorInfo) {
-  // HACK: we need to force editor to sync with user selection before testing if there
-  // is some text selected
-  synchronizeEditorWithUserSelection(editorInfo);
-
   return !editorInfo.ace_isCaret();
 }
 
-var synchronizeEditorWithUserSelection = function(editorInfo) {
-  editorInfo.ace_fastIncorp();
+var isAtSecondHalfOfSplit = function(currentLine, attributeManager) {
+  return paginationSplit.lineIsSecondHalfOfSplit(currentLine, attributeManager);
+}
+
+var isAtFirstHalfOfSplit  = function(currentLine, attributeManager) {
+  return paginationSplit.lineIsFirstHalfOfSplit(currentLine, attributeManager);
 }
 
 var getCaretPosition = function(line, rep, editorInfo, attributeManager) {
