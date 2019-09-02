@@ -1,17 +1,18 @@
 var utils = require('./utils');
 var paginationSplit = require('./paginationSplit');
+var lineSizeUtils = require('ep_script_line_size/static/js/utils');
 
-exports.getBlockInfo = function($helperLine) {
-  var $topOfBlock = $helperLine;
+exports.getBlockInfo = function($originalLine) {
+  var $topOfBlock = $originalLine;
 
-  var $previousLine = $helperLine.prev();
-  var $nextLine     = $helperLine.next();
+  var $previousLine = $originalLine.prev();
+  var $nextLine     = $originalLine.next();
 
-  var typeOfCurrentLine  = utils.typeOf($helperLine);
+  var typeOfCurrentLine  = utils.typeOf($originalLine);
   var typeOfPreviousLine = utils.typeOf($previousLine);
   var typeOfNextLine     = utils.typeOf($nextLine);
 
-  var innerLinesOfCurrentLine = getNumberOfInnerLinesOf($helperLine);
+  var innerLinesOfCurrentLine = getNumberOfInnerLinesOf($originalLine);
 
   // block type:
   // (*) => transition (only one line of text)
@@ -104,9 +105,5 @@ exports.getBlockInfo = function($helperLine) {
 }
 
 var getNumberOfInnerLinesOf = function($line) {
-  var totalHeight = utils.getLineHeightWithoutMargins($line);
-  var heightOfOneLine = utils.getRegularLineHeight();
-  var numberOfInnerLines = parseInt(totalHeight / heightOfOneLine);
-
-  return numberOfInnerLines;
+  return lineSizeUtils.getInnerLinesOf($line);
 }

@@ -34,7 +34,6 @@ exports.addListenerOfClearPagination = function(cleanFn) {
   listenersOfClear.push(cleanFn);
 }
 
-
 // Façade for methods on other modules of pagination
 exports.addListenerOfHeadingOnTopOfPage = paginationNonSplit.addListenerOfHeadingOnTopOfPage;
 exports.setMethodToCleanMarksOnHeadingsOnTopOfPages = paginationCalculation.setMethodToCleanMarksOnHeadingsOnTopOfPages;
@@ -43,6 +42,7 @@ var enable = function() {
   var context = this;
   resetTimerToRestartPagination(context);
 }
+
 var disable = function() {
   var context = this;
   var editorInfo = context.editorInfo;
@@ -51,9 +51,8 @@ var disable = function() {
     cleanAllPageBreaks(context);
   }, 'disablePagination');
 }
-exports.aceInitialized = function(hook, context) {
-  var editorInfo = context.editorInfo;
 
+exports.aceInitialized = function(hook, context) {
   exports.enable = _(enable).bind(context);
   exports.disable = _(disable).bind(context);
 }
@@ -68,6 +67,10 @@ exports.aceRegisterBlockElements = function(hook, context) {
                  paginationScrollPosition.blockElements());
 }
 
+exports.collectContentPre = function(hook, context) {
+  return paginationSplit.collectContentPre(context);
+}
+
 exports.aceAttribsToClasses = function(hook, context) {
   return _.union(
     paginationSplit.atribsToClasses(context),
@@ -78,9 +81,11 @@ exports.aceAttribsToClasses = function(hook, context) {
 }
 
 exports.aceDomLineProcessLineAttributes = function(hook, context) {
-  var scrollTargetHtml = paginationScrollPosition.buildHtmlWithTargetScroll(context.cls) || '';
-  var pageBreak = paginationNonSplit.buildHtmlWithPageBreaks(context.cls) ||
-                  paginationSplit.buildHtmlWithPageBreaks(context.cls) ||
+  var cls = context.cls;
+
+  var scrollTargetHtml = paginationScrollPosition.buildHtmlWithTargetScroll(cls) || '';
+  var pageBreak = paginationNonSplit.buildHtmlWithPageBreaks(cls) ||
+                  paginationSplit.buildHtmlWithPageBreaks(cls) ||
                   // use a default object for clearer code bellow
                   { preHtml: '', postHtml: '', default: true };
 
@@ -198,7 +203,7 @@ var isAChangeOnElementType = function(eventType) {
   return eventType === scriptElementUtils.CHANGE_ELEMENT_EVENT;
 }
 var isAPaginationScheduledByMe = function(eventType) {
-  return eventType === 'pagination-' + clientVars.userId;
+  return eventType === myPaginationEventType();
 }
 
 var myPaginationEventType = function() {
@@ -231,9 +236,11 @@ var paginateWholePad = function(context) {
 
   var originalCaretPosition = rep.selStart.slice();
   var startAtLine = 0;
+  var $lastLineWithPageBreak = getLastLineWithPageBreakBeforeLineNumber(startAtLine, rep);
   var performFullPagination = true;
+  var firstPageNumberOfThisCycle = nextPageNumber($lastLineWithPageBreak);
 
-  var paginationInfo = paginationCalculation.calculatePageBreaks(startAtLine, originalCaretPosition, attributeManager, rep, performFullPagination);
+  var paginationInfo = paginationCalculation.calculatePageBreaks($lastLineWithPageBreak, firstPageNumberOfThisCycle, originalCaretPosition, attributeManager, rep, performFullPagination);
 
   utils.performNonUnduableEvent(callstack, function() {
     savePageBreaks(paginationInfo.pageBreaksInfo, attributeManager, rep, editorInfo);
@@ -264,28 +271,57 @@ var nextPaginationCycle = function(context) {
   var originalCaretPosition = rep.selStart.slice();
 
   var startAtLine = getLineWherePaginationShouldStart(rep);
+  var $lastLineWithPageBreak = getLastLineWithPageBreakBeforeLineNumber(startAtLine, rep);
 
   // if repagination should start at a line after end of the pad, we simply clean lines marked as
   // changed and do nothing else
   if (startAtLine === REACHED_END_OF_PAD) {
     paginationLinesChanged.reset(rep);
-  } else {
+  }
+  // we can only calculate page breaks if all lines of this cycle have its size calculated already
+  else if (!paginationCalculation.allLinesOfPaginationCycleAreReady($lastLineWithPageBreak)) {
+    resetTimerToRestartPagination(context);
+  }
+  else {
+    var firstPageNumberOfThisCycle = nextPageNumber($lastLineWithPageBreak);
+    var canStopPaginating = false;
     var paginationInfo;
     utils.performNonUnduableEvent(callstack, function() {
       // avoid editor to go up & down while pagination is not finished
       paginationScrollPosition.keepViewportScrollPosition(function() {
-        paginationInfo = paginationCalculation.calculatePageBreaks(startAtLine, originalCaretPosition, attributeManager, rep);
+        paginationInfo = paginationCalculation.calculatePageBreaks($lastLineWithPageBreak, firstPageNumberOfThisCycle, originalCaretPosition, attributeManager, rep);
         var endAtLine = getLineNumberBeforePaginationOfLastPageBreak(paginationInfo, rep);
 
-        cleanPageBreaks(startAtLine, endAtLine, attributeManager, rep, editorInfo);
+        cleanPageBreaks(paginationInfo.pageBreaksInfo, startAtLine, endAtLine, attributeManager, rep, editorInfo);
         savePageBreaks(paginationInfo.pageBreaksInfo, attributeManager, rep, editorInfo);
+
+        // optimization: if we've reached a point where existing page breaks are
+        // already on the page breaks of this cycle, we don't need to continue
+        // paginating, as there will be no changes further.
+        // The only exception is if there's a line changed AFTER the set of lines
+        // affected by this pagination cycle (ex: when user moves a scene -- we need
+        // to recalculate page breaks both on the original place of the scene and on
+        // the place where the scene was moved to)
+        canStopPaginating =
+          paginationInfo.reachedPointWherePaginationAlreadyExist &&
+          !hasLineChangedAfter(endAtLine, rep);
+
+        // BUGFIX: although all page breaks might exist already, the page numbers
+        // might had changed.
+        // Ex: user removes a full page => page breaks will be at the same places,
+        // but all page numbers will be different
+        if (canStopPaginating) {
+          var $linesWithPageBreaks = getAllLinesWithPageBreakAfterLineNumber(endAtLine, rep);
+          var lastPageNumberOfThisCycle = getLastPageNumberOfCycle(paginationInfo);
+          paginationPageNumber.ensurePageNumbersAreCorrectAfterLine($linesWithPageBreaks, lastPageNumberOfThisCycle, attributeManager, rep);
+        }
       }, attributeManager, rep);
     });
 
     // clean pending lines to paginate and mark next line as changed so pagination will start from
     // it on next cycle
     paginationLinesChanged.reset(rep);
-    if (paginationInfo.done) {
+    if (paginationInfo.done || canStopPaginating) {
       calculatingPageNumberIcons.hideAll();
     } else {
       var endAtLineAfterClean = getLineNumberAfterPaginationOfLastPageBreak(paginationInfo, rep);
@@ -399,52 +435,87 @@ var cleanAllPageBreaks = function(context) {
   var rep              = context.rep;
   var editorInfo       = context.editorInfo;
 
+  var pageBreaksInfo = [];
   var firstLineOfPad = 0;
   var lastLineOfPad = rep.lines.length();
 
-  cleanPageBreaks(firstLineOfPad, lastLineOfPad, attributeManager, rep, editorInfo);
+  cleanPageBreaks(pageBreaksInfo, firstLineOfPad, lastLineOfPad, attributeManager, rep, editorInfo);
 }
 
-var cleanPageBreaks = function(startAtLine, endAtLine, attributeManager, rep, editorInfo) {
+var cleanPageBreaks = function(pageBreaksInfo, startAtLine, endAtLine, attributeManager, rep, editorInfo) {
+  var linesToBeCleared = getListOfLinesToBeCleared(pageBreaksInfo, startAtLine, endAtLine);
   for (var i = 0; i < listenersOfClear.length; i++) {
     var cleanFn = listenersOfClear[i];
-    cleanFn(startAtLine, endAtLine, attributeManager, rep, editorInfo);
+    cleanFn(linesToBeCleared, attributeManager, rep, editorInfo);
   }
 }
 
-var savePageBreaks = function(pageBreaksInfo, attributeManager, rep, editorInfo) {
-  var initialPageNumber = nextPageNumber(pageBreaksInfo, rep);
-  for (var i = 0; i < pageBreaksInfo.length; i++) {
-    var pageNumber = initialPageNumber + i;
+// return an array with all line numbers between startAtLine and endAtLine that
+// should be cleared.
+// Optimization: skip all lines on pageBreaksInfo with pagination that
+// already exist (pageBreakInfo.data.skipPagination).
+// Ex of returned value: [0, 1, 2, 4, 5, 6, 7, 8, 10] (skips lines 3 and 9)
+var getListOfLinesToBeCleared = function(pageBreaksInfo, startAtLine, endAtLine) {
+  var pageBreaksToBeSkipped = _(pageBreaksInfo).filter(function(pageBreakInfo) {
+    return pageBreakInfo.data.skipPagination;
+  });
+  var lineNumbersToBeSkipped = _(pageBreaksToBeSkipped).map(function(pageBreakInfo) {
+    return pageBreakInfo.data.lineNumberAfterClean;
+  });
 
+  // ex: endAtLine = 10, startAtLine = 0, range = [0, 1, ..., 9, 10]
+  var allLinesOnInterval = _.range(startAtLine, endAtLine + 1);
+
+  // remove lines to be skipped from the entire range
+  var linesToBeCleared = _(allLinesOnInterval).difference(lineNumbersToBeSkipped);
+
+  return linesToBeCleared;
+}
+
+var savePageBreaks = function(pageBreaksInfo, attributeManager, rep, editorInfo) {
+  for (var i = 0; i < pageBreaksInfo.length; i++) {
     var pageBreakInfo = pageBreaksInfo[i];
-    pageBreakInfo.save(pageBreakInfo.data, pageNumber, attributeManager, rep, editorInfo);
+    pageBreakInfo.save(pageBreakInfo.data, attributeManager, rep, editorInfo);
   }
 
   // Bug fix: when user changes element to general and then undoes this change, the UNDO might
   // not work properly if line has a page break. So we need to make an adjustment to avoid that
+  // TODO do we still need this, as now all lines have lineMarker (even general), due to ep_line_size?
   undoElementType.fix(rep, attributeManager);
 }
 
-var nextPageNumber = function(pageBreaksInfo, rep) {
+var nextPageNumber = function($lastLineWithPageBreak) {
   // if pad does not have any page break before content being paginated, start from 1
   var maxPageNumber = 1;
 
-  var firstPageBreakInfo = pageBreaksInfo[0];
-  if (firstPageBreakInfo) {
-    // find page breaks that will not be modified by this pagination
-    var firstLineWithPageBreak = firstPageBreakInfo.lineNumberAfterClean;
-    var $lineOfFirstPageBreakInfo = $(utils.getDOMLineFromLineNumber(firstLineWithPageBreak, rep));
-    var $linesWithUnchangedPageBreaks = $lineOfFirstPageBreakInfo.prevAll(DIV_WITH_PAGE_BREAK);
-
-    if ($linesWithUnchangedPageBreaks.length > 0) {
-      // get max page number that will not be modified by this pagination
-      var $lastLineWithUnchangedPageBreak = $linesWithUnchangedPageBreaks.first();
-      var lastUnchangedPageNumber = utils.pageNumberOfDOMLine($lastLineWithUnchangedPageBreak);
-
-      maxPageNumber = parseInt(lastUnchangedPageNumber || 1);
-    }
+  if ($lastLineWithPageBreak.length > 0) {
+    // get max page number that will not be modified by this pagination
+    var maxPageNumberAboveBaseLine = utils.pageNumberOfDOMLine($lastLineWithPageBreak);
+    maxPageNumber = parseInt(maxPageNumberAboveBaseLine || 1);
   }
 
   return maxPageNumber + 1;
+}
+
+var getLastLineWithPageBreakBeforeLineNumber = function(lineNumber, rep) {
+  var $baseLine = $(utils.getDOMLineFromLineNumber(lineNumber, rep));
+  var $linesWithPageBreaksAboveBaseLine = $baseLine.prevAll(DIV_WITH_PAGE_BREAK);
+  return $linesWithPageBreaksAboveBaseLine.first();
+}
+
+var getAllLinesWithPageBreakAfterLineNumber = function(lineNumber, rep) {
+  var $baseLine = $(utils.getDOMLineFromLineNumber(lineNumber, rep));
+  var $linesWithPageBreaksAfterBaseLine = $baseLine.nextAll(DIV_WITH_PAGE_BREAK);
+  return $linesWithPageBreaksAfterBaseLine.addBack();
+}
+
+var getLastPageNumberOfCycle = function(paginationInfo) {
+  var pageBreaksInfo = paginationInfo.pageBreaksInfo;
+  var lastPageBreakInfo = pageBreaksInfo[pageBreaksInfo.length - 1];
+  return lastPageBreakInfo.pageNumber;
+}
+
+var hasLineChangedAfter = function(lineNumber, rep) {
+  var minLineChangedAfterTargetLine = paginationLinesChanged.minLineChangedFromLine(lineNumber);
+  return !paginationReachedEndOfPad(minLineChangedAfterTargetLine, rep);
 }

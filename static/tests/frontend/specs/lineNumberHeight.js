@@ -1,3 +1,4 @@
+// TODO line numbers are not visible anymore, should we still have those tests?
 // FIXME Line numbers are not aligned to correspondent text line
 // https://trello.com/c/hdZGr9EA/684
 describe.skip('ep_script_page_view - height of line numbers', function() {

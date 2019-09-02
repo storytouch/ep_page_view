@@ -1,16 +1,15 @@
-describe.skip('ep_script_page_view - repaginate', function() {
-  var utils, smUtils;
+describe('ep_script_page_view - repaginate', function() {
+  var utils = ep_script_page_view_test_helper.utils;
+  var smUtils;
 
-  before(function(){
-    utils = ep_script_page_view_test_helper.utils;
+  before(function(done) {
     smUtils = ep_script_scene_marks_test_helper.utils;
+    helper.newPad(done);
+    this.timeout(60000);
   });
 
-  beforeEach(function(done){
-    helper.newPad(function() {
-      utils.cleanPad(done);
-    });
-    this.timeout(60000);
+  beforeEach(function(done) {
+    utils.cleanPad(done);
   });
 
   context('when user inserts text on a line', function() {
@@ -23,10 +22,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
       var script = utils.buildScriptWithGenerals(lastLineText, GENERALS_PER_PAGE + 1);
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length > 0;
-        }, 2000).done(done);
+        utils.waitToHaveAnyNonSplitPageBreak(done);
       });
     });
 
@@ -41,11 +37,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
       $lineBeforePageBreak.sendkeys('. ' + fullLine);
 
       // wait for pagination to be re-run
-      helper.waitFor(function() {
-        // now we have a split page break instead of a non-split one
-        var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
-        return $linesWithPageBreaks.length > 0;
-      }, 2000).done(function() {
+      utils.waitToHaveAnySplitPageBreak(function() {
         var $firstLineOfSecondPage = utils.linesAfterSplitPageBreaks().first();
 
         expect(utils.cleanText($firstLineOfSecondPage.text())).to.be(fullLine);
@@ -55,6 +47,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
     });
   });
 
+  // FIXME
   context('when user removes text from a line', function() {
     var firstHalfOfSplit, secondHalfOfSplit;
 
@@ -77,10 +70,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
 
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
-          return $linesWithPageBreaks.length > 0;
-        }, 2000).done(done);
+        utils.waitToHaveAnySplitPageBreak(done);
       });
     });
 
@@ -93,12 +83,9 @@ describe.skip('ep_script_page_view - repaginate', function() {
       var $textToBeRemoved = inner$('div b');
       $textToBeRemoved.sendkeys('{selectall}{backspace}');
 
-      // wait for pagination to be re-run
-      helper.waitFor(function() {
-        // now we have a non-split page break instead of a split one
-        var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-        return $linesWithPageBreaks.length > 0;
-      }, 2000).done(function() {
+      // wait for pagination to be re-run. Now we have a non-split page break
+      // instead of a split one
+      utils.waitToHaveAnyNonSplitPageBreak(function() {
         var $lineBeforePageBreak = utils.linesAfterNonSplitPageBreaks().first().prev();
         var expectedLineBeforePageBreak = firstHalfOfSplit + secondHalfOfSplit;
 
@@ -109,6 +96,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
     });
   });
 
+  // FIXME
   context('when user removes a full line', function() {
     var textToBeOnTopOfSecondPage;
     before(function() {
@@ -132,10 +120,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
       var script = lineToBeRemoved + pageFullOfGenerals + lineToBeAtBottomOfFirstPage + lastGeneral;
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length > 0;
-        }, 2000).done(done);
+        utils.waitToHaveAnyNonSplitPageBreak(done);
       });
     });
 
@@ -152,12 +137,9 @@ describe.skip('ep_script_page_view - repaginate', function() {
       // the <div> itself
       $firstLine.get(0).outerHTML = '';
 
-      // wait for pagination to be re-run
-      helper.waitFor(function() {
-        // now we have a split page break instead of a non-split one
-        var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
-        return $linesWithPageBreaks.length > 0;
-      }, 2000).done(function() {
+      // wait for pagination to be re-run. Now we have a split page break
+      // instead of a non-split one
+      utils.waitToHaveAnyNonSplitPageBreak(function() {
         var $firstLineOfSecondPage = utils.linesAfterSplitPageBreaks().first();
 
         expect($firstLineOfSecondPage.text()).to.be(textToBeOnTopOfSecondPage);
@@ -171,7 +153,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
     var buildLineToBeChanged, numberOfGeneralsBeforeHeading;
 
     beforeEach(function(done) {
-      this.timeout(4000);
+      this.timeout(10000);
 
       var lastLineText = 'last general';
 
@@ -195,10 +177,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
                  + lastGeneral;
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length > 0;
-        }, 2000).done(done);
+        utils.waitToHaveAnyNonSplitPageBreak(done);
       });
     });
 
@@ -273,7 +252,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
       });
 
       beforeEach(function(done) {
-        this.timeout(4000);
+        this.timeout(10000);
 
         var inner$ = helper.padInner$;
 
@@ -289,17 +268,14 @@ describe.skip('ep_script_page_view - repaginate', function() {
         $lastLine.html(anotherPage);
 
         // wait for pagination to finish
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length > 1;
-        }, 3000).done(function() {
+        utils.waitToHaveNNonSplitPageBreaks(2, function() {
           // store ids of lines with page break to verify later if they had changed
           var $linesWithPageBreaks           = inner$('div:has(nonsplitpagebreak)');
           originalIdOfFirstLineWithPageBreak = $linesWithPageBreaks.first().attr('id');
           originalIdOfLastLineWithPageBreak  = $linesWithPageBreaks.last().attr('id');
 
           // change line on bottom of block (heading => character => dialogue) to destroy the block
-          smUtils.changeLineToElement(utils.GENERAL, changedLine, function() {
+          smUtils.changeLineToElement(utils.ACTION, changedLine, function() {
             // wait for pagination to be re-run before start testing
             helper.waitFor(function() {
               // id of line with last page break should be different
@@ -308,7 +284,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
               var newIdOfLastLineWithPageBreak = $lineWithLastPageBreak.attr('id');
 
               return ($linesAfterPageBreaks.length === 2) && (newIdOfLastLineWithPageBreak !== originalIdOfLastLineWithPageBreak);
-            }, 2000).done(done);
+            }, 5000).done(done);
           });
         });
       });
@@ -361,7 +337,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
     }
 
     beforeEach(function(done) {
-      this.timeout(4000);
+      this.timeout(20000);
 
       var lastLineText = 'last line';
 
@@ -373,10 +349,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
 
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length > 0;
-        }, 2000).done(function() {
+        utils.waitToHaveAnyNonSplitPageBreak(function() {
           // store value for tests
           originalIdOfLineWithLastPageBreak = getIdOfLineWithLastPageBreak();
 
@@ -421,7 +394,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
 
   context('when line after a page break has top margin', function() {
     beforeEach(function(done) {
-      this.timeout(4000);
+      this.timeout(10000);
 
       var lastLineText = 'general';
 
@@ -439,10 +412,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
 
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length === 2;
-        }, 2000).done(done);
+        utils.waitToHaveNNonSplitPageBreaks(2, done);
       });
     });
 
@@ -457,10 +427,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
       $lineAfterHeading.get(0).outerHTML = '';
 
       // wait for repagination to finish
-      helper.waitFor(function() {
-        var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-        return $linesWithPageBreaks.length === 1;
-      }, 2000).done(function() {
+      utils.waitToHaveNNonSplitPageBreaks(1, function() {
         // although there are 2 empty lines on 1st page, the heading itself needs 3 lines
         // (1 for text and 2 for top margin), so it should still be on top of 2nd page
         var $firstLineOfSecondPage = utils.linesAfterNonSplitPageBreaks().first();
@@ -476,7 +443,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
     var lines;
 
     beforeEach(function(done) {
-      this.timeout(4000);
+      this.timeout(10000);
 
       var lastLineText = 'general';
 
@@ -492,10 +459,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
       var script = fullPage + lastGeneral;
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length > 0;
-        }, 2000).done(done);
+        utils.waitToHaveAnyNonSplitPageBreak(done);
       });
     });
 
@@ -506,15 +470,12 @@ describe.skip('ep_script_page_view - repaginate', function() {
 
       // insert text on first line to change page break from non-split to split
       var longText = utils.buildStringWithLength(62, '1');
-      var $firstLine = inner$('div').first();
+      var $firstLine = inner$('div span').first();
       $firstLine.sendkeys(longText);
 
-      // wait for pagination to be re-run
-      helper.waitFor(function() {
-        // now we have a split page break instead of a non-split one
-        var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
-        return $linesWithPageBreaks.length > 0;
-      }, 2000).done(function() {
+      // wait for pagination to be re-run. Now we have a split page break
+      // instead of a non-split one
+      utils.waitToHaveAnySplitPageBreak(function() {
         var $firstLineOfSecondPage = utils.linesAfterSplitPageBreaks().first();
         var secondHalfOfSplit = lines[1];
 
@@ -559,7 +520,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
     }
 
     beforeEach(function(done) {
-      this.timeout(4000);
+      this.timeout(10000);
 
       var lastLineText = 'general';
 
@@ -573,10 +534,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
 
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length === 1;
-        }, 2000).done(function() {
+        utils.waitToHaveNNonSplitPageBreaks(1, function() {
           // show/hide once first, then show again (to force char to move from
           // act to heading to act again)
           clickToShowSceneMarks(function() {
@@ -617,7 +575,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
     var TEXT_OF_LAST_LINE = 'first line of 3rd page';
 
     beforeEach(function(done) {
-      this.timeout(4000);
+      this.timeout(10000);
 
       // build script with 1st page almost full of generals + one heading with act and seq on
       // bottom of 1st page (to be moved to 2nd page) + a page almost full of generals +
@@ -636,10 +594,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
 
       utils.createScriptWith(script, TEXT_OF_LAST_LINE, function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length > 0;
-        }, 2000).done(done);
+        utils.waitToHaveAnyNonSplitPageBreak(done);
       });
     });
 
@@ -650,13 +605,12 @@ describe.skip('ep_script_page_view - repaginate', function() {
       // to next page and last line to the 3rd page
       var oneLineLong = utils.buildStringWithLength(61, '.');
       var $lineOn1stPage = utils.getLine(GENERALS_PER_PAGE/2);
-      $lineOn1stPage.sendkeys(oneLineLong);
+      // need to change the span, not the div. Otherwise we would not correctly
+      // simulate what happens when user types something on the pad
+      $lineOn1stPage.find('span').first().sendkeys(oneLineLong);
 
       // wait for repagination to finish
-      helper.waitFor(function() {
-        var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-        return $linesWithPageBreaks.length === 2;
-      }, 2000).done(function() {
+      utils.waitToHaveNNonSplitPageBreaks(2, function() {
         var $topOfPages = utils.linesAfterNonSplitPageBreaks();
         var $topOf2ndPage = $topOfPages.first();
         var $topOfLastPage = $topOfPages.last();
@@ -673,7 +627,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
     var TEXT_OF_LAST_LINE = 'first line of 3rd page';
 
     beforeEach(function(done) {
-      this.timeout(4000);
+      this.timeout(10000);
 
       // build script with 1st page almost full of generals + one heading with act and seq on
       // bottom of 1st page (to be moved to 2nd page) + a page almost full of generals +
@@ -692,10 +646,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
 
       utils.createScriptWith(script, TEXT_OF_LAST_LINE, function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length > 0;
-        }, 2000).done(done);
+        utils.waitToHaveAnyNonSplitPageBreak(done);
       });
     });
 
@@ -706,13 +657,12 @@ describe.skip('ep_script_page_view - repaginate', function() {
       // to next page and last line to the 3rd page
       var oneLineLong = utils.buildStringWithLength(61, '.');
       var $lineOn1stPage = utils.getLine(GENERALS_PER_PAGE/2);
-      $lineOn1stPage.sendkeys(oneLineLong);
+      // need to change the span, not the div. Otherwise we would not correctly
+      // simulate what happens when user types something on the pad
+      $lineOn1stPage.find('span').first().sendkeys(oneLineLong);
 
       // wait for repagination to finish
-      helper.waitFor(function() {
-        var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-        return $linesWithPageBreaks.length === 2;
-      }, 2000).done(function() {
+      utils.waitToHaveNNonSplitPageBreaks(2, function() {
         var $topOfPages = utils.linesAfterNonSplitPageBreaks();
         var $topOf2ndPage = $topOfPages.first();
         var $topOfLastPage = $topOfPages.last();
@@ -729,7 +679,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
     var TEXT_OF_FUTURE_TOP_OF_PAGE = 'this is going to be a heading';
 
     beforeEach(function(done) {
-      this.timeout(4000);
+      this.timeout(10000);
 
       // build script with 1st page full of generals + one heading with act and seq on
       // top of 2nd page + some generals
@@ -744,10 +694,7 @@ describe.skip('ep_script_page_view - repaginate', function() {
 
       utils.createScriptWith(script, 'general', function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length > 0;
-        }, 2000).done(done);
+        utils.waitToHaveAnyNonSplitPageBreak(done);
       });
     });
 
@@ -772,31 +719,6 @@ describe.skip('ep_script_page_view - repaginate', function() {
           var $firstScriptElementOfSecondPage = utils.getFirstScriptElementOfPageStartingAt($firstLineOfSecondPage);
           return $firstScriptElementOfSecondPage.text() === TEXT_OF_FUTURE_TOP_OF_PAGE;
         }, 2000).done(done);
-      });
-    });
-
-    context('and user edits a line on first page without changing its height', function() {
-      beforeEach(function(done) {
-        var originalIdOfLineWithPageBreak = utils.linesAfterNonSplitPageBreaks().first().prev().attr('id');
-
-        // edit a line on first page
-        var $lineOn1stPage = utils.getLine(GENERALS_PER_PAGE/2);
-        $lineOn1stPage.sendkeys(' [edited] ');
-
-        // wait for repagination to finish
-        helper.waitFor(function() {
-          var newIdOfLineWithPageBreak = utils.linesAfterNonSplitPageBreaks().first().prev().attr('id');
-          return originalIdOfLineWithPageBreak !== newIdOfLineWithPageBreak;
-        }, 2000).done(done);
-      });
-
-      it('recalculates page breaks taking into account the future margin heading would have if it was moved to bottom of previous page (i.e.: "keeps heading on top of page")', function(done) {
-        this.timeout(4000);
-
-        var $topOf2ndPage = utils.linesAfterNonSplitPageBreaks().first();
-        expect($topOf2ndPage.text()).to.be('first act');
-
-        done();
       });
     });
   });

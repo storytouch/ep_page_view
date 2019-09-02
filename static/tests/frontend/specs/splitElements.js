@@ -1,26 +1,26 @@
-describe.skip('ep_script_page_view - pagination of split elements', function() {
+describe('ep_script_page_view - pagination of split elements', function() {
   // shortcuts for helper functions
   var utils, splitElements;
   // context-dependent values/functions
   var linesBeforeTargetElement, buildTargetElement, targetElementText, sentences;
 
-  before(function(){
+  before(function(done) {
     utils = ep_script_page_view_test_helper.utils;
     splitElements = ep_script_page_view_test_helper.splitElements;
+    helper.newPad(done);
+    this.timeout(60000);
   });
 
-  beforeEach(function(cb){
-    helper.newPad(function() {
-      utils.cleanPad(function() {
-        var generals      = utils.buildScriptWithGenerals('general', linesBeforeTargetElement);
-        var targetElement = buildTargetElement();
-        var lastGeneral   = utils.general('last general')
-        var script        = generals + targetElement + lastGeneral;
+  beforeEach(function(done) {
+    this.timeout(5000);
+    utils.cleanPad(function() {
+      var generals      = utils.buildScriptWithGenerals('general', linesBeforeTargetElement);
+      var targetElement = buildTargetElement();
+      var lastGeneral   = utils.general('last general')
+      var script        = generals + targetElement + lastGeneral;
 
-        utils.createScriptWith(script, 'last general', cb);
-      });
+      utils.createScriptWith(script, 'last general', done);
     });
-    this.timeout(60000);
   });
 
   context('when first line of page is a very long general', function() {
@@ -39,13 +39,11 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
     });
 
     it('splits the original line into two separated lines', function(done) {
+      this.timeout(5000);
       var inner$ = helper.padInner$;
 
       // there should be a page break before we start testing
-      helper.waitFor(function() {
-        var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-        return $splitElementsWithPageBreaks.length === 1;
-      }, 2000).done(function() {
+      utils.waitToHaveNSplitPageBreaks(1, function() {
         var $lines = inner$('div');
         var $targetLine = $lines.last().prev();
         var textOnLastDiv = sentences[1] + sentences[2] + sentences[3];
@@ -63,10 +61,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       var inner$ = helper.padInner$;
 
       // there should be a page break before we start testing
-      helper.waitFor(function() {
-        var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-        return $splitElementsWithPageBreaks.length === 1;
-      }, 2000).done(function() {
+      utils.waitToHaveNSplitPageBreaks(1, function() {
         // create another very long general before the last one, so pagination needs to be re-done
         // (The extra '.prev()' is because we insert a '\n' when line is split between pages)
         var $threeLinesGeneral = inner$('div').last().prev().prev().prev();
@@ -98,10 +93,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       var inner$ = helper.padInner$;
 
       // there should be a page break before we start testing
-      helper.waitFor(function() {
-        var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-        return $splitElementsWithPageBreaks.length === 1;
-      }, 2000).done(function() {
+      utils.waitToHaveNSplitPageBreaks(1, function() {
         // create another very long general before the last one, so pagination needs to be re-done
         // (The extra '.prev()' is because we insert a '\n' when line is split between pages)
         var $threeLinesGeneral = inner$('div').last().prev().prev().prev();
@@ -134,10 +126,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       var inner$ = helper.padInner$;
 
       // there should be a page break before we start testing
-      helper.waitFor(function() {
-        var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-        return $splitElementsWithPageBreaks.length === 1;
-      }, 2000).done(function() {
+      utils.waitToHaveNSplitPageBreaks(1, function() {
         // write something on fist half of split line
         var $firstHalfOfSplitLine = inner$('div:has(splitPageBreak)').first();
         $firstHalfOfSplitLine.sendkeys('{selectall}{rightarrow}');
@@ -166,10 +155,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       var inner$ = helper.padInner$;
 
       // there should be a page break before we start testing
-      helper.waitFor(function() {
-        var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-        return $splitElementsWithPageBreaks.length === 1;
-      }, 2000).done(function() {
+      utils.waitToHaveNSplitPageBreaks(1, function() {
         // write something on second half of split line
         var $secondHalfOfSplitLine = inner$('div:has(splitPageBreak)').first().next();
         // sendkeys fails if we apply it to <div>. Need to apply to the inner span
@@ -199,10 +185,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       var inner$ = helper.padInner$;
 
       // there should be a page break before we start testing
-      helper.waitFor(function() {
-        var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-        return $splitElementsWithPageBreaks.length === 1;
-      }, 2000).done(function() {
+      utils.waitToHaveNSplitPageBreaks(1, function() {
         // 'copy' content of split line
         var $firstHalfOfSplitLine = inner$('div:has(splitPageBreak)').first();
         var $secondHalfOfSplitLine = $firstHalfOfSplitLine.next();
@@ -277,10 +260,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
         var inner$ = helper.padInner$;
 
         // there should be a page break before we start testing
-        helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-          return $splitElementsWithPageBreaks.length === 1;
-        }, 2000).done(function() {
+        utils.waitToHaveNSplitPageBreaks(1, function() {
           // edit one element
           var $elementToBeEdited = inner$('div').last().prev().prev();
           var originalText = $elementToBeEdited.text();
@@ -340,15 +320,12 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       });
 
       it('considers the height of the resulting second half of the element split', function(done) {
-        this.timeout(5000);
+        this.timeout(10000);
 
         var inner$ = helper.padInner$;
 
         // there should be a page break before we start testing
-        helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$('div nonSplitPageBreak');
-          return $splitElementsWithPageBreaks.length === 1;
-        }, 2000).done(function() {
+        utils.waitToHaveNNonSplitPageBreaks(1, function() {
           // change 57th line to be 3-lines-long (2 sentences, each ~1.25 long, so when they are
           // split they need 2 lines each)
           // build sentences that are ~1.25 line long (when split they need 2 lines each)
@@ -360,10 +337,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           $lineAtEndOfFirstPage.sendkeys(sentence1 + sentence2);
 
           // wait for edition to be processed and pagination to be complete
-          helper.waitFor(function() {
-            var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-            return $splitElementsWithPageBreaks.length > 0;
-          }, 3000).done(function() {
+          utils.waitToHaveAnySplitPageBreak(function() {
             // 1: verify first page break was added between the two sentences of 57th line
             utils.testSplitPageBreakIsOn(sentence2, function() {
               // 2: verify second page break was added on top of last line
@@ -445,10 +419,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
         var inner$ = helper.padInner$;
 
         // there should be a page break before we start testing
-        helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-          return $splitElementsWithPageBreaks.length === 1;
-        }, 2000).done(function() {
+        utils.waitToHaveNSplitPageBreaks(1, function() {
           // repeat some times: remove one line then check is pagination is correct
           var textBeforePageBreak = sentences[0] + sentences[1];
           splitElements.removeFirstLineAndExpectTextBeforePageBreakToBe(textBeforePageBreak, function() {
@@ -493,10 +464,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
         $targetLine.sendkeys('{selectall}').sendkeys('not ' + multiLineText + veryLongLine);
 
         // wait for pagination to finish
-        helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-          return $splitElementsWithPageBreaks.length === 1;
-        }, 2000).done(function() {
+        utils.waitToHaveNSplitPageBreaks(1, function() {
           // Select part of 1st and 2nd halves of same split to be able to remove them at the same time.
           var $firstHalfOfSplitLine  = inner$('div:has(splitPageBreak)');
           var $secondHalfOfSplitLine = $firstHalfOfSplitLine.next();
@@ -508,10 +476,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           utils.pressBackspace();
 
           // wait for pagination to finish (content is removed, lines merged, etc.)
-          helper.waitFor(function() {
-            var $nonSplitElementsWithPageBreaks = inner$('div nonSplitPageBreak');
-            return $nonSplitElementsWithPageBreaks.length === 1;
-          }, 2000).done(function() {
+          utils.waitToHaveNNonSplitPageBreaks(1, function() {
             var $lines = inner$('div');
             var $targetLine = $lines.last().prev();
             var $lineBeforeTarget = $targetLine.prev();
@@ -526,6 +491,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       });
     });
 
+    // FIXME
     context('and caret is at the end of 1st half of split line, and user presses DELETE', function() {
       before(function() {
         linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
@@ -545,10 +511,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
         var inner$ = helper.padInner$;
 
         // there should be a page break before we start testing
-        helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-          return $splitElementsWithPageBreaks.length === 1;
-        }, 2000).done(function() {
+        utils.waitToHaveNSplitPageBreaks(1, function() {
           utils.placeCaretAtTheEndOfLine(GENERALS_PER_PAGE-1, done);
         });
       });
@@ -578,6 +541,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       });
     });
 
+    // FIXME
     context('and caret is at the beginning of 2nd half of split line, and user presses BACKSPACE', function() {
       before(function() {
         linesBeforeTargetElement = GENERALS_PER_PAGE - 1;
@@ -651,7 +615,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       });
 
       beforeEach(function(done) {
-        this.timeout(6000);
+        this.timeout(20000);
 
         var inner$ = helper.padInner$;
 
@@ -660,10 +624,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
         var veryLongLine = line1 + line2;
 
         // there should be a page break before we start creating other split page breaks
-        helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-          return $splitElementsWithPageBreaks.length === 1;
-        }, 2000).done(function() {
+        utils.waitToHaveNSplitPageBreaks(1, function() {
           // create some other split page breaks before the existing one
           var $lastLineOfSecondPage = utils.getLine(2*GENERALS_PER_PAGE-2);
           $lastLineOfSecondPage.sendkeys('{selectall}');
@@ -674,10 +635,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           $lastLineOfFirstPage.sendkeys(veryLongLine);
 
           // there should be 3 page breaks now
-          helper.waitFor(function() {
-            var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-            return $splitElementsWithPageBreaks.length === 3;
-          }, 2000).done(done);
+          utils.waitToHaveNSplitPageBreaks(3, done);
         });
       });
 
@@ -699,7 +657,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var firstLine = function() { return helper.padInner$('div').first() };
           var textAfterInsertedText = 'AAAAAAAAA'.length;
 
-          splitElements.testCaretIsOn(firstLine, textAfterInsertedText, false, done);
+          splitElements.testCaretIsOn(firstLine, textAfterInsertedText, done);
         });
       });
 
@@ -725,7 +683,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var targetLine = function() { return helper.padInner$('div').last().prev() };
           var textAfterInsertedText = 'AAAAAAAAA'.length;
 
-          splitElements.testCaretIsOn(targetLine, textAfterInsertedText, true, done);
+          splitElements.testCaretIsOn(targetLine, textAfterInsertedText, done);
         });
       });
 
@@ -754,7 +712,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var secondHalfOfSplitLine = function() { return helper.padInner$('div:has(splitPageBreak)').last().next() };
           var textAfterInsertedText = 'AAAAAAAAA'.length;
 
-          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, done);
         });
       });
 
@@ -772,6 +730,9 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           done();
         });
 
+        // This context is working, but test is failing for some weird (unknown)
+        // reasons: utils.getColumnWhereCaretIs() is returning 1 even when we
+        // see on the browser that the caret is not on the column 1.
         context('and text inserted is short', function() {
           var textBeforePageBreak;
 
@@ -798,7 +759,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
             var firstHalfOfSplitLine = function() { return helper.padInner$('div:has(splitPageBreak)').last() };
             var textAfterInsertedText = textBeforePageBreak.length;
 
-            splitElements.testCaretIsOn(firstHalfOfSplitLine, textAfterInsertedText, false, done);
+            splitElements.testCaretIsOn(firstHalfOfSplitLine, textAfterInsertedText, done);
           });
         });
 
@@ -825,11 +786,14 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
             var secondHalfOfSplitLine = function() { return helper.padInner$('div:has(splitPageBreak)').last().next() };
             var textAfterInsertedText = theText.length;
 
-            splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+            splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, done);
           });
         });
       });
 
+      // This context is working, but test is failing for some weird (unknown)
+      // reasons: utils.getColumnWhereCaretIs() is returning 1 even when we
+      // see on the browser that the caret is not on the column 1.
       context('and user adds text to the end of 2nd half of split line', function() {
         beforeEach(function(done) {
           this.timeout(6000);
@@ -852,7 +816,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var lineAfterPageBreak = function() { return helper.padInner$('div:has(splitPageBreak)').last().next().next() };
           var textAfterInsertedText = lineAfterPageBreak().text().length;
 
-          splitElements.testCaretIsOn(lineAfterPageBreak, textAfterInsertedText, true, done);
+          splitElements.testCaretIsOn(lineAfterPageBreak, textAfterInsertedText, done);
         });
       });
 
@@ -882,7 +846,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var secondHalfOfSplitLine = function() { return helper.padInner$('div:has(splitPageBreak)').last().next() };
           var textAfterInsertedText = 'AAAAAAAAA'.length;
 
-          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, done);
         });
       });
     });
@@ -907,6 +871,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       });
 
       it('moves the entire action for next page', function(done) {
+        this.timeout(5000);
         var wholeElement = targetElementText;
         utils.testNonSplitPageBreakIsOnScriptElementWithText(wholeElement, done);
       });
@@ -931,10 +896,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
         var inner$ = helper.padInner$;
 
         // there should be a page break before we start testing
-        helper.waitFor(function() {
-          var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-          return $splitElementsWithPageBreaks.length === 1;
-        }, 2000).done(function() {
+        utils.waitToHaveNSplitPageBreaks(1, function() {
           var $secondHalfOfAction = inner$('div').last().prev();
           var $firstHalfOfAction = $secondHalfOfAction.prev();
 
@@ -958,10 +920,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var inner$ = helper.padInner$;
 
           // there should be a page break before we start testing
-          helper.waitFor(function() {
-            var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-            return $splitElementsWithPageBreaks.length === 1;
-          }, 2000).done(function() {
+          utils.waitToHaveNSplitPageBreaks(1, function() {
             // edit last line of previous page
             var $lastLineOfFirstPage = inner$('div').last().prev().prev();
             $lastLineOfFirstPage.sendkeys('{selectall}{rightarrow}');
@@ -1091,7 +1050,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       });
 
       beforeEach(function(done) {
-        this.timeout(6000);
+        this.timeout(10000);
 
         var smUtils = ep_script_scene_marks_test_helper.utils;
         var inner$ = helper.padInner$;
@@ -1102,23 +1061,23 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
         var line4 = utils.buildStringWithLength(59, 'Z') + '. ';
         var veryLongLine = line1 + line2 + line3 + line4;
 
-        // create some other actions with split page breaks before the existing one
-        var $lastLineOfFirstPage = utils.getLine(LAST_LINE_OF_PAGE_1);
-        $lastLineOfFirstPage.sendkeys('{selectall}');
-        $lastLineOfFirstPage.sendkeys(veryLongLine);
+        // make sure first pagination had already run
+        utils.waitToHaveNNonSplitPageBreaks(2, function() {
+          // create some other actions with split page breaks before the existing one
+          var $lastLineOfFirstPage = utils.getLine(LAST_LINE_OF_PAGE_1);
+          $lastLineOfFirstPage.sendkeys('{selectall}');
+          $lastLineOfFirstPage.sendkeys(veryLongLine);
 
-        var $lastLineOfSecondPage = utils.getLine(LAST_LINE_OF_PAGE_2);
-        $lastLineOfSecondPage.sendkeys('{selectall}');
-        $lastLineOfSecondPage.sendkeys(veryLongLine);
+          var $lastLineOfSecondPage = utils.getLine(LAST_LINE_OF_PAGE_2);
+          $lastLineOfSecondPage.sendkeys('{selectall}');
+          $lastLineOfSecondPage.sendkeys(veryLongLine);
 
-        // change both lines to action
-        smUtils.changeLineToElement(utils.ACTION, LAST_LINE_OF_PAGE_2, function() {
-          smUtils.changeLineToElement(utils.ACTION, LAST_LINE_OF_PAGE_1, function() {
-            // there should be 3 page breaks now
-            helper.waitFor(function() {
-              var $splitElementsWithPageBreaks = inner$('div splitPageBreak');
-              return $splitElementsWithPageBreaks.length === 3;
-            }, 2000).done(done);
+          // change both lines to action
+          smUtils.changeLineToElement(utils.ACTION, LAST_LINE_OF_PAGE_2, function() {
+            smUtils.changeLineToElement(utils.ACTION, LAST_LINE_OF_PAGE_1, function() {
+              // there should be 3 page breaks now
+              utils.waitToHaveNSplitPageBreaks(3, done);
+            });
           });
         });
       });
@@ -1141,7 +1100,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var firstLine = function() { return helper.padInner$('div').first() };
           var textAfterInsertedText = 'AAAAAAAAA'.length;
 
-          splitElements.testCaretIsOn(firstLine, textAfterInsertedText, false, done);
+          splitElements.testCaretIsOn(firstLine, textAfterInsertedText, done);
         });
       });
 
@@ -1167,7 +1126,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var targetLine = function() { return helper.padInner$('div').last().prev() };
           var textAfterInsertedText = 'BBBBBBBBBBBB'.length;
 
-          splitElements.testCaretIsOn(targetLine, textAfterInsertedText, true, done);
+          splitElements.testCaretIsOn(targetLine, textAfterInsertedText, done);
         });
       });
 
@@ -1196,7 +1155,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var secondHalfOfSplitLine = function() { return helper.padInner$('div:has(splitPageBreak)').last().next() };
           var textAfterInsertedText = 'AAAAAAAAA'.length;
 
-          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, done);
         });
       });
 
@@ -1224,10 +1183,13 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var secondHalfOfSplitLine = function() { return helper.padInner$('div:has(splitPageBreak)').last().next() };
           var textAfterInsertedText = 'something'.length;
 
-          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, false, done);
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, done);
         });
       });
 
+      // This context is working, but test is failing for some weird (unknown)
+      // reasons: utils.getColumnWhereCaretIs() is returning 1 even when we
+      // see on the browser that the caret is not on the column 1.
       context('and user adds text to the end of 2nd half of split line', function() {
         beforeEach(function(done) {
           this.timeout(6000);
@@ -1250,7 +1212,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var lineAfterPageBreak = function() { return helper.padInner$('div:has(splitPageBreak)').last().next().next() };
           var textAfterInsertedText = lineAfterPageBreak().text().length;
 
-          splitElements.testCaretIsOn(lineAfterPageBreak, textAfterInsertedText, true, done);
+          splitElements.testCaretIsOn(lineAfterPageBreak, textAfterInsertedText, done);
         });
       });
 
@@ -1280,7 +1242,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var secondHalfOfSplitLine = function() { return helper.padInner$('div:has(splitPageBreak)').last().next() };
           var textAfterInsertedText = 'AAAAAAAAA'.length;
 
-          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, true, done);
+          splitElements.testCaretIsOn(secondHalfOfSplitLine, textAfterInsertedText, done);
         });
       });
     });
@@ -1454,7 +1416,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
       });
 
       // FIXME this is an extreme corner case, so we won't work on it for now
-      context('and inner lines do not have full length', function() {
+      context.skip('and inner lines do not have full length', function() {
         before(function() {
           linesBeforeTargetElement = 0;
 
@@ -1465,7 +1427,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           targetElementText = sentences.join('');
         });
 
-        xit('splits transition between the two pages, and second page has the last two lines of the transition', function(done) {
+        it('splits transition between the two pages, and second page has the last two lines of the transition', function(done) {
           var firstLineOnPage2 = sentences[GENERALS_PER_PAGE-1];
           utils.testSplitPageBreakIsOn(firstLineOnPage2, done);
         });
@@ -1636,10 +1598,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
             var inner$ = helper.padInner$;
 
             // wait for pagination to be finished
-            helper.waitFor(function() {
-              var $splitPageBreaks = inner$('div splitPageBreak');
-              return $splitPageBreaks.length > 0;
-            }, 2000).done(function() {
+            utils.waitToHaveAnySplitPageBreak(function() {
               // verify 2nd half is two-lines high
               var secondHalfHeight = inner$('div').last().prev().outerHeight();
               var twoLinesHigh = 2 * utils.regularLineHeight();
@@ -1676,10 +1635,7 @@ describe.skip('ep_script_page_view - pagination of split elements', function() {
           var inner$ = helper.padInner$;
 
           // wait for pagination to be finished
-          helper.waitFor(function() {
-            var $splitPageBreaks = inner$('div splitPageBreak');
-            return $splitPageBreaks.length > 0;
-          }).done(function() {
+          utils.waitToHaveAnySplitPageBreak(function() {
             // verify CONT\'D is one line high
             // (if it is not, line number and line position on editor will be different)
             var firstLineOfSecondPage = GENERALS_PER_PAGE-1;
@@ -1985,25 +1941,45 @@ ep_script_page_view_test_helper.splitElements = {
     }, 3000).done(done);
   },
 
-  testCaretIsOn: function(expectedLine, expectedColumn, withTimeout, done) {
+  _waitForCaretToBeOnLine: function(expectedLine, done) {
     var utils = ep_script_page_view_test_helper.utils;
+    helper.
+      waitFor(function() {
+        var $lineWhereCaretIs = utils.getLineWhereCaretIs();
+        return $lineWhereCaretIs.get(0) === expectedLine().get(0);
+      }).
+      done(done).
+      // give a more meaningful message
+      fail(function() {
+        var $lineWhereCaretIs = utils.getLineWhereCaretIs();
+        var message = `Expected caret to be on line ${expectedLine().index()}, but it is on ${$lineWhereCaretIs.index()}`;
+        expect().fail(message);
+      });
+  },
 
-    var theTest = function() {
-      var $lineWhereCaretIs = utils.getLineWhereCaretIs();
-      var columnWhereCaretIs = utils.getColumnWhereCaretIs();
+  _waitForCaretToBeOnColumn: function(expectedColumn, done) {
+    var utils = ep_script_page_view_test_helper.utils;
+    helper.
+      waitFor(function() {
+        var columnWhereCaretIs = utils.getColumnWhereCaretIs();
+          return columnWhereCaretIs === expectedColumn;
+      }).
+      done(done).
+      // give a more meaningful message
+      fail(function() {
+        var columnWhereCaretIs = utils.getColumnWhereCaretIs();
+        debugger
+        helper.padInner$.document.getSelection().anchorOffset
+        var message = `Expected caret to be on column ${expectedColumn}, but it is on ${columnWhereCaretIs}`;
+        expect().fail(function() { return message });
+      });
+  },
 
-      expect(columnWhereCaretIs).to.be(expectedColumn);
-      expect($lineWhereCaretIs.get(0)).to.be(expectedLine().get(0));
-
-      done();
-    };
-
-    // some tests need to to wait some time so caret finishes moving
-    if (withTimeout) {
-      setTimeout(theTest, 1000);
-    } else {
-      theTest();
-    }
+  testCaretIsOn: function(expectedLine, expectedColumn, done) {
+    var self = ep_script_page_view_test_helper.splitElements;
+    self._waitForCaretToBeOnLine(expectedLine, function() {
+      self._waitForCaretToBeOnColumn(expectedColumn, done);
+    });
   },
 
   buildLongLine: function(numberOfInnerLines, charsPerLine) {

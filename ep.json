@@ -10,7 +10,7 @@
         "acePostWriteDomLineHTML": "ep_script_page_view/static/js/pagination",
         "aceRegisterBlockElements": "ep_script_page_view/static/js/pagination",
         "aceRegisterNonScrollableEditEvents": "ep_script_page_view/static/js/pagination",
-        "collectContentPre": "ep_script_page_view/static/js/paginationSplit",
+        "collectContentPre": "ep_script_page_view/static/js/pagination",
         "aceEditEvent": "ep_script_page_view/static/js/pagination"
       },
       "hooks": {

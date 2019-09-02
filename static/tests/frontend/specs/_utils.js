@@ -39,9 +39,15 @@ ep_script_page_view_test_helper.utils = {
   createScriptWith: function(scriptContent, lastLineText, cb) {
     var inner$ = helper.padInner$;
     var utils = ep_script_page_view_test_helper.utils;
+    var lineSizeUtils = ep_script_line_size_test_helper.utils;
+
+    var $firstLine = inner$('div').first();
+
+    // make sure line has no size calculated, otherwise we might insert a bunch of
+    // lines on it and Etherpad won't be able to notice they had changed
+    lineSizeUtils.resetLineSizeOf($firstLine);
 
     // set script content
-    var $firstLine = inner$('div').first();
     $firstLine.html(scriptContent);
 
     // wait for Etherpad to finish processing the lines
@@ -62,7 +68,7 @@ ep_script_page_view_test_helper.utils = {
   clickOnAddAct: function(done) {
     var outer$ = helper.padOuter$;
     helper.waitFor(function() {
-      var mouseWindowIsVisible = outer$('.mouseWindow').length != 0;
+      var mouseWindowIsVisible = outer$('.mouseWindow').length !== 0;
       return mouseWindowIsVisible;
     }, 2000).done(function() {
       var $addActMenuOption = outer$('#addAct');
@@ -106,19 +112,34 @@ ep_script_page_view_test_helper.utils = {
     callback();
   },
 
+  setPaginationDelay: function(delay) {
+    helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.paginationDelay = delay;
+  },
+
+  speedUpPagination: function() {
+    // Cannot be too low, otherwise the orchestration of plugin event handlers will be messed up
+    ep_script_page_view_test_helper.utils.setPaginationDelay(100);
+  },
+
   cleanPad: function(callback) {
     // make tests run faster, as the delay is only defined to improve usability.
     // Cannot be too low, otherwise the orchestration of plugin event handlers will be messed up
-    helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.paginationDelay = 100;
+    ep_script_page_view_test_helper.utils.speedUpPagination();
 
     var inner$ = helper.padInner$;
     var $padContent = inner$('#innerdocbody');
     $padContent.html('');
 
-    // wait for Etherpad to re-create first line
+    // wait for Etherpad to re-create first line. We need to wait for text to be
+    // empty because line size calculation creates an "*" when we use
+    // `$padContent.html("")`. As using $.html() is not the way users remove the
+    // entire script, this is just a workaround on the tests and won't affect the
+    // actual usage of Etherpad.
     helper.waitFor(function(){
-      var lineNumber = inner$('div').length;
-      return lineNumber === 1;
+      var $lines = inner$("div");
+      var recreatedFirstLine = $lines.length === 1;
+      var textIsEmpty = $lines.first().text().length === 0;
+      return recreatedFirstLine && textIsEmpty;
     }, 2000).done(callback);
   },
 
@@ -266,17 +287,24 @@ ep_script_page_view_test_helper.utils = {
     utils.pressKey(utils.DELETE);
   },
 
-  _clickOnSettingIfNeeded: function(shouldEnable) {
-    var $paginationSetting = helper.padChrome$('#options-pagination');
-    if ($paginationSetting.prop('checked') !== shouldEnable) {
-      $paginationSetting.click();
-    }
+  _triggerAPICallToEnableDisablePagination: function(shouldEnable) {
+    var message = {
+      type: 'pagination_enabled',
+      paginationEnabled: shouldEnable,
+    };
+
+    var inboundApiEventsTarget = helper.padChrome$.window;
+    inboundApiEventsTarget.postMessage(message, '*');
   },
   enablePagination: function() {
-    this._clickOnSettingIfNeeded(true);
+    this._triggerAPICallToEnableDisablePagination(true);
   },
   disablePagination: function() {
-    this._clickOnSettingIfNeeded(false);
+    this._triggerAPICallToEnableDisablePagination(false);
+  },
+
+  isPaginationEnabled: function() {
+    return helper.padChrome$.window.clientVars.plugins.plugins.ep_script_page_view.pageBreakEnabled;
   },
 
   moveViewportToLine: function(lineNumber) {
@@ -365,6 +393,41 @@ ep_script_page_view_test_helper.utils = {
     var $sceneMarksAndPreviousLine = $lastLineOfPreviousPage.nextUntil(':not(.sceneMark)').addBack();
     var $lastLineOnBlockOfSceneMarks = $sceneMarksAndPreviousLine.last();
     return $lastLineOnBlockOfSceneMarks.next();
+  },
+
+  waitToHaveAnyPageBreak: function(done) {
+    helper.waitFor(function() {
+      var $pageBreaks = helper.padInner$('splitPageBreak, nonSplitPageBreak');
+      return $pageBreaks.length > 0;
+    }, 15000).done(done);
+  },
+
+  waitToHaveAnySplitPageBreak: function(done) {
+    helper.waitFor(function() {
+      var $pageBreaks = helper.padInner$('div splitPageBreak');
+      return $pageBreaks.length > 0;
+    }, 15000).done(done);
+  },
+
+  waitToHaveAnyNonSplitPageBreak: function(done) {
+    helper.waitFor(function() {
+      var $pageBreaks = helper.padInner$('div nonSplitPageBreak');
+      return $pageBreaks.length > 0;
+    }, 15000).done(done);
+  },
+
+  waitToHaveNNonSplitPageBreaks: function(numberOfNonSplitPageBreaks, done) {
+    helper.waitFor(function() {
+      var $nonSplitPageBreaks = helper.padInner$('div nonSplitPageBreak');
+      return $nonSplitPageBreaks.length === numberOfNonSplitPageBreaks;
+    }, 15000).done(done);
+  },
+
+  waitToHaveNSplitPageBreaks: function(numberOfSplitPageBreaks, done) {
+    helper.waitFor(function() {
+      var $splitElementsWithPageBreaks = helper.padInner$('div splitPageBreak');
+      return $splitElementsWithPageBreaks.length === numberOfSplitPageBreaks;
+    }, 15000).done(done);
   },
 
   testSplitPageBreakIsOn: function(textAfterPageBreak, done, expectedPageNumber) {

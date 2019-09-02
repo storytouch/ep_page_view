@@ -3,7 +3,7 @@
 // A4
 var GENERALS_PER_PAGE = 58;
 
-describe.skip('ep_script_page_view - pagination of element blocks', function() {
+describe('ep_script_page_view - pagination of element blocks', function() {
   var utils;
 
   var undoLastChanges = function(done) {
@@ -95,7 +95,7 @@ describe.skip('ep_script_page_view - pagination of element blocks', function() {
   }
 
   var createBaseScript = function(test, done) {
-    test.timeout(5000);
+    test.timeout(15000);
 
     utils.cleanPad(function() {
       var act         = utils.act('first act', 'summary of act');
@@ -105,7 +105,11 @@ describe.skip('ep_script_page_view - pagination of element blocks', function() {
       var generals    = utils.buildScriptWithGenerals('general', GENERALS_PER_PAGE);
       var lastGeneral = utils.general('last general');
       var script      = act + seq + synopsis + heading + generals + lastGeneral;
-      utils.createScriptWith(script, 'last general', done);
+      utils.createScriptWith(script, 'last general', function() {
+        // make sure the first pagination runs, otherwise we might have some
+        // errors on script creation
+        utils.waitToHaveAnyPageBreak(done);
+      });
     });
   }
 

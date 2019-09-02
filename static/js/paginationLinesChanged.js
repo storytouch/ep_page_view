@@ -4,16 +4,16 @@ var utils = require('./utils');
 
 var linesChanged = {
   rep: undefined,
-  lines: {},
+  lines: new Set(),
   initialized: false,
 
   add: function(lineNumber) {
-    this.lines[lineNumber] = true;
+    this.lines.add(lineNumber);
   },
 
   reset: function(rep) {
     this.rep = rep;
-    this.lines = {};
+    this.lines.clear();
     this.initialized = true;
   },
 };
@@ -38,13 +38,21 @@ exports.markLineAsChanged = function(lineNumber) {
 }
 
 exports.hasLinesChanged = function() {
-  return _(linesChanged.lines).keys().size > 0;
+  return linesChanged.lines.size > 0;
 }
 
 exports.minLineChanged = function() {
-  return _(_(linesChanged.lines).keys()).min();
+  return _(Array.from(linesChanged.lines)).min();
+}
+
+// same as minLineChanged, but returns the minimum line number ABOVE baseLineNumber
+exports.minLineChangedFromLine = function(baseLineNumber) {
+  var linesAboveBase = _(Array.from(linesChanged.lines)).filter(function(lineNumber) {
+    return lineNumber > baseLineNumber;
+  });
+  return _(linesAboveBase).min();
 }
 
 exports.lineWasChanged = function(lineNumber) {
-  return linesChanged.lines[lineNumber];
+  return linesChanged.lines.has(lineNumber);
 }
