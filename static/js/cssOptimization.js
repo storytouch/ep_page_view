@@ -7,6 +7,9 @@ var detailedLinesChangedListener = require('ep_script_scene_marks/static/js/deta
 var BEFORE_PAGE_BREAK_CLASS = 'beforePageBreak';
 var AFTER_PAGE_BREAK_CLASS = 'afterPageBreak';
 
+// warning: these classes are used on other places too
+// TODO use a single constant on utils, instead of the same string across
+// different modules
 var FIRST_HALF_CLASS = 'firstHalf';
 var SECOND_HALF_CLASS = 'secondHalf';
 

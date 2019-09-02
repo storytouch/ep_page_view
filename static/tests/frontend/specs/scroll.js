@@ -1,20 +1,18 @@
-describe.skip('ep_script_page_view - scroll', function() {
-  var utils;
+describe('ep_script_page_view - scroll', function() {
+  var utils = ep_script_page_view_test_helper.utils;
 
-  before(function(){
-    utils = ep_script_page_view_test_helper.utils;
+  before(function(done) {
+    helper.newPad(done);
+    this.timeout(60000);
   });
 
-  beforeEach(function(done){
-    helper.newPad(function() {
-      utils.cleanPad(done);
-    });
-    this.timeout(60000);
+  beforeEach(function(done) {
+    utils.cleanPad(done);
   });
 
   context('when user edits a line with page break', function() {
     beforeEach(function(done) {
-      this.timeout(4000);
+      this.timeout(10000);
 
       var lastLineText = 'general';
 
@@ -22,10 +20,7 @@ describe.skip('ep_script_page_view - scroll', function() {
       var script = utils.buildScriptWithGenerals(lastLineText, 3*GENERALS_PER_PAGE);
       utils.createScriptWith(script, lastLineText, function() {
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length === 2;
-        }, 2000).done(done);
+        utils.waitToHaveNNonSplitPageBreaks(2, done);
       });
     });
 
@@ -49,17 +44,14 @@ describe.skip('ep_script_page_view - scroll', function() {
       var lastLineOfSecondPage = 2*GENERALS_PER_PAGE-1;
 
       beforeEach(function (done) {
-        this.timeout(3000);
+        this.timeout(10000);
 
         // make line a split line, but leave room for some more text at the end of 1st half
         var longText = utils.buildStringWithLength(57, '1') + ' ';
         utils.getLine(lastLineOfSecondPage).sendkeys(longText);
 
         // wait for pagination to finish before start testing
-        helper.waitFor(function() {
-          var $linesWithSplitPageBreaks = utils.linesAfterSplitPageBreaks();
-          return $linesWithSplitPageBreaks.length === 1;
-        }, 2000).done(done);
+        utils.waitToHaveNSplitPageBreaks(1, done);
       });
 
       it('keeps line with caret on same position of viewport when edit 1st half of split', function(done) {
@@ -174,10 +166,7 @@ describe.skip('ep_script_page_view - scroll', function() {
       var script = utils.buildStringWithLength(NUMBER_OF_PAGES, fullPage) + lastLine;
       utils.createScriptWith(script, lastLineText, function() {
         // wait for initial pagination to finish
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-          return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
-        }, 10000).done(function() {
+        utils.waitToHaveNNonSplitPageBreaks(NUMBER_OF_PAGES, function() {
           // change target line text, to be easier to visualize what should be on top of viewport
           var $targetLine = utils.getLine(targetLineNumber);
           $targetLine.sendkeys('{selectall}{backspace}');
@@ -198,10 +187,7 @@ describe.skip('ep_script_page_view - scroll', function() {
 
           // wait for first cycle of repagination to be completed before moving caret and viewport
           // to target lines (otherwise Etherpad will overwrite this viewport moving)
-          helper.waitFor(function() {
-            var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
-            return $linesWithPageBreaks.length > 1;
-          }, 2000).done(function() {
+          utils.waitToHaveAnySplitPageBreak(function() {
             moveCaretToLineAfterFirstPaginationCycle(function() {
               utils.moveViewportToLine(targetLineNumberAfter1stCycleWithSplitPageBreaks());
 
@@ -227,10 +213,7 @@ describe.skip('ep_script_page_view - scroll', function() {
         this.timeout(14000);
 
         // check if viewport is still where it should be after repagination is complete
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
-          return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
-        }, 10000).done(function() {
+        utils.waitToHaveNSplitPageBreaks(NUMBER_OF_PAGES, function() {
           utils.testLineIsOnTopOfViewport(targetLineNumberAfterFullRepaginationWithSplitPageBreaks(), done);
         });
       });
@@ -247,10 +230,7 @@ describe.skip('ep_script_page_view - scroll', function() {
         this.timeout(10000);
 
         // wait for repagination to complete
-        helper.waitFor(function() {
-          var $linesWithPageBreaks = utils.linesAfterSplitPageBreaks();
-          return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
-        }, 10000).done(done);
+        utils.waitToHaveNSplitPageBreaks(NUMBER_OF_PAGES, done);
       });
 
       it('keeps first visible line always on top of viewport', function(done) {
@@ -269,16 +249,9 @@ describe.skip('ep_script_page_view - scroll', function() {
 
           // wait for first cycle of repagination to be completed before moving viewport
           // to target line (otherwise Etherpad will overrite this viewport moving)
-          helper.waitFor(function() {
-            var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-            return $linesWithPageBreaks.length > 1;
-          }, 2000).done(function() {
+          utils.waitToHaveAnyNonSplitPageBreak(function() {
             utils.moveViewportToLine(lineNumberAfterFirstCycle);
-
-            helper.waitFor(function() {
-              var $linesWithPageBreaks = utils.linesAfterNonSplitPageBreaks();
-              return $linesWithPageBreaks.length === NUMBER_OF_PAGES;
-            }, 10000).done(done);
+            utils.waitToHaveNNonSplitPageBreaks(NUMBER_OF_PAGES, done);
           });
         });
 

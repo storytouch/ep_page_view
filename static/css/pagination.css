@@ -149,15 +149,16 @@
   }
 
   /* special style used on the calculation of split lines: hide both "()" of cloned parenthetical */
-  /* FIXME do we still need this, after pagination algorithm is changed to not use cloned lines? */
-/*
-  div.clone parenthetical:after,
-  div.clone parenthetical:before {
+  /*
+    FIXME do we still need this, after pagination algorithm is changed to not use cloned lines?
+    Yes! Until we remove calculateHeightToFitText(), at least
+  */
+  #innerdocbody:not(.pasting) div.clone parenthetical:after,
+  #innerdocbody:not(.pasting) div.clone parenthetical:before {
     content: ' ';
     margin-left: 0;
     margin-right: 0;
   }
-*/
 
   /* page number: */
   div pagenumber {

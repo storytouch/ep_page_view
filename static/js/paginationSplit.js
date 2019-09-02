@@ -5,6 +5,7 @@ var utils                = require('./utils');
 var paginationPageNumber = require('./paginationPageNumber');
 var paginationNonSplit   = require('./paginationNonSplit');
 var scriptElementUtils   = require('ep_script_elements/static/js/utils');
+var lineSizeUtils        = require('ep_script_line_size/static/js/utils');
 
 var PAGE_BREAKS_ATTRIB                     = 'splitPageBreak';
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = 'splitPageBreakWithMoreAndContd';
@@ -34,13 +35,8 @@ var FIRST_HALF_WITH_MORE_AND_CONTD_TAG = 'split_with_more_and_contd_first_half';
 var SECOND_HALF_TAG                    = 'split_second_half';
 exports.SECOND_HALF_TAG = SECOND_HALF_TAG;
 
-var DO_NOT_COLLECT = 'ignore_pagination_attribs';
-
 var SENTENCE_MARKER_AND_WHITESPACE_REGEX = /^(.*[.?!;]\s+)[^.?!;]*$/;
 var WHITESPACE_REGEX                     = /^(.*\s+)[^\s]*$/;
-
-var MERGED_LINE = 'merged';
-exports.MERGED_LINE = MERGED_LINE;
 
 // number of minimum lines each element needs before a page break so it can be split in two parts
 // (default is 1)
@@ -88,11 +84,10 @@ var HAVE_MORE_AND_CONTD = {
   parenthetical: true,
 }
 
-exports.getSplitInfo = function($helperLine, $originalLine, lineNumberShift, availableHeightOnPageWithoutMargins, originalCaretPosition, attributeManager, rep) {
-  var lineInfo = getLineInfo($helperLine, $originalLine, originalCaretPosition, attributeManager, rep);
+exports.getSplitInfo = function($originalLine, lineNumberShift, linesAvailableBeforePageBreak, originalCaretPosition, attributeManager, rep) {
+  var lineInfo = getLineInfo($originalLine, originalCaretPosition, attributeManager, rep);
 
   if (canSplit(lineInfo)) {
-    var linesAvailableBeforePageBreak = getNumberOfInnerLinesThatFitOnPage($helperLine, availableHeightOnPageWithoutMargins);
     var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor(lineInfo);
 
     // only calculate the position where element should be split if there is enough space to do that
@@ -108,7 +103,7 @@ exports.getSplitInfo = function($helperLine, $originalLine, lineNumberShift, ava
 
 // Put together information about the line. Use the returned value to move around line information
 // through the functions of this file
-var getLineInfo = function($helperLine, $originalLine, originalCaretPosition, attributeManager, rep) {
+var getLineInfo = function($originalLine, originalCaretPosition, attributeManager, rep) {
   var lineIdBeforeRepagination     = $originalLine.attr('id');
   var lineNumberBeforeRepagination = rep.lines.indexOfKey(lineIdBeforeRepagination);
   var lineHasMarker                = lineHasMarkerExcludingSplitLineMarkers(lineNumberBeforeRepagination, attributeManager);
@@ -120,12 +115,15 @@ var getLineInfo = function($helperLine, $originalLine, originalCaretPosition, at
   var caretAtColumn = lineHasMarker ? originalCaretPosition[1] : originalCaretPosition[1] - 1;
   var caretIsAtLine = (originalCaretPosition[0] === lineNumberBeforeRepagination);
 
+  // if line is split between pages, we need to get its full text (of both halves)
+  var lineText = fullTextOfLine($originalLine);
+
   return {
     // properties always needed
     lineNumberBeforeRepagination: lineNumberBeforeRepagination,
-    lineText: $helperLine.text(),
+    lineText: lineText,
     lineHasMarker: lineHasMarker,
-    typeOfLine: utils.typeOf($helperLine),
+    typeOfLine: utils.typeOf($originalLine),
     $originalLine: $originalLine,
     caretIsAtLine: caretIsAtLine,
     caretAtColumn: caretAtColumn,
@@ -158,13 +156,6 @@ var canSplit = function(lineInfo) {
   return canBeSplit;
 }
 
-var getNumberOfInnerLinesThatFitOnPage = function($helperLine, availableHeightForInnerLines) {
-  var singleInnerLineHeight = utils.getRegularLineHeight();
-  var numberOfLinesThatFit  = parseInt(availableHeightForInnerLines/singleInnerLineHeight);
-
-  return numberOfLinesThatFit;
-}
-
 var getMinimumLinesBeforePageBreakFor = function(lineInfo) {
   var typeOfLine = lineInfo.typeOfLine;
   var minimumLines = MINIMUM_LINES_BEFORE_PAGE_BREAK[typeOfLine] || 1;
@@ -195,17 +186,18 @@ var getSplitMethod = function(lineInfo) {
   return getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine;
 }
 
-var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift) {
+var calculateSplitPosition = function(linesAvailableBeforePageBreak, lineInfo, lineNumberShift) {
   var method = getSplitMethod(lineInfo);
   var lineNumberAfterClean = lineInfo.lineNumberBeforeRepagination + lineNumberShift;
 
-  var position = findPositionWhereLineCanBeSplit(innerLineNumber, lineInfo, method);
+  var position = findPositionWhereLineCanBeSplit(linesAvailableBeforePageBreak, lineInfo, method);
   // if found position to split, return its split attributes
   if (position) {
     var columnToSplit              = position.columnToSplit;
     var afterLastSentenceThatFits  = [lineNumberAfterClean, columnToSplit];
     var moreAndContdInfo           = getMoreAndContdInfo(lineInfo);
     var caretOriginallyOnFirstHalf = (lineInfo.caretIsAtLine && lineInfo.caretAtColumn <= columnToSplit);
+    var splitIsAtSameLineAndColumn = splitPositionIsAlreadySplit(lineInfo.$originalLine, columnToSplit);
 
     return {
       addMoreAndContd: moreAndContdInfo,
@@ -213,6 +205,8 @@ var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift
       start: afterLastSentenceThatFits,
       caretOriginallyOnFirstHalf: caretOriginallyOnFirstHalf,
       innerLinesOnFirstHalf: position.innerLinesOnFirstHalf,
+      innerLinesOnSecondHalf: position.innerLinesOnSecondHalf,
+      skipPagination: splitIsAtSameLineAndColumn,
     };
   }
 }
@@ -224,9 +218,9 @@ var calculateSplitPosition = function(innerLineNumber, lineInfo, lineNumberShift
 //
 // Return column where line should be split (char that should be 1st on next page) and
 // number of inner lines of 1st half
-var findPositionWhereLineCanBeSplit = function(innerLineNumber, lineInfo, findColumnAfterPageBreak) {
+var findPositionWhereLineCanBeSplit = function(linesAvailableBeforePageBreak, lineInfo, findColumnAfterPageBreak) {
   var regularLineHeight           = utils.getRegularLineHeight();
-  var targetInnerLine             = innerLineNumber;
+  var targetInnerLine             = linesAvailableBeforePageBreak;
   var minimumLinesBeforePageBreak = getMinimumLinesBeforePageBreakFor(lineInfo);
   var minimumLinesAfterPageBreak  = getMinimumLinesAfterPageBreakFor(lineInfo);
 
@@ -264,6 +258,7 @@ var findPositionWhereLineCanBeSplit = function(innerLineNumber, lineInfo, findCo
       return {
         columnToSplit: columnAfterPageBreak,
         innerLinesOnFirstHalf: linesBeforePageBreak,
+        innerLinesOnSecondHalf: linesAfterPageBreak,
       };
     } else {
       // this inner line did not satisfy conditions; try previous one
@@ -281,6 +276,11 @@ var getMoreAndContdInfo = function(lineInfo) {
     };
   }
   return false;
+}
+
+var splitPositionIsAlreadySplit = function($originalLine, columnToSplit) {
+  var lineAlreadyHasSplitPageBreak = linesAreHalvesOfSameSplit($originalLine, $originalLine.next());
+  return lineAlreadyHasSplitPageBreak && $originalLine.text().length === columnToSplit - 1;
 }
 
 var getFirstCharAfterLastSentenceMarkerAndWhitespacesOfInnerLine = function(innerLineNumber, lineInfo) {
@@ -323,6 +323,8 @@ var getInnerLineLengthOf = function(lineInfo) {
   return lineLength;
 }
 
+// TODO are we going to keep cloning the line to get line height? Or are we going to
+// use the same logic of ep_script_line_size to calculate that?
 var calculateHeightToFitText = function(text, lineInfo) {
   // create a clone to know the height needed
   var $originalLine = lineInfo.$originalLine;
@@ -371,14 +373,11 @@ var isSecondHalfOfSplit = function(cls) {
 
 // Bug fix: if user edits first half of split line, for some reason Etherpad is loosing the page break
 // line attribute. So we need to collect it:
-exports.collectContentPre = function(hook, context) {
+exports.collectContentPre = function(context) {
   var tname = context.tname;
   var cls   = context.cls || '';
   var state = context.state;
   var lineAttributes = state.lineAttributes;
-
-  var shouldNotCollectThisTag = cls.indexOf(DO_NOT_COLLECT) !== -1;
-  if (shouldNotCollectThisTag) return;
 
   // new line
   if (tname === 'div') {
@@ -402,13 +401,6 @@ exports.collectContentPre = function(hook, context) {
     var splitId = getSplitIdFromClass(context.cls);
     lineAttributes[SECOND_HALF_ATTRIB] = splitId;
   }
-}
-
-// Bug fix: when pasting lines with page breaks, we don't want the page breaks to be collected
-exports.dontCollectPageBreaksOfLines = function($lines) {
-  var tagsCollected = [FIRST_HALF_TAG, FIRST_HALF_WITH_MORE_AND_CONTD_TAG, SECOND_HALF_TAG];
-  var $tagsToNotBeCollected = $lines.find(tagsCollected.join(','));
-  $tagsToNotBeCollected.addClass(DO_NOT_COLLECT);
 }
 
 exports.buildHtmlWithPageBreaks = function(cls) {
@@ -456,11 +448,12 @@ exports.blockElements = function() {
   return [FIRST_HALF_TAG, FIRST_HALF_WITH_MORE_AND_CONTD_TAG, SECOND_HALF_TAG];
 }
 
-exports.cleanPageBreaks = function(startAtLine, endAtLine, attributeManager, rep, editorInfo) {
+exports.cleanPageBreaks = function(linesToBeCleared, attributeManager, rep, editorInfo) {
   // this loop MUST be from bottom to top! If the direction of the loop needs to be changed, it
   // is necessary to change the value of lineNumberShift every time a line is split
   // (on pageBreak.js, function calculatePageBreaks())
-  for (var lineNumber = endAtLine; lineNumber >= startAtLine; lineNumber--) {
+  for (var i = linesToBeCleared.length - 1; i >= 0; i--) {
+    var lineNumber = linesToBeCleared[i];
     // remove marker(s) of a split line
     if (exports.lineIsFirstHalfOfSplit(lineNumber, attributeManager)) {
       mergeLines(lineNumber, rep, attributeManager, editorInfo);
@@ -511,21 +504,31 @@ exports.mergeLinesWithExtraChars = function(lineNumber, rep, attributeManager, e
 
     // remove "\n" at the end of the line
     editorInfo.ace_replaceRange(start, end, '');
+
+    // force merged line to have its size recalculated
+    // TODO use getSizeOfBothHalvesOf to get merged line size, so we don't need to wait for it to be calculated
+    lineSizeUtils.forceLineToHaveSizeRecalculated(lineNumber, attributeManager);
   }
 }
 
-exports.savePageBreak = function(splitPosition, pageNumber, attributeManager, editorInfo, rep) {
-  splitLine(splitPosition, attributeManager, editorInfo, rep);
-  addPageBreakBetweenLines(splitPosition, pageNumber, attributeManager);
+exports.savePageBreak = function(splitPosition, attributeManager, editorInfo, rep) {
+  if (!splitPosition.skipPagination) {
+    splitLine(splitPosition, attributeManager, editorInfo, rep);
+    addPageBreakBetweenLines(splitPosition, attributeManager);
+  }
 }
 
 var splitLine = function(splitPosition, attributeManager, editorInfo, rep) {
   var splitLine                        = splitPosition.start[0];
   var splitColumn                      = splitPosition.start[1];
   var typeOfLineToBeSplit              = utils.getLineTypeOf(splitLine, attributeManager);
-  var caretIsOriginallyAtSplitPosition = (rep.selStart[0] === splitPosition.start[0] && rep.selStart[1] === splitPosition.start[1]);
+  var caretIsOriginallyAtSplitPosition = (rep.selStart[0] === splitLine && rep.selStart[1] === splitColumn);
 
   editorInfo.ace_replaceRange(splitPosition.start, splitPosition.start, "\n");
+
+  // update size of both halves
+  lineSizeUtils.saveLineSize(splitLine, splitPosition.innerLinesOnFirstHalf, attributeManager);
+  lineSizeUtils.saveLineSize(splitLine + 1, splitPosition.innerLinesOnSecondHalf, attributeManager);
 
   // if caret was at the same place of the split before we started repaginating the script,
   // the insertion of "\n" above moves caret to the beginning of 2nd half of split.
@@ -543,7 +546,7 @@ var setTypeOfSecondHalfOfLine = function(lineNumber, lineType, attributeManager)
   scriptElementUtils.updateLineType(lineNumber + 1, attributeManager, lineType);
 }
 
-var addPageBreakBetweenLines = function(splitPosition, pageNumber, attributeManager) {
+var addPageBreakBetweenLines = function(splitPosition, attributeManager) {
   var lineNumber = splitPosition.start[0];
   var attributeName = PAGE_BREAKS_ATTRIB;
   var attributeValue = true;
@@ -553,9 +556,6 @@ var addPageBreakBetweenLines = function(splitPosition, pageNumber, attributeMana
   }
 
   attributeManager.setAttributeOnLine(lineNumber, attributeName, attributeValue);
-
-  // save page number
-  paginationPageNumber.savePageBreak(lineNumber, pageNumber, attributeManager);
 
   // mark both halves with same id
   var splitId = newSplitId();
@@ -572,20 +572,23 @@ exports.lineHasPageBreak = function(lineNumber, attributeManager) {
          attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
 }
 
-exports.mergeHelperLines = function($helperLines) {
+// helper methods for any plugin that needs to get rid of split lines and get the
+// "cleared" HTML content
+exports.mergeLines = function($lines) {
   var $secondHalvesOfMergedLines = $();
 
-  for (var i = 0; i < $helperLines.length - 1; i++) { // -1: last line cannot be merged to next one
-    var $line = $($helperLines.get(i));
-    var $nextLine = $($helperLines.get(i+1));
-    var fullTextOfLine = fullTextOfSplitLine($line, $nextLine);
-    var lineNeedsToBeMerged = !!fullTextOfLine;
+  for (var i = 0; i < $lines.length - 1; i++) { // -1: last line cannot be merged to next one
+    var $thisLine = $($lines.get(i));
+    var $nextLine = $($lines.get(i+1));
+    var lineNeedsToBeMerged = linesAreHalvesOfSameSplit($thisLine, $nextLine);
     if (lineNeedsToBeMerged) {
-      // merge text to fist half
-      utils.setTextOfLine($line, fullTextOfLine);
+      var fullTextOfThisLine = $thisLine.text() + $nextLine.text();
 
-      // mark first half as merged (used later, of pagination calculation)
-      $line.addClass(MERGED_LINE);
+      // merge text to fist half
+      utils.setTextOfLine($thisLine, fullTextOfThisLine);
+
+      // $thisLine has a longer text now, so its size needs to be recalculated
+      lineSizeUtils.recalculateLineSizeOf($thisLine);
 
       // mark second half to be removed
       $secondHalvesOfMergedLines = $secondHalvesOfMergedLines.add($nextLine);
@@ -596,7 +599,7 @@ exports.mergeHelperLines = function($helperLines) {
   }
 
   // remove 2nd halves that were merged
-  return $helperLines.not($secondHalvesOfMergedLines);
+  return $lines.not($secondHalvesOfMergedLines);
 }
 
 var linesAreHalvesOfSameSplit = function($targetLine, $nextLine) {
@@ -616,9 +619,24 @@ var linesAreHalvesOfSameSplit = function($targetLine, $nextLine) {
 }
 exports.linesAreHalvesOfSameSplit = linesAreHalvesOfSameSplit;
 
-var fullTextOfSplitLine = function($targetLine, $nextLine) {
-  if (linesAreHalvesOfSameSplit($targetLine, $nextLine)) {
+var fullTextOfLine = function($line) {
+  var $nextLine = $line.next();
+  if (linesAreHalvesOfSameSplit($line, $nextLine)) {
     // if line is 1st half of split line, join it with next line
-    return $targetLine.text() + $nextLine.text();
+    return $line.text() + $nextLine.text();
+  } else {
+    return $line.text();
   }
 }
+
+var getSizeOfBothHalvesOf = function($line) {
+  var text = fullTextOfLine($line);
+  var regularLineHeight = utils.getRegularLineHeight();
+  var heightOfBothHalves = calculateHeightToFitText(text, { $originalLine: $line });
+  var innerLinesOfBothHalves = parseInt(heightOfBothHalves / regularLineHeight);
+  return innerLinesOfBothHalves;
+}
+
+// HACK allow lineSizeUtils to call getSizeOfBothHalvesOf without having the circular
+// dependency between this module and lineSizeUtils
+lineSizeUtils.setFnToGetSizeOfBothHalvesOfSplitLine(getSizeOfBothHalvesOf);

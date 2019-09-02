@@ -30,17 +30,18 @@ var listenToAPICallsToTogglePagination = function() {
 
 var enablePagination = function() {
   togglePagination(true);
-  paginationCalculation.enable();
 }
 
 var disablePagination = function() {
   togglePagination(false);
-  paginationCalculation.disable();
 }
 
 var togglePagination = function(paginationEnabled) {
   utils.getPluginProps().pageBreakEnabled = paginationEnabled;
   utils.getPadInner().find('#innerdocbody').toggleClass('breakPages', paginationEnabled);
+
+  var togglePaginationCalculation = paginationEnabled ? paginationCalculation.enable : paginationCalculation.disable;
+  togglePaginationCalculation();
 }
 
 var adjustToLineNumberSetting = function() {
@@ -71,8 +72,11 @@ var setupPageViewInitialSetting = function() {
 }
 
 var loadPageBreakInitialSettingFromURL = function() {
+  // Pagination is enabled by default, must receive `pagebreak=false` on URL to be disabled
   var urlParams = new URLSearchParams(window.location.search);
-  var paginationEnabled = urlParams.get('pagebreak');
+  var paginationParam = urlParams.get('pagebreak');
+  var paginationEnabled = paginationParam !== 'false';
+
   if (paginationEnabled) {
     enablePagination();
   } else {

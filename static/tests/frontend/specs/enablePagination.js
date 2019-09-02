@@ -1,4 +1,4 @@
-describe.skip('ep_script_page_view - Enable / Disable automatic pagination', function() {
+describe('ep_script_page_view - Enable / Disable automatic pagination', function() {
   var NUMBER_OF_PAGES = 3;
   var SHOULD_HAVE_PAGE_BREAK = true;
   var SHOULD_NOT_HAVE_PAGE_BREAK = false;
@@ -9,7 +9,7 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
     helper.waitFor(function() {
       var scriptHasPageBreaks = utils.linesAfterNonSplitPageBreaks().length > 0;
       return scriptHasPageBreaks === shouldHavePageBreak;
-    }).done(done);
+    }, 10000).done(done);
   }
   var makeSurePageBreaksWereAdded = function(done) {
     waitForPageBreaksChange(SHOULD_HAVE_PAGE_BREAK, done);
@@ -39,6 +39,7 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
 
   context('when script has page breaks and user disables pagination', function() {
     before(function(done) {
+      this.timeout(10000);
       utils.enablePagination();
 
       makeSurePageBreaksWereAdded(function() {
@@ -48,12 +49,14 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
     });
 
     it('removes all page breaks', function(done) {
+      this.timeout(5000);
       makeSurePageBreaksWereRemoved(done);
     });
   });
 
   context('when script has no page breaks and user enables pagination', function() {
     before(function(done) {
+      this.timeout(5000);
       utils.disablePagination();
 
       makeSurePageBreaksWereRemoved(function() {
@@ -74,14 +77,8 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
       makeSurePageBreaksWereAdded(function() {
         // wait for page breaks to be saved
         setTimeout(function() {
-          // load another pad, so can disable pagination without affecting page breaks of
-          // original pad
-          helper.newPad(function() {
-            utils.disablePagination();
-
-            // load original pad, the one with page breaks
-            helper.newPad(done, padId);
-          });
+          // reload pad, but with pagination flag off
+          helper.newPad(done, `${padId}?pagebreak=false`);
         }, 1000);
       });
 
@@ -89,35 +86,8 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
     });
 
     it('removes all page breaks', function(done) {
+      this.timeout(5000);
       makeSurePageBreaksWereRemoved(done);
-    });
-  });
-
-  context('when pagination is enabled on preferences by the user', function() {
-    before(function() {
-      utils.enablePagination();
-    });
-
-    it('reloads original pad with pagination disabled', function(done) {
-      // reload same pad
-      helper.newPad(function() {
-        var $paginationSetting = helper.padChrome$('#options-pagination');
-        expect($paginationSetting.prop('checked')).to.be(false);
-        done();
-      }, padId);
-
-      this.timeout(60000);
-    });
-
-    it('loads new pads with pagination disabled', function(done) {
-      // load a new pad
-      helper.newPad(function() {
-        var $paginationSetting = helper.padChrome$('#options-pagination');
-        expect($paginationSetting.prop('checked')).to.be(false);
-        done();
-      });
-
-      this.timeout(60000);
     });
   });
 });

@@ -8,13 +8,10 @@ var EMPTY_CHARACTER_NAME = 'empty';
 
 var SCRIPT_ELEMENTS_SELECTOR = 'heading, action, character, parenthetical, dialogue, transition, shot';
 
-var CLONED_ELEMENTS_CLASS = 'cloned';
-var CLONED_ELEMENTS_SELECTOR = '.' + CLONED_ELEMENTS_CLASS;
-
 // Letter
-// var REGULAR_LINES_PER_PAGE = 54;
+// exports.LINES_PER_PAGE = 54;
 // A4
-var REGULAR_LINES_PER_PAGE = 58;
+exports.LINES_PER_PAGE = 58;
 
 // WARNING: if you change any of these values, you need to change on the CSS of page breaks too
 var DEFAULT_PAGE_BREAK_HEIGHT = 10;
@@ -32,7 +29,6 @@ var DEFAULT_PAGE_BREAK_TOTAL_HEIGHT =
   DEFAULT_PAGE_BREAK_BORDER_TOP +
   DEFAULT_PAGE_BREAK_BORDER_BOTTOM +
   SAFETY;
-
 
 // Easier access to outer pad
 var padOuter;
@@ -231,12 +227,25 @@ exports.getDOMLineFromLineNumber = function(lineNumber, rep) {
   return rep.lines.atIndex(lineNumber).lineNode;
 }
 
+var isSceneMark = function($targetLine) {
+  return $targetLine.is('.sceneMark');
+}
+exports.isSceneMark = isSceneMark;
+
 exports.getTopSceneMarkOrTargetLine = function($targetLine) {
   return $targetLine.prevUntil(':not(.sceneMark)').andSelf().first();
 }
 
-exports.getNextLineIgnoringSceneMarks = function($targetLine) {
+var getNextLineIgnoringSceneMarks = function($targetLine) {
   return $targetLine.nextUntil(':not(.sceneMark)').andSelf().last().next();
+}
+exports.getNextLineIgnoringSceneMarks = getNextLineIgnoringSceneMarks;
+
+exports.getFirstNonSceneMark = function($targetLine) {
+  if (isSceneMark($targetLine)) {
+    return getNextLineIgnoringSceneMarks($targetLine);
+  }
+  return $targetLine;
 }
 
 exports.nodeHasMoreAndContd = function($node) {
@@ -275,26 +284,6 @@ exports.createCleanCopyOf = function($targetLine, text) {
   return $('<div>' + innerHtml + '</div>');
 }
 
-exports.cleanHelperLines = function($helperLines) {
-  $helperLines.addClass(CLONED_ELEMENTS_CLASS);
-
-  // remove possible page-break-related tags.
-  $helperLines.find(getPageBreakTagsSelector()).remove();
-
-  // remove classes that impact element dimensions
-  $helperLines.removeClass('firstHalf beforePageBreak withMoreAndContd');
-
-  // store original id on another attribute so it can be retrieved later
-  $helperLines.each(function(index, element) {
-    var $helperLine = $(element);
-    var originalId = $helperLine.attr('id');
-    $helperLine.attr('data-original-id', originalId);
-
-    // remove id to not mess up with existing lines
-    $helperLine.attr('id', '');
-  });
-}
-
 var pageBreakTags = ['more', 'contdLine', 'pagenumber'];
 var pageBreakTagsSelector;
 exports.registerPageBreakTag = function(tagName) {
@@ -309,26 +298,11 @@ var getPageBreakTagsSelector = function() {
 }
 exports.getPageBreakTagsSelector = getPageBreakTagsSelector;
 
-// Use line proportion to find height needed so we always have REGULAR_LINES_PER_PAGE generals/page
-var calculatePageHeight = function(oneLineHeight) {
-  oneLineHeight = oneLineHeight || getHeightOfOneLine();
-  var pageHeightNeeded = oneLineHeight * REGULAR_LINES_PER_PAGE;
-
-  return pageHeightNeeded;
-}
-
 // cache maxPageHeight
 var maxPageHeight;
 exports.getMaxPageHeight = function() {
   maxPageHeight = maxPageHeight || calculatePageHeight();
   return maxPageHeight;
-}
-
-var updatePageHeight = function(oneLineHeight) {
-  maxPageHeight = calculatePageHeight(oneLineHeight);
-
-  // update cached value for line height
-  updateRegularLineHeight();
 }
 
 // cache pageBreakHeight

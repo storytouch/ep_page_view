@@ -1,5 +1,4 @@
 var utils = require('./utils');
-var paginationPageNumber = require('./paginationPageNumber');
 
 var PAGE_BREAKS_ATTRIB                     = 'nonSplitPageBreak';
 var PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB = 'nonSplitPageBreakWithMoreAndContd';
@@ -58,18 +57,20 @@ exports.blockElements = function() {
   return ['line_with_page_break'];
 }
 
-exports.cleanPageBreaks = function(startAtLine, endAtLine, attributeManager) {
-  for (var lineNumber = endAtLine; lineNumber >= startAtLine; lineNumber--) {
-    if (exports.lineHasPageBreak(lineNumber, attributeManager)) {
+exports.cleanPageBreaks = function(linesToBeCleared, attributeManager) {
+  for (var i = linesToBeCleared.length - 1; i >= 0; i--) {
+    var lineNumber = linesToBeCleared[i];
+    if (lineHasPageBreak(lineNumber, attributeManager)) {
       removePageBreak(lineNumber, attributeManager);
     }
   }
 }
 
-exports.lineHasPageBreak = function(lineNumber, attributeManager) {
+var lineHasPageBreak = function(lineNumber, attributeManager) {
   return attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB) ||
          attributeManager.getAttributeOnLine(lineNumber, PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB);
 }
+exports.lineHasPageBreak = lineHasPageBreak;
 
 var removePageBreak = function(lineNumber, attributeManager) {
   attributeManager.removeAttributeOnLine(lineNumber, PAGE_BREAKS_ATTRIB);
@@ -92,16 +93,19 @@ exports.getNonSplitInfo = function($line, lineNumberShift, rep) {
     };
   }
 
+  var lineNumberBeforeClean = utils.getLineNumberFromDOMLine($targetLine, rep);
   // some lines before $targetLine might be split lines that would be merged on pagination,
   // so we need to shift line number to address that
-  var lineNumberAfterClean = utils.getLineNumberFromDOMLine($targetLine, rep) + lineNumberShift;
+  var lineNumberAfterClean = lineNumberBeforeClean + lineNumberShift;
   var moreAndContdInfo = getMoreAndContdInfo($targetLine);
+  var lineAlreadyHasNonSplitPageBreak = nodeHasPageBreak($targetLine);
 
   return {
-    lineNumberBeforeClean: utils.getLineNumberFromDOMLine($targetLine, rep),
+    lineNumberBeforeClean: lineNumberBeforeClean,
     lineNumberAfterClean: lineNumberAfterClean,
     addMoreAndContd: moreAndContdInfo,
     callbackAfterSave: callbackAfterSave,
+    skipPagination: lineAlreadyHasNonSplitPageBreak,
   };
 }
 
@@ -124,23 +128,22 @@ var getMoreAndContdInfo = function($line) {
   return false;
 }
 
-exports.savePageBreak = function(nonSplitInfo, pageNumber, attributeManager) {
-  var lineWithPageBreak = nonSplitInfo.lineNumberAfterClean;
+exports.savePageBreak = function(nonSplitInfo, attributeManager) {
+  if (!nonSplitInfo.skipPagination) {
+    var lineWithPageBreak = nonSplitInfo.lineNumberAfterClean;
+    var attributeName = PAGE_BREAKS_ATTRIB;
+    var attributeValue = true;
 
-  var attributeName = PAGE_BREAKS_ATTRIB;
-  var attributeValue = true;
+    if (nonSplitInfo.addMoreAndContd) {
+      attributeName = PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
+      attributeValue = nonSplitInfo.addMoreAndContd.characterName;
+    }
 
-  if (nonSplitInfo.addMoreAndContd) {
-    attributeName = PAGE_BREAKS_WITH_MORE_AND_CONTD_ATTRIB;
-    attributeValue = nonSplitInfo.addMoreAndContd.characterName;
+    attributeManager.setAttributeOnLine(lineWithPageBreak, attributeName, attributeValue);
   }
-
-  attributeManager.setAttributeOnLine(lineWithPageBreak, attributeName, attributeValue);
-
-  // save page number
-  paginationPageNumber.savePageBreak(lineWithPageBreak, pageNumber, attributeManager);
 }
 
-exports.nodeHasPageBreak = function($node) {
+var nodeHasPageBreak = function($node) {
   return $node.find(PAGE_BREAK_TAG).length > 0;
 }
+exports.nodeHasPageBreak = nodeHasPageBreak;
