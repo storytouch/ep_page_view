@@ -145,7 +145,7 @@ exports.findCharacterNameOf = function($line) {
   // navigate up until find an element that is not a dialogue or parenthetical
   // (include $line because there might be no dialogue or parenthetical before it, so the result would
   // be empty)
-  var $firstElementOfDialogueOfBlock = $line.prevUntil("div:not(:has(dialogue,parenthetical))").andSelf().first();
+  var $firstElementOfDialogueOfBlock = $line.prevUntil("div:not(:has(dialogue,parenthetical))").addBack().first();
 
   // element before dialogue block should be a character -- if it is not, the text will be ""
   var $characterBeforeDialogueBlock = $firstElementOfDialogueOfBlock.prev().find("character");
@@ -228,11 +228,11 @@ exports.getDOMLineFromLineNumber = function(lineNumber, rep) {
 }
 
 exports.getTopSceneMarkOrTargetLine = function($targetLine) {
-  return $targetLine.prevUntil(':not(.sceneMark)').andSelf().first();
+  return $targetLine.prevUntil(':not(.sceneMark)').addBack().first();
 }
 
 exports.getNextLineIgnoringSceneMarks = function($targetLine) {
-  return $targetLine.nextUntil(':not(.sceneMark)').andSelf().last().next();
+  return $targetLine.nextUntil(':not(.sceneMark)').addBack().last().next();
 }
 
 exports.nodeHasMoreAndContd = function($node) {

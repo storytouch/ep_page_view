@@ -120,7 +120,7 @@ var increaseOffsetTop = function(offset, topShift) {
 }
 
 var getNumberOfMergedLinesOnPage = function(pageBreakInfo) {
-  var $linesOfThisPage = pageBreakInfo.$firstLineOfThisPage.nextUntil(pageBreakInfo.$firstLineOfNextPage).andSelf();
+  var $linesOfThisPage = pageBreakInfo.$firstLineOfThisPage.nextUntil(pageBreakInfo.$firstLineOfNextPage).addBack();
   var $mergedLinesOfThisPage = $linesOfThisPage.filter("." + paginationSplit.MERGED_LINE);
   return $mergedLinesOfThisPage.length;
 }
@@ -140,7 +140,7 @@ var createHelperLines = function($firstLine, $linesOfScript) {
   var $lastLineOfScript      = $linesOfScript.last();
   var startAtOffset          = $firstLine.offset();
   var firstLineToNotBeCloned = getFirstLineNotReachedByThisPaginationCycle(startAtOffset);
-  var $linesToClone          = $firstLine.nextUntil(firstLineToNotBeCloned).andSelf();
+  var $linesToClone          = $firstLine.nextUntil(firstLineToNotBeCloned).addBack();
   var $helperLines           = createCleanClonesOf($linesToClone);
 
   $helperLines.insertAfter($lastLineOfScript);
