@@ -102,12 +102,12 @@
 
   #innerdocbody .innerPV{
     min-height:1500px;
-    padding-top:77px !important;
+    padding-top:25px !important;
   }
 
   #innerdocbody > div {
     padding-left: 117px; /* WARNING if you change this here, you need to change other CSSs too */
-    padding-right: 78px; /* WARNING if you change this here, you need to change other CSSs too */
+    padding-right: 25px; /* WARNING if you change this here, you need to change other CSSs too */
   }
 
   .lineNumbersAndPageView{
