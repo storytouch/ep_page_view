@@ -130,6 +130,14 @@
   }
 }
 
+/* TODO working */
+@media (min-width: 686px) {
+  #innerdocbody > div {
+    padding-left: 117px; /* WARNING if you change this here, you need to change other CSSs too */
+    padding-right: 10px; /* WARNING if you change this here, you need to change other CSSs too */
+  }
+}
+
 /* add top margin to the editor */
  #innerdocbody, #sidediv {
   min-height: 1500px;
