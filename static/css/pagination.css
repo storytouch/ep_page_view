@@ -190,7 +190,7 @@
 
   /* Prevent the last line from sticking on the bottom of the viewport.
      Useful for a smooth scrolling when editing last line. */
-  #innerdocbody {
+  #innerdocbody, #sidediv {
     padding-bottom: 40px;
   }
 }
