@@ -4,140 +4,35 @@
 
 .pageView {
   width:100%;
-  /* margin-left:0px; */
-  /* height:12px; */
   background-color: #FFFFFF; /* color 255 */
-  /* margin-top:0px; */
-  /* margin-bottom:0px; */
-}
-
-.lineNumbersAndPageView{
-  /* padding-right:12px !important; */
 }
 
 #innerdocbody {
   line-height: 16px;
 }
 
-/* For LESS THAN 641px wide */
-@media (max-width : 640px) {
-  /* #innerdocbody{ */
-  /*   padding-top:77px !important; */
-  /*   margin-left:0px !important; */
-  /* } */
-  /* #sidediv{ */
-  /*   padding-right:4px !important */
-  /* } */
+#innerdocbody > div {
+  padding-left: 117px;
+  padding-right: 20px;
 }
 
-/* 444px ~ 61 chars/line */
-
-/* If it is not possible to have any margin: */
-@media (max-width : 463px) {
-  /* #innerdocbody > div { */
-  /*   padding-left: 0px; */
-  /*   padding-right: 0px; */
-  /* } */
+/* make the comment container white as well */
+.outerBackground{
+  background-color: #FFFFFF; /* color 255 */
 }
 
-/* This is the point where we hide page outline: */
-@media (max-width : 691px) {
-  /* #innerdocbody > div { */
-  /*   padding-left: 0px; */
-  /*   padding-right: 0px; */
-  /*   max-width: 444px; */
-  /* } */
-  /* #innerdocbody > div.sceneMark { */
-  /*   max-width: 480px; */
-  /* } */
-  /* .outerBackground{ */
-  /*   width:100%; */
-  /* } */
-  /* .innerPV{ */
-  /*   border:none; */
-  /*   box-shadow:none; */
-  /* } */
+/* add top margin to the editor */
+#innerdocbody, #sidediv {
+  min-height: 1500px;
+  padding-top: 77px;
 }
 
-/* If we have some space to have a right margin, but not
-   enough for a left margin or to draw page outline: */
-@media (min-width: 464px) and (max-width : 541px) {
-  /* #innerdocbody > div { */
-  /*   padding-left: 0px; /1* right margin gets all available space *1/ */
-  /*   padding-right: calc(100% - 444px); */
-  /* } */
+/* remove border to make ace_inner have the full width */
+#sidediv {
+  border-right: 0;
 }
 
-/* If we have some space to have both margins, but not
-   enough to draw page outline: */
-@media (min-width: 542px) and (max-width : 691px) {
-  /* #innerdocbody > div { */
-  /*   padding-left: 77px; /1* left margin gets only enough to display scene number and SM icon *1/ */
-  /*   padding-right: calc(100% - 521px); /1* 444 + 77 (padding-left) *1/ */
-  /* } */
-}
-
-/* For screens GREATER THAN 636px wide */
-/* Note some browers are this pissy about this..  Chrome and FF respond at different sizes etc. */
-@media (min-width: 636px) {
-  background-color: red;
-  #innerdocbody > div {
-    padding-left: 0px;
-    padding-right: 0px;
-    max-width: 700px;
-  }
-
-  #sidediv .pv{
-    /* padding-right:12px; */
-  }
-
-  .innerPVlineNumbers{
-    /* border-radius: 0px 5px 0 0; */
-  }
-
-  .outerBackground{
-    background-color: #FFFFFF; /* color 255 */
-    /* width: 641px; /1* this is overwritten by ep_comments *1/ */
-    /* margin:auto; */
-    /* border:none; */
-  }
-
-  .innerPV{
-    /* background-color: #FFFFFF; /1* color 255 *1/ */
-    /* position: relative; */
-    /* min-height:1500px; */
-  }
-
-  #innerdocbody .innerPV{
-    /* min-height:1500px; */
-    /* padding-top:25px !important; */
-  }
-
-  #innerdocbody > div {
-    padding-left: 117px; /* WARNING if you change this here, you need to change other CSSs too */
-    padding-right: 25px; /* WARNING if you change this here, you need to change other CSSs too */
-  }
-
-  .lineNumbersAndPageView{
-    /* width:28px !important; */
-    /* The above breaks ep_comments */
-    /* border-radius: 5px 0 0 0; */
-    /* border: 1px solid #ccc; */
-    /* border-right:none !important; */
-    /* top: 7px !important; */
-    /* left: auto !important; */
-    /* padding-top: 77px !important; */
-  }
-}
-
-/* TODO working */
-@media (min-width: 686px) {
-  #innerdocbody > div {
-    padding-left: 117px; /* WARNING if you change this here, you need to change other CSSs too */
-    padding-right: 20px; /* WARNING if you change this here, you need to change other CSSs too */
-  }
-}
-
+/* scroll bar styles */
 ::-webkit-scrollbar {
   width: 8px;
   border-style: solid;
@@ -170,14 +65,15 @@
   border-color: #FFFFFF;
 }
 
-/* add top margin to the editor */
- #innerdocbody, #sidediv {
-  min-height: 1500px;
-  padding-top: 77px;
+/*
+XXX: This style in only applied on the Editor when it is running without the
+Teksto Wrapper.
+on the Teksto manager we use a fixed width of 795px, to make the general to
+have 61 characters when it is running Etherpad alone we have to fix the width
+at 720px
+*/
+@media (min-width: 800px) {
+  #innerdocbody {
+    max-width: 720px;
+  }
 }
-
-/* remove border to make ace_inner have the full width */
-#sidediv {
-  border-right: 0;
-}
-
