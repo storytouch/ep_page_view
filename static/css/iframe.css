@@ -134,8 +134,40 @@
 @media (min-width: 686px) {
   #innerdocbody > div {
     padding-left: 117px; /* WARNING if you change this here, you need to change other CSSs too */
-    padding-right: 10px; /* WARNING if you change this here, you need to change other CSSs too */
+    padding-right: 20px; /* WARNING if you change this here, you need to change other CSSs too */
   }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  border-style: solid;
+  border-width: 0 5px;
+  background-color: #FFFFFF;
+  border-color: #FFFFFF;
+}
+
+::-webkit-scrollbar-button:increment:end,
+::-webkit-scrollbar-button:decrement:start {
+  display: block;
+  height: 10px;
+  border-left: 3px solid transparent;
+  border-right: 3px solid transparent;
+  border-color: #FFFFFF;
+}
+::-webkit-scrollbar-button:decrement:start {
+  border-bottom-width: 10px;
+  border-bottom-style: solid;
+}
+::-webkit-scrollbar-button:increment:end {
+  border-top-width: 10px;
+  border-top-style: solid;
+}
+::-webkit-scrollbar-thumb {
+  border-width: 0 1px;
+  border-style: solid;
+
+  background-color: #D8D9DC;
+  border-color: #FFFFFF;
 }
 
 /* add top margin to the editor */
