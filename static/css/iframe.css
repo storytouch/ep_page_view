@@ -8,12 +8,11 @@
 }
 
 #innerdocbody {
-  line-height: 16px;
+  line-height: 20px;
 }
 
 #innerdocbody > div {
-  padding-left: 117px;
-  padding-right: 20px;
+  padding-left: 133px;
 }
 
 /* make the comment container white as well */
