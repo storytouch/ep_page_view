@@ -1,7 +1,7 @@
 /* Etherpad does not set #linemetricsdiv with the same line-height as the editor, and we need
    this in order to calculate page breaks when zoom is not 100% */
 #linemetricsdiv {
-  line-height: 16px;
+  line-height: 20px;
 }
 
 /* TODO review the "!important" used here. They might had been necessary when we had
@@ -51,8 +51,8 @@
 
   /* make CONT'D and character name work together */
   contdLine {
-    max-width: calc(100% - 152px - 16px + 222px);
-    min-width: calc(100% - 152px - 16px);
+    max-width: calc(100% - 152px - 20px + 222px);
+    min-width: calc(100% - 152px - 20px);
     margin-right: -222px;
   }
 
@@ -161,7 +161,7 @@
 
   /* page number: */
   div pagenumber {
-    margin-top: -32px;
+    margin-top: -40px;
     margin-right: 4px;
     float: right;
   }
