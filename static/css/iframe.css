@@ -15,9 +15,13 @@
   padding-left: 133px;
 }
 
-/* make the comment container white as well */
-.outerBackground{
-  background-color: #FFFFFF; /* color 255 */
+/*
+ * make the comment container white as well. We need to force it to take
+ * precedence over the "body.greydout" rule from Etherpad
+ *
+*/
+body.outerBackground{
+  background-color: #FFFFFF !important; /* color 255 */
 }
 
 /* add top margin to the editor */
