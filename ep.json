@@ -2,6 +2,7 @@
   "parts": [
     {
       "name": "page_view",
+      "pre": ["ep_script_simple_page_view/preLoader"],
       "client_hooks": {
         "postAceInit": "ep_script_page_view/static/js/index",
         "aceEditorCSS": "ep_script_page_view/static/js/aceEditorCSS",
