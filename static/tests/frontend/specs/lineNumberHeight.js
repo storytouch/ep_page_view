@@ -1,6 +1,13 @@
 // FIXME Line numbers are not aligned to correspondent text line
 // https://trello.com/c/hdZGr9EA/684
 describe.skip("ep_script_page_view - height of line numbers", function() {
+  // Letter
+  // var PAPER = 'Letter';
+  // var GENERALS_PER_PAGE = 54;
+  // A4
+  var PAPER = 'A4';
+  var GENERALS_PER_PAGE = 58;
+
   var utils;
 
   before(function(){
@@ -8,9 +15,10 @@ describe.skip("ep_script_page_view - height of line numbers", function() {
   });
 
   beforeEach(function(done){
-    helper.newPad(function() {
+    var simplePageViewUtils = ep_script_simple_page_view_test_helper.utils;
+    simplePageViewUtils.newPadWithPaperType(function() {
       utils.cleanPad(done);
-    });
+    }, PAPER);
     this.timeout(60000);
   });
 

@@ -2,6 +2,7 @@ var $ = require('ep_etherpad-lite/static/js/rjquery').$;
 var _ = require('ep_etherpad-lite/static/js/underscore');
 var Security = require('ep_etherpad-lite/static/js/security');
 
+var simplePageViewUtils = require('ep_script_simple_page_view/static/js/utils');
 var scriptElementUtils = require('ep_script_elements/static/js/utils');
 
 var EMPTY_CHARACTER_NAME = "empty";
@@ -10,11 +11,6 @@ var SCRIPT_ELEMENTS_SELECTOR = "heading, action, character, parenthetical, dialo
 
 var CLONED_ELEMENTS_CLASS = "cloned";
 var CLONED_ELEMENTS_SELECTOR = "." + CLONED_ELEMENTS_CLASS;
-
-// Letter
-// var REGULAR_LINES_PER_PAGE = 54;
-// A4
-var REGULAR_LINES_PER_PAGE = 58;
 
 // WARNING: if you change any of these values, you need to change on the CSS of page breaks too
 var DEFAULT_PAGE_BREAK_HEIGHT = 10;
@@ -305,11 +301,12 @@ var getPageBreakTagsSelector = function() {
 }
 exports.getPageBreakTagsSelector = getPageBreakTagsSelector;
 
-// Use line proportion to find height needed so we always have REGULAR_LINES_PER_PAGE generals/page
+// Use line proportion to find height needed so we always have
+// the same amount of generals per page
 var calculatePageHeight = function(oneLineHeight) {
   oneLineHeight = oneLineHeight || getHeightOfOneLine();
-  var pageHeightNeeded = oneLineHeight * REGULAR_LINES_PER_PAGE;
-
+  var numberOfLinesPerPage = simplePageViewUtils.getThisPlugin().pageLayout.getNumberOfLinesPerPage();
+  var pageHeightNeeded = oneLineHeight * numberOfLinesPerPage;
   return pageHeightNeeded;
 }
 

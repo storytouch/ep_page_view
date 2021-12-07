@@ -1,4 +1,11 @@
 describe.skip("ep_script_page_view - pagination of split elements", function() {
+  // Letter
+  // var PAPER = 'Letter';
+  // var GENERALS_PER_PAGE = 54;
+  // A4
+  var PAPER = 'A4';
+  var GENERALS_PER_PAGE = 58;
+
   // shortcuts for helper functions
   var utils, splitElements;
   // context-dependent values/functions
@@ -10,7 +17,8 @@ describe.skip("ep_script_page_view - pagination of split elements", function() {
   });
 
   beforeEach(function(cb){
-    helper.newPad(function() {
+    var simplePageViewUtils = ep_script_simple_page_view_test_helper.utils;
+    simplePageViewUtils.newPadWithPaperType(function() {
       utils.cleanPad(function() {
         var generals      = utils.buildScriptWithGenerals("general", linesBeforeTargetElement);
         var targetElement = buildTargetElement();
@@ -19,7 +27,7 @@ describe.skip("ep_script_page_view - pagination of split elements", function() {
 
         utils.createScriptWith(script, "last general", cb);
       });
-    });
+    }, PAPER);
     this.timeout(60000);
   });
 
