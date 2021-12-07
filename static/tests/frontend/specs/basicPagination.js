@@ -1,24 +1,26 @@
-// Letter
-// var GENERALS_PER_PAGE       = 54;
-// var HEADINGS_PER_PAGE       = 18;
-// var ACTIONS_PER_PAGE        = 27;
-// var CHARACTERS_PER_PAGE     = 27;
-// var PARENTHETICALS_PER_PAGE = 54;
-// var DIALOGUES_PER_PAGE      = 54;
-// var TRANSITIONS_PER_PAGE    = 26;
-// var SHOTS_PER_PAGE          = 18;
-
-// A4
-var GENERALS_PER_PAGE       = 58;
-var HEADINGS_PER_PAGE       = 20;
-var ACTIONS_PER_PAGE        = 29;
-var CHARACTERS_PER_PAGE     = 29;
-var PARENTHETICALS_PER_PAGE = 58;
-var DIALOGUES_PER_PAGE      = 58;
-var TRANSITIONS_PER_PAGE    = 28;
-var SHOTS_PER_PAGE          = 20;
-
 describe.skip("ep_script_page_view - pagination basic tests", function() {
+  // Letter
+  // var PAPER                   = 'Letter';
+  // var GENERALS_PER_PAGE       = 54;
+  // var HEADINGS_PER_PAGE       = 18;
+  // var ACTIONS_PER_PAGE        = 27;
+  // var CHARACTERS_PER_PAGE     = 27;
+  // var PARENTHETICALS_PER_PAGE = 54;
+  // var DIALOGUES_PER_PAGE      = 54;
+  // var TRANSITIONS_PER_PAGE    = 26;
+  // var SHOTS_PER_PAGE          = 18;
+
+  // A4
+  var PAPER                   = 'A4';
+  var GENERALS_PER_PAGE       = 58;
+  var HEADINGS_PER_PAGE       = 20;
+  var ACTIONS_PER_PAGE        = 29;
+  var CHARACTERS_PER_PAGE     = 29;
+  var PARENTHETICALS_PER_PAGE = 58;
+  var DIALOGUES_PER_PAGE      = 58;
+  var TRANSITIONS_PER_PAGE    = 28;
+  var SHOTS_PER_PAGE          = 20;
+
   var utils, pageBreak;
 
   var getPageBuilder = function(elementsPerPage, builder) {
@@ -29,7 +31,10 @@ describe.skip("ep_script_page_view - pagination basic tests", function() {
   before(function(done) {
     utils = ep_script_page_view_test_helper.utils;
     pageBreak = ep_script_page_view_test_helper.pageBreak;
-    helper.newPad(done);
+
+    var simplePageViewUtils = ep_script_simple_page_view_test_helper.utils;
+    simplePageViewUtils.newPadWithPaperType(done, PAPER);
+
     this.timeout(60000);
   });
 

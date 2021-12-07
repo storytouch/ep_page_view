@@ -1,4 +1,11 @@
 describe.skip("ep_script_page_view - repaginate", function() {
+  // Letter
+  // var PAPER = 'Letter';
+  // var GENERALS_PER_PAGE = 54;
+  // A4
+  var PAPER = 'A4';
+  var GENERALS_PER_PAGE = 58;
+
   var utils, smUtils;
 
   before(function(){
@@ -7,9 +14,10 @@ describe.skip("ep_script_page_view - repaginate", function() {
   });
 
   beforeEach(function(done){
-    helper.newPad(function() {
+    var simplePageViewUtils = ep_script_simple_page_view_test_helper.utils;
+    simplePageViewUtils.newPadWithPaperType(function() {
       utils.cleanPad(done);
-    });
+    }, PAPER);
     this.timeout(60000);
   });
 

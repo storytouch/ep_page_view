@@ -1,9 +1,16 @@
 describe.skip('ep_script_page_view - Enable / Disable automatic pagination', function() {
+  // Letter
+  // var PAPER = 'Letter';
+  // var GENERALS_PER_PAGE = 54;
+  // A4
+  var PAPER = 'A4';
+  var GENERALS_PER_PAGE = 58;
+
   var NUMBER_OF_PAGES = 3;
   var SHOULD_HAVE_PAGE_BREAK = true;
   var SHOULD_NOT_HAVE_PAGE_BREAK = false;
 
-  var utils, padId;
+  var utils, padId, simplePageViewUtils;
 
   var waitForPageBreaksChange = function(shouldHavePageBreak, done) {
     helper.waitFor(function() {
@@ -20,14 +27,15 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
 
   before(function(done) {
     utils = ep_script_page_view_test_helper.utils;
+    simplePageViewUtils = ep_script_simple_page_view_test_helper.utils;
 
-    padId = helper.newPad(function() {
+    padId = simplePageViewUtils.newPadWithPaperType(function() {
       utils.cleanPad(function() {
         // build a script with 3 full pages an an extra line on 4th page
         var script = utils.buildScriptWithGenerals('general', NUMBER_OF_PAGES * GENERALS_PER_PAGE + 1);
         utils.createScriptWith(script, 'general', done);
       });
-    });
+    }, PAPER);
 
     this.timeout(60000);
   });
@@ -76,12 +84,12 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
         setTimeout(function() {
           // load another pad, so can disable pagination without affecting page breaks of
           // original pad
-          helper.newPad(function() {
+          simplePageViewUtils.newPadWithPaperType(function() {
             utils.disablePagination();
 
             // load original pad, the one with page breaks
             helper.newPad(done, padId);
-          });
+          }, PAPER);
         }, 1000);
       });
 
@@ -111,11 +119,11 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
 
     it('loads new pads with pagination disabled', function(done) {
       // load a new pad
-      helper.newPad(function() {
+      simplePageViewUtils.newPadWithPaperType(function() {
         var $paginationSetting = helper.padChrome$('#options-pagination');
         expect($paginationSetting.prop('checked')).to.be(false);
         done();
-      });
+      }, PAPER);
 
       this.timeout(60000);
     });

@@ -1,4 +1,11 @@
 describe.skip("ep_script_page_view - other MORE/CONT'D tests", function() {
+  // Letter
+  // var PAPER = 'Letter';
+  // var GENERALS_PER_PAGE = 54;
+  // A4
+  var PAPER = 'A4';
+  var GENERALS_PER_PAGE = 58;
+
   var utils, scriptBuilder, lastLineText;
 
   before(function(){
@@ -6,11 +13,12 @@ describe.skip("ep_script_page_view - other MORE/CONT'D tests", function() {
   });
 
   beforeEach(function(cb){
-    helper.newPad(function() {
+    var simplePageViewUtils = ep_script_simple_page_view_test_helper.utils;
+    simplePageViewUtils.newPadWithPaperType(function() {
       utils.cleanPad(function() {
         utils.createScriptWith(scriptBuilder(), lastLineText, cb);
       });
-    });
+    }, PAPER);
     this.timeout(60000);
   });
 
