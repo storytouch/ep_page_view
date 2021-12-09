@@ -1,9 +1,9 @@
 describe.skip('ep_script_page_view - Enable / Disable automatic pagination', function() {
   // Letter
-  // var PAPER = 'Letter';
+  // var PAPER_SZE = 'Letter';
   // var GENERALS_PER_PAGE = 54;
   // A4
-  var PAPER = 'A4';
+  var PAPER_SZE = 'A4';
   var GENERALS_PER_PAGE = 58;
 
   var NUMBER_OF_PAGES = 3;
@@ -29,13 +29,13 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
     utils = ep_script_page_view_test_helper.utils;
     simplePageViewUtils = ep_script_simple_page_view_test_helper.utils;
 
-    padId = simplePageViewUtils.newPadWithPaperType(function() {
+    padId = simplePageViewUtils.newPadWithPaperSize(function() {
       utils.cleanPad(function() {
         // build a script with 3 full pages an an extra line on 4th page
         var script = utils.buildScriptWithGenerals('general', NUMBER_OF_PAGES * GENERALS_PER_PAGE + 1);
         utils.createScriptWith(script, 'general', done);
       });
-    }, PAPER);
+    }, PAPER_SZE);
 
     this.timeout(60000);
   });
@@ -84,12 +84,12 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
         setTimeout(function() {
           // load another pad, so can disable pagination without affecting page breaks of
           // original pad
-          simplePageViewUtils.newPadWithPaperType(function() {
+          simplePageViewUtils.newPadWithPaperSize(function() {
             utils.disablePagination();
 
             // load original pad, the one with page breaks
             helper.newPad(done, padId);
-          }, PAPER);
+          }, PAPER_SZE);
         }, 1000);
       });
 
@@ -119,11 +119,11 @@ describe.skip('ep_script_page_view - Enable / Disable automatic pagination', fun
 
     it('loads new pads with pagination disabled', function(done) {
       // load a new pad
-      simplePageViewUtils.newPadWithPaperType(function() {
+      simplePageViewUtils.newPadWithPaperSize(function() {
         var $paginationSetting = helper.padChrome$('#options-pagination');
         expect($paginationSetting.prop('checked')).to.be(false);
         done();
-      }, PAPER);
+      }, PAPER_SZE);
 
       this.timeout(60000);
     });
