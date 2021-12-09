@@ -1,6 +1,6 @@
 describe.skip("ep_script_page_view - pagination basic tests", function() {
   // Letter
-  // var PAPER                   = 'Letter';
+  // var PAPER_SZE               = 'Letter';
   // var GENERALS_PER_PAGE       = 54;
   // var HEADINGS_PER_PAGE       = 18;
   // var ACTIONS_PER_PAGE        = 27;
@@ -11,7 +11,7 @@ describe.skip("ep_script_page_view - pagination basic tests", function() {
   // var SHOTS_PER_PAGE          = 18;
 
   // A4
-  var PAPER                   = 'A4';
+  var PAPER_SZE               = 'A4';
   var GENERALS_PER_PAGE       = 58;
   var HEADINGS_PER_PAGE       = 20;
   var ACTIONS_PER_PAGE        = 29;
@@ -33,7 +33,7 @@ describe.skip("ep_script_page_view - pagination basic tests", function() {
     pageBreak = ep_script_page_view_test_helper.pageBreak;
 
     var simplePageViewUtils = ep_script_simple_page_view_test_helper.utils;
-    simplePageViewUtils.newPadWithPaperType(done, PAPER);
+    simplePageViewUtils.newPadWithPaperSize(done, PAPER_SZE);
 
     this.timeout(60000);
   });

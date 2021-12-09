@@ -1,9 +1,9 @@
 describe.skip("ep_script_page_view - pagination of element blocks", function() {
   // Letter
-  // var PAPER = 'Letter';
+  // var PAPER_SZE = 'Letter';
   // var GENERALS_PER_PAGE = 54;
   // A4
-  var PAPER = 'A4';
+  var PAPER_SZE = 'A4';
   var GENERALS_PER_PAGE = 58;
 
   var utils;
@@ -116,7 +116,7 @@ describe.skip("ep_script_page_view - pagination of element blocks", function() {
     utils = ep_script_page_view_test_helper.utils;
 
     var simplePageViewUtils = ep_script_simple_page_view_test_helper.utils;
-    simplePageViewUtils.newPadWithPaperType(done, PAPER);
+    simplePageViewUtils.newPadWithPaperSize(done, PAPER_SZE);
 
     this.timeout(60000);
   });
